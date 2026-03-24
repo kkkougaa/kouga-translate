@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
 <style>
   /* ====== API KEY — 여기에 입력하세요 ====== */
-  /* const GEMINI_API_KEY = "AIzaSyD7v_uR99pMpx0M5Oho-ggKZw29qT3Wwfw"; (하단 script 참고) */
+  /* API 키는 설정(⚙) 화면에서 입력 */
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -462,6 +462,11 @@
     <div class="handle"></div>
     <div class="sheet-title">설정</div>
     <div class="field">
+      <div class="field-label">Gemini API 키</div>
+      <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
+      <div class="field-note">Google AI Studio에서 발급 · 이 기기에만 저장됩니다</div>
+    </div>
+    <div class="field">
       <div class="field-label">캐릭터 프롬프트</div>
       <textarea id="savedCharPrompt" style="min-height:180px;"></textarea>
       <div class="field-note">코우가(KOUGA) 프롬프트가 기본값으로 설정되어 있습니다. 직접 수정하면 저장됩니다.</div>
@@ -473,11 +478,9 @@
 </div>
 
 <script>
-// ============================================================
-//  ★ API 키를 여기에 입력하세요 ★
-// ============================================================
-const GEMINI_API_KEY = "AIzaSyD7v_uR99pMpx0M5Oho-ggKZw29qT3Wwfw";
-// ============================================================
+function getApiKey() {
+  return localStorage.getItem('gemini_api_key') || '';
+}
 
 const KOUGA_PROMPT = `너는 이제부터 '코우가(KOUGA)'라는 이름의 캐릭터야. 너는 긍지 높은 늑대이자 천재 연금술사이고, 스스로를 '俺様(오레사마)'라고 부르는 아주 자신감 넘치는 녀석이지.
 다음 규칙을 엄격히 지켜서 번역해줘:
@@ -548,7 +551,8 @@ document.querySelectorAll('.chip').forEach(c => {
     }
     $('charSection').style.display = state.tone === 'character' ? 'block' : 'none';
     if (state.tone === 'character') {
-      const saved = localStorage.getItem('char_prompt_default') || KOUGA_PROMPT;
+      $('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
+  const saved = localStorage.getItem('char_prompt_default') || KOUGA_PROMPT;
       if (!$('charPrompt').value) $('charPrompt').value = saved;
     }
     updateSummary();
@@ -588,12 +592,14 @@ function updateSummary() {
 $('settingsBtn').onclick = () => $('overlay').classList.add('open');
 $('overlay').onclick = e => { if (e.target === $('overlay')) $('overlay').classList.remove('open'); };
 $('saveBtn').onclick = () => {
+  localStorage.setItem('gemini_api_key', $('apiKeyInput').value.trim());
   localStorage.setItem('char_prompt_default', $('savedCharPrompt').value.trim());
   $('saveMsg').style.display = 'block';
   setTimeout(() => $('saveMsg').style.display = 'none', 2000);
 };
 
 function loadStorage() {
+  $('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
   const saved = localStorage.getItem('char_prompt_default') || KOUGA_PROMPT;
   $('savedCharPrompt').value = saved;
   $('charPrompt').value = saved;
@@ -661,10 +667,9 @@ async function translate() {
   const text = $('inputText').value.trim();
   if (!text || state.busy) return;
 
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
-    $('errorBox').textContent = 'API 키를 설정하지 않았습니다. 코드의 GEMINI_API_KEY를 교체하세요.';
-    $('errorBox').style.display = 'block';
-    $('resultText').style.display = 'none';
+  if (!getApiKey()) {
+    $('overlay').classList.add('open');
+    $('apiKeyInput').focus();
     return;
   }
 
@@ -676,7 +681,7 @@ async function translate() {
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${getApiKey()}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -742,7 +747,7 @@ async function sendFeedback() {
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${getApiKey()}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -780,7 +785,7 @@ async function fetchBackTranslation(japaneseText) {
   $('btLoading').style.display = 'block';
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${getApiKey()}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
