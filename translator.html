@@ -1362,6 +1362,8 @@ $('pasteBtn').onclick = async function() {
 
 // ── 지우기 ──
 $('clearBtn').onclick = function() {
+  $('inputText').value = '';
+  $('charCount').textContent = '0 / 2000';
   clearResult();
 };
 
