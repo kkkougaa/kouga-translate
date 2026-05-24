@@ -1155,6 +1155,7 @@ async function translate() {
     const result = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
     if (!result) throw new Error('번역 결과를 받지 못했습니다.');
     state.result = result;
+    saveHistory(text, result, state.srcLang, state.tgtLang);
     state.originalText = text;
     state.conversation = [
       { role: 'user', parts: [{ text: buildPrompt(text) }] },
