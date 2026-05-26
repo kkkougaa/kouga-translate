@@ -338,7 +338,7 @@
   .opt-label { font-size: 11px; font-weight: 500; color: var(--text3); margin-bottom: 7px; letter-spacing: 0.4px; text-transform: uppercase; }
   .chips { display: flex; gap: 5px; flex-wrap: nowrap; width: 100%; }
   .chip {
-    padding: 6px 6px; border-radius: 18px; font-size: 12px; white-space: nowrap;
+    padding: 6px 8px; border-radius: 18px; font-size: 13px; white-space: nowrap;
     flex: 1 1 auto; text-align: center; min-width: 0;
     border: 0.5px solid var(--border2); background: var(--bg2);
     cursor: pointer; color: var(--text2); transition: all 0.15s;
@@ -638,18 +638,20 @@
           <img id="imgPreview" style="width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:0.5px solid var(--border2);">
           <button id="imgRemoveBtn" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,0.5);color:#fff;font-size:12px;cursor:pointer;line-height:22px;text-align:center;padding:0;">✕</button>
         </div>
-        <textarea class="input-ta" id="inputText" placeholder="번역할 텍스트를 입력하세요..." maxlength="2000"></textarea>
+        <div style="position:relative;">
+          <textarea class="input-ta" id="inputText" placeholder="번역할 텍스트를 입력하세요..." maxlength="2000"></textarea>
+          <button id="imgAttachBtn" style="display:none;position:absolute;bottom:8px;right:8px;width:30px;height:30px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg);color:var(--text2);font-size:16px;cursor:pointer;align-items:center;justify-content:center;line-height:1;">📷</button>
+        </div>
       <div class="card-footer">
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="char-count" id="charCount">0 / 2000</span>
-          <button class="paste-btn" id="imgAttachBtn">📷</button>
           <input type="file" id="imgFileInput" accept="image/*" style="display:none;">
-          <button class="paste-btn" id="pasteBtn">붙여넣기</button>
-          <button class="paste-btn" id="spellBtn" style="display:none;">맞춤법</button>
+          <button class="paste-btn" id="pasteBtn">📋</button>
           <button class="clear-btn" id="clearBtn">✕</button>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <button class="grammar-btn" id="grammarBtn" style="display:none;">문법 체크</button>
+          <button class="grammar-btn" id="spellBtn" style="display:none;">맞춤법</button>
+          <button class="grammar-btn" id="grammarBtn" style="display:none;">문법</button>
           <button class="translate-btn" id="translateBtn">번역 ▶</button>
         </div>
       </div>
@@ -927,7 +929,14 @@ function updateLangUI() {
   $('optionsCard').classList.toggle('disabled', isToKO);
   if (isToKO) { $('optBody').classList.remove('open'); $('chevron').classList.remove('open'); }
   $('grammarBtn').style.display = isToKO ? 'flex' : 'none';
-  $('spellBtn').style.display = isToKO ? 'none' : 'inline-flex';
+  $('spellBtn').style.display = isToKO ? 'none' : 'flex';
+  $('imgAttachBtn').style.display = isToKO ? 'inline-flex' : 'none';
+  if (isToKO) { // 한국어 원문일 때 이미지 초기화
+    state.imgData = null; state.imgMime = null;
+    $('imgPreviewWrap').style.display = 'none';
+    $('imgAttachBtn').textContent = '📷';
+    $('imgAttachBtn').style.color = '';
+  }
   $('optToggle').classList.toggle('disabled-mode', isToKO);
   $('disabledNotice').style.visibility = isToKO ? 'visible' : 'hidden';
   $('optSummary').style.display = isToKO ? 'none' : 'inline';
