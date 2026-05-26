@@ -1276,7 +1276,6 @@ async function translate() {
     if (!result) throw new Error('번역 결과를 받지 못했습니다.');
     state.result = result;
     saveHistory(text, result, state.srcLang, state.tgtLang);
-    setTranslateIcon('done');
     state.originalText = text;
     state.conversation = [
       { role: 'user', parts: [{ text: buildPrompt(text) }] },
@@ -1299,13 +1298,18 @@ async function translate() {
       $('loading').style.display = 'none';
     }
   } finally {
+    const succeeded = !!state.result;
     state.busy = false;
     state.abortCtrl = null;
     $('translateBtn').disabled = false;
     $('translateBtn').onclick = translate;
     $('translateLabel').textContent = '번역';
-    if (!state.result) setTranslateIcon('idle');
     $('loading').style.display = 'none';
+    if (succeeded) {
+      setTranslateIcon('done');
+    } else {
+      setTranslateIcon('idle');
+    }
   }
 }
 
