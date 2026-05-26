@@ -1313,14 +1313,14 @@ async function translate() {
   }
 }
 
-function setTranslateIcon(state) {
+function setTranslateIcon(iconState) {
   const icon = $('translateIcon');
   if (!icon) return;
-  if (state === 'loading') {
+  if (iconState === 'loading') {
     icon.classList.remove('check');
     icon.textContent = '↻';
     icon.classList.add('spinning');
-  } else if (state === 'done') {
+  } else if (iconState === 'done') {
     icon.classList.remove('spinning');
     icon.classList.add('fade-out');
     setTimeout(() => {
