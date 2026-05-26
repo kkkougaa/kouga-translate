@@ -306,6 +306,15 @@
     letter-spacing: -0.2px;
   }
   .translate-btn:hover { opacity: 0.88; }
+  .ticon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .ticon.spinning { animation: spin 0.8s linear infinite; }
+  .ticon.check { transform: scale(1.2); }
+  .ticon.fade-out { opacity: 0; transform: scale(0.5); }
+  .ticon.fade-in { opacity: 1; transform: scale(1); }
   .translate-btn:disabled { opacity: 0.45; cursor: default; }
   .grammar-btn {
     display: flex; align-items: center; gap: 5px;
@@ -652,7 +661,7 @@
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="grammar-btn" id="spellBtn" style="display:none;">맞춤법</button>
           <button class="grammar-btn" id="grammarBtn" style="display:none;">문법</button>
-          <button class="translate-btn" id="translateBtn">번역 ▶</button>
+          <button class="translate-btn" id="translateBtn"><span id="translateLabel">번역</span><span id="translateIcon" class="ticon">▶</span></button>
         </div>
       </div>
     </div>
@@ -724,8 +733,13 @@
         <div class="back-translation-label">↩ 한국어로 보면</div>
         <div id="backTranslationText"></div>
       </div>
+      <div id="pronunciationWrap" style="display:none;padding:8px 14px 4px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">📖 독음</div>
+        <div id="pronunciationText" style="font-size:14px;color:var(--text2);line-height:1.6;"></div>
+      </div>
       <div class="result-footer">
         <button class="copy-btn" id="ttsBtn" style="margin-right:auto;">🔊</button>
+        <button class="copy-btn" id="pronBtn">독음</button>
         <button class="copy-both-btn" id="copyBothBtn">원문+번역</button>
         <button class="copy-btn" id="copyBtn">복사</button>
       </div>
@@ -888,6 +902,7 @@ const state = {
   imgData: null,
   imgMime: null,
   busy: false,
+  abortCtrl: null,
   result: '',
   originalText: '',
   conversation: []
@@ -1211,7 +1226,12 @@ ${text}`;
 
 async function translate() {
   const text = $('inputText').value.trim();
-  if ((!text && !state.imgData) || state.busy) return;
+  // 번역 중이면 취소
+  if (state.busy) {
+    if (state.abortCtrl) state.abortCtrl.abort();
+    return;
+  }
+  if (!text && !state.imgData) return;
 
   if (!getApiKey()) {
     $('overlay').classList.add('open');
@@ -1220,7 +1240,10 @@ async function translate() {
   }
 
   state.busy = true;
-  $('translateBtn').disabled = true;
+  state.abortCtrl = new AbortController();
+  $('translateBtn').disabled = false;
+  $('translateLabel').textContent = '취소';
+  setTranslateIcon('loading');
   $('resultText').style.display = 'none';
   $('errorBox').style.display = 'none';
   $('loading').style.display = 'flex';
@@ -1230,6 +1253,7 @@ async function translate() {
       `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
       {
         method: 'POST',
+        signal: state.abortCtrl.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [
@@ -1256,6 +1280,8 @@ async function translate() {
     ];
     $('resultText').textContent = result;
     $('resultText').className = 'result-area';
+    $('pronunciationWrap').style.display = 'none';
+    if ($('pronBtn')) { $('pronBtn').classList.remove('active'); }
     $('resultText').style.display = 'block';
     $('fbHistory').innerHTML = '';
     $('feedbackCard').classList.add('visible');
@@ -1267,6 +1293,37 @@ async function translate() {
     state.busy = false;
     $('translateBtn').disabled = false;
     $('loading').style.display = 'none';
+  }
+}
+
+function setTranslateIcon(state) {
+  const icon = $('translateIcon');
+  if (!icon) return;
+  if (state === 'loading') {
+    icon.classList.remove('check');
+    icon.textContent = '↻';
+    icon.classList.add('spinning');
+  } else if (state === 'done') {
+    icon.classList.remove('spinning');
+    icon.classList.add('fade-out');
+    setTimeout(() => {
+      icon.textContent = '✓';
+      icon.classList.remove('fade-out');
+      icon.classList.add('check', 'fade-in');
+      setTimeout(() => icon.classList.remove('fade-in'), 300);
+    }, 150);
+    setTimeout(() => {
+      icon.classList.add('fade-out');
+      setTimeout(() => {
+        icon.textContent = '▶';
+        icon.classList.remove('fade-out', 'check');
+        icon.classList.add('fade-in');
+        setTimeout(() => icon.classList.remove('fade-in'), 300);
+      }, 150);
+    }, 1800);
+  } else {
+    icon.classList.remove('spinning', 'check');
+    icon.textContent = '▶';
   }
 }
 
@@ -1318,6 +1375,8 @@ ${text}`;
     if (!result) throw new Error('응답을 받지 못했습니다.');
     $('resultText').textContent = result;
     $('resultText').className = 'result-area';
+    $('pronunciationWrap').style.display = 'none';
+    if ($('pronBtn')) { $('pronBtn').classList.remove('active'); }
     $('resultText').style.display = 'block';
     $('feedbackCard').classList.add('visible');
     $('fbHistory').innerHTML = '';
@@ -1466,17 +1525,46 @@ $('imgRemoveBtn').onclick = () => {
 
 $('pasteBtn').onclick = async function() {
   try {
-    const text = await navigator.clipboard.readText();
-    $('inputText').value = text;
-    $('charCount').textContent = text.length + ' / 2000';
-    this.textContent = '✓ 붙여넣어짐';
-    this.classList.add('pasted');
-    setTimeout(() => { this.textContent = '붙여넣기'; this.classList.remove('pasted'); }, 2000);
+    const items = await navigator.clipboard.read();
+    let handled = false;
+
+    // 이미지가 있으면 우선 처리
+    for (const item of items) {
+      const imgType = item.types.find(t => t.startsWith('image/'));
+      if (imgType) {
+        const blob = await item.getType(imgType);
+        const reader = new FileReader();
+        reader.onload = e => {
+          const dataUrl = e.target.result;
+          const [header, b64] = dataUrl.split(',');
+          const mime = header.match(/:(.*?);/)[1];
+          state.imgData = b64;
+          state.imgMime = mime;
+          $('imgPreview').src = dataUrl;
+          $('imgPreviewWrap').style.display = 'block';
+          $('imgAttachBtn').textContent = '📷✓';
+          $('imgAttachBtn').style.color = 'var(--accent)';
+        };
+        reader.readAsDataURL(blob);
+        this.textContent = '🖼️ 이미지!';
+        setTimeout(() => { this.textContent = '📋'; }, 2000);
+        handled = true;
+        break;
+      }
+    }
+
+    // 이미지 없으면 텍스트 처리
+    if (!handled) {
+      const text = await navigator.clipboard.readText();
+      $('inputText').value = text;
+      $('charCount').textContent = text.length + ' / 2000';
+      this.textContent = '✓';
+      setTimeout(() => { this.textContent = '📋'; }, 2000);
+    }
   } catch(e) {
-    // 권한 없을 때 fallback: 포커스 후 안내
     $('inputText').focus();
-    this.textContent = '길게 눌러서 붙여넣기';
-    setTimeout(() => { this.textContent = '붙여넣기'; }, 2000);
+    this.textContent = '길게 눌러서';
+    setTimeout(() => { this.textContent = '📋'; }, 2000);
   }
 };
 
@@ -1585,6 +1673,8 @@ ${text}`;
     if (!result) throw new Error('결과를 받지 못했습니다.');
     $('resultText').textContent = result;
     $('resultText').className = 'result-area';
+    $('pronunciationWrap').style.display = 'none';
+    if ($('pronBtn')) { $('pronBtn').classList.remove('active'); }
   } catch(e) {
     $('errorBox').textContent = '오류: ' + e.message;
     $('errorBox').style.display = 'block';
@@ -1654,6 +1744,48 @@ function pcmToWav(pcmData, sampleRate) {
   new Uint8Array(buf).set(pcmData, 44);
   return buf;
 }
+
+// ── 독음 ──
+$('pronBtn').onclick = async function() {
+  if (!state.result) return;
+  // 토글
+  if ($('pronunciationWrap').style.display === 'block') {
+    $('pronunciationWrap').style.display = 'none';
+    this.classList.remove('active');
+    return;
+  }
+  if (!getApiKey()) { $('overlay').classList.add('open'); return; }
+  this.textContent = '...';
+  this.disabled = true;
+  try {
+    const cfg = LANG_CONFIG[state.tgtLang] || LANG_CONFIG['ja'];
+    const tgtName = state.srcLang === 'ko' ? cfg.label : '한국어';
+    const prompt = `다음 ${tgtName} 텍스트의 한국어 독음(발음)을 표기해줘.
+각 문장/어절의 원문 옆에 괄호로 한국어 발음을 적어줘.
+예시: 今日はいい天気ですね (오늘와 이이 텐키데스네)
+원문만 독음 형식으로 출력하고 설명은 하지 마.
+
+[원문]
+${state.result}`;
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) }
+    );
+    const data = await res.json();
+    const result = data.candidates?.[0]?.content?.parts?.filter(p=>p.text).map(p=>p.text).join('').trim();
+    if (!result) throw new Error('결과 없음');
+    $('pronunciationText').textContent = result;
+    $('pronunciationWrap').style.display = 'block';
+    this.classList.add('active');
+  } catch(e) {
+    $('pronunciationText').textContent = '독음을 가져오지 못했어요.';
+    $('pronunciationWrap').style.display = 'block';
+  } finally {
+    this.textContent = '독음';
+    this.disabled = false;
+  }
+};
 
 $('copyBothBtn').onclick = function() {
   if (!state.result) return;
