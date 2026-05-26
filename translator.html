@@ -634,10 +634,16 @@
 
     <!-- 입력 -->
     <div class="card">
-      <textarea class="input-ta" id="inputText" placeholder="번역할 텍스트를 입력하세요..." maxlength="2000"></textarea>
+      <div id="imgPreviewWrap" style="display:none;position:relative;margin-bottom:6px;">
+          <img id="imgPreview" style="width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:0.5px solid var(--border2);">
+          <button id="imgRemoveBtn" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,0.5);color:#fff;font-size:12px;cursor:pointer;line-height:22px;text-align:center;padding:0;">✕</button>
+        </div>
+        <textarea class="input-ta" id="inputText" placeholder="번역할 텍스트를 입력하세요..." maxlength="2000"></textarea>
       <div class="card-footer">
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="char-count" id="charCount">0 / 2000</span>
+          <button class="paste-btn" id="imgAttachBtn">📷</button>
+          <input type="file" id="imgFileInput" accept="image/*" style="display:none;">
           <button class="paste-btn" id="pasteBtn">붙여넣기</button>
           <button class="paste-btn" id="spellBtn" style="display:none;">맞춤법</button>
           <button class="clear-btn" id="clearBtn">✕</button>
@@ -717,6 +723,7 @@
         <div id="backTranslationText"></div>
       </div>
       <div class="result-footer">
+        <button class="copy-btn" id="ttsBtn" style="margin-right:auto;">🔊</button>
         <button class="copy-both-btn" id="copyBothBtn">원문+번역</button>
         <button class="copy-btn" id="copyBtn">복사</button>
       </div>
@@ -763,8 +770,24 @@
     </div>
     <div class="field">
       <div class="field-label">번역 모델</div>
-      <input type="text" id="modelInput" placeholder="gemini-3.5-flash">
-      <div class="field-note">기본값: gemini-3.5-flash · <a href="https://ai.google.dev/gemini-api/docs/models" target="_blank" style="color:var(--accent);">모델 목록 보기</a></div>
+      <input type="text" id="modelInput" placeholder="gemini-3.1-flash-lite">
+      <div class="field-note">기본값: gemini-3.1-flash-lite · <a href="https://ai.google.dev/gemini-api/docs/models" target="_blank" style="color:var(--accent);">모델 목록 보기</a></div>
+    </div>
+    <div class="field">
+      <div class="field-label">앱 아이콘 이미지</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+        <img id="iconPreview" style="width:52px;height:52px;border-radius:12px;object-fit:cover;border:0.5px solid var(--border2);flex-shrink:0;">
+        <div style="flex:1;">
+          <label for="iconUpload" style="display:inline-block;padding:7px 14px;border-radius:10px;background:var(--bg2);border:0.5px solid var(--border2);font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit;">이미지 선택</label>
+          <input type="file" id="iconUpload" accept="image/*" style="display:none;">
+          <div class="field-note" style="margin-top:6px;">저장 후 홈 화면에서 삭제 → 재추가하면 아이콘이 바뀌어요.</div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">TTS 모델</div>
+      <input type="text" id="ttsModelInput" placeholder="gemini-3.1-flash-tts-preview">
+      <div class="field-note">기본값: gemini-3.1-flash-tts-preview</div>
     </div>
     <div class="field">
       <div class="field-label">캐릭터 이름</div>
@@ -792,7 +815,10 @@ function getApiKey() {
   return localStorage.getItem('gemini_api_key') || '';
 }
 function getModel() {
-  return localStorage.getItem('gemini_model') || 'gemini-3.5-flash';
+  return localStorage.getItem('gemini_model') || 'gemini-3.1-flash-lite';
+}
+function getTtsModel() {
+  return localStorage.getItem('gemini_tts_model') || 'gemini-3.1-flash-tts-preview';
 }
 
 const LANG_CONFIG = {
@@ -857,6 +883,8 @@ const state = {
   strict: true,
   thinking: false,
   extraOn: false,
+  imgData: null,
+  imgMime: null,
   busy: false,
   result: '',
   originalText: '',
@@ -968,7 +996,13 @@ document.querySelectorAll('.chip:not(#extraBtn)').forEach(c => {
     $('charSection').style.display = state.tone === 'character' ? 'block' : 'none';
     if (state.tone === 'character') {
       $('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
-  $('modelInput').value = localStorage.getItem('gemini_model') || 'gemini-3.5-flash';
+  const savedIcon = localStorage.getItem('custom_icon');
+  if (savedIcon) {
+    applyCustomIcon(savedIcon);
+  } else {
+    $('iconPreview').src = $('headerCharImg') ? $('headerCharImg').src : '';
+  }
+  $('modelInput').value = localStorage.getItem('gemini_model') || 'gemini-3.1-flash-lite';
       const saved = localStorage.getItem('char_prompt_default') || KOUGA_PROMPT;
       if (!$('charPrompt').value) $('charPrompt').value = saved;
     }
@@ -1009,7 +1043,13 @@ $('overlay').onclick = e => { if (e.target === $('overlay')) closeOverlay($('ove
 $('saveBtn').onclick = () => {
   localStorage.setItem('gemini_api_key', $('apiKeyInput').value.trim());
   localStorage.setItem('char_prompt_default', $('savedCharPrompt').value.trim());
-  localStorage.setItem('gemini_model', $('modelInput').value.trim() || 'gemini-3.5-flash');
+  const mv = $('modelInput').value.trim();
+  if (mv) localStorage.setItem('gemini_model', mv);
+  else localStorage.removeItem('gemini_model');
+  const tv = $('ttsModelInput').value.trim();
+  if (tv) localStorage.setItem('gemini_tts_model', tv);
+  else localStorage.removeItem('gemini_tts_model');
+  // 아이콘은 iconUpload 이벤트에서 자동 저장됨
   localStorage.setItem('char_name', $('charNameInput').value.trim());
   localStorage.setItem('char_x', $('charXInput').value.trim().replace('@',''));
   updateCharChip();
@@ -1017,15 +1057,47 @@ $('saveBtn').onclick = () => {
   setTimeout(() => $('saveMsg').style.display = 'none', 2000);
 };
 
+function applyCustomIcon(base64) {
+  if (!base64) return;
+  // 헤더 아이콘
+  if ($('headerCharImg')) $('headerCharImg').src = base64;
+  // 말투 칩 아이콘
+  if ($('charChipImg')) $('charChipImg').src = base64;
+  // apple-touch-icon & favicon
+  const apple = document.querySelector('link[rel="apple-touch-icon"]');
+  if (apple) apple.href = base64;
+  const icon = document.querySelector('link[rel="icon"]');
+  if (icon) icon.href = base64;
+  // 미리보기
+  if ($('iconPreview')) $('iconPreview').src = base64;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const upload = $('iconUpload');
+  if (!upload) return;
+  upload.onchange = function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64 = e.target.result;
+      localStorage.setItem('custom_icon', base64);
+      applyCustomIcon(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+});
+
 function updateCharChip() {
   const name = localStorage.getItem('char_name') || '코우가';
   const x = localStorage.getItem('char_x') || 'kkkougaa';
   const label = name + ' 말투';
   if ($('charChipLabel')) $('charChipLabel').textContent = label;
-  const imgSrc = 'https://unavatar.io/twitter/' + x;
+  const customIcon = localStorage.getItem('custom_icon');
+  const imgSrc = customIcon || ('https://unavatar.io/twitter/' + x);
   if ($('charChipImg')) {
     $('charChipImg').src = imgSrc;
-    $('charChipImg').onerror = function() { this.style.display='none'; };
+    $('charChipImg').onerror = customIcon ? null : function() { this.style.display='none'; };
   }
   if ($('headerCharImg')) {
     $('headerCharImg').src = imgSrc;
@@ -1046,7 +1118,13 @@ function updateCharChip() {
 
 function loadStorage() {
   $('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
-  $('modelInput').value = localStorage.getItem('gemini_model') || 'gemini-3.5-flash';
+  const savedIcon = localStorage.getItem('custom_icon');
+  if (savedIcon) {
+    applyCustomIcon(savedIcon);
+  } else {
+    $('iconPreview').src = $('headerCharImg') ? $('headerCharImg').src : '';
+  }
+  $('modelInput').value = localStorage.getItem('gemini_model') || 'gemini-3.1-flash-lite';
   const saved = localStorage.getItem('char_prompt_default') || KOUGA_PROMPT;
   $('savedCharPrompt').value = saved;
   $('charPrompt').value = saved;
@@ -1152,7 +1230,8 @@ async function translate() {
     );
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || `오류 ${res.status}`);
-    const result = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const result = parts.filter(p => p.text).map(p => p.text).join('').trim();
     if (!result) throw new Error('번역 결과를 받지 못했습니다.');
     state.result = result;
     saveHistory(text, result, state.srcLang, state.tgtLang);
@@ -1344,6 +1423,33 @@ $('feedbackInput').addEventListener('input', function() {
 });
 
 // ── 붙여넣기 ──
+// ── 이미지 첨부 ──
+$('imgAttachBtn').onclick = () => $('imgFileInput').click();
+$('imgFileInput').onchange = function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    const [header, b64] = dataUrl.split(',');
+    const mime = header.match(/:(.*?);/)[1];
+    state.imgData = b64;
+    state.imgMime = mime;
+    $('imgPreview').src = dataUrl;
+    $('imgPreviewWrap').style.display = 'block';
+    $('imgAttachBtn').textContent = '📷✓';
+    $('imgAttachBtn').style.color = 'var(--accent)';
+  };
+  reader.readAsDataURL(file);
+  this.value = '';
+};
+$('imgRemoveBtn').onclick = () => {
+  state.imgData = null; state.imgMime = null;
+  $('imgPreviewWrap').style.display = 'none';
+  $('imgAttachBtn').textContent = '📷';
+  $('imgAttachBtn').style.color = '';
+};
+
 $('pasteBtn').onclick = async function() {
   try {
     const text = await navigator.clipboard.readText();
@@ -1370,17 +1476,26 @@ $('clearBtn').onclick = function() {
 // ── 복사 ──
 // ── 히스토리 ──
 function saveHistory(src, tgt, srcLang, tgtLang) {
-  const list = JSON.parse(localStorage.getItem('trans_history') || '[]');
-  const cfg = LANG_CONFIG[tgtLang] || LANG_CONFIG['ja'];
-  const srcName = srcLang === 'ko' ? '한국어' : cfg.label;
-  const tgtName = srcLang === 'ko' ? cfg.label : '한국어';
-  list.unshift({ src, tgt, srcName, tgtName, ts: Date.now() });
-  if (list.length > 30) list.splice(30);
-  localStorage.setItem('trans_history', JSON.stringify(list));
+  try {
+    const list = JSON.parse(localStorage.getItem('trans_history') || '[]');
+    const cfg = LANG_CONFIG[tgtLang] || LANG_CONFIG['ja'];
+    const srcName = srcLang === 'ko' ? '한국어' : cfg.label;
+    const tgtName = srcLang === 'ko' ? cfg.label : '한국어';
+    list.unshift({
+      src: src.slice(0, 200),
+      tgt: tgt.slice(0, 200),
+      srcName, tgtName, ts: Date.now()
+    });
+    if (list.length > 30) list.splice(30);
+    localStorage.setItem('trans_history', JSON.stringify(list));
+  } catch(e) {
+    console.error('saveHistory error:', e);
+  }
 }
 
 function renderHistory() {
-  const list = JSON.parse(localStorage.getItem('trans_history') || '[]');
+  const raw = localStorage.getItem('trans_history');
+  const list = JSON.parse(raw || '[]');
   const el = $('historyList');
   if (!list.length) {
     el.innerHTML = '<div class="history-empty">아직 번역 기록이 없어요</div>';
@@ -1465,6 +1580,66 @@ ${text}`;
     $('spellBtn').textContent = '맞춤법';
   }
 };
+
+// ── TTS (Gemini) ──
+let ttsAudio = null;
+$('ttsBtn').onclick = async function() {
+  if (!state.result) return;
+  if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; $('ttsBtn').textContent = '🔊'; return; }
+  if (!getApiKey()) { $('overlay').classList.add('open'); return; }
+  $('ttsBtn').textContent = '⏳';
+  $('ttsBtn').disabled = true;
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${getTtsModel()}:generateContent?key=${getApiKey()}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: state.result }] }],
+          generationConfig: {
+            responseModalities: ['AUDIO'],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } }
+          }
+        })
+      }
+    );
+    const data = await res.json();
+    const audioB64 = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+    if (!audioB64) throw new Error('오디오를 받지 못했습니다.');
+
+    // PCM → WAV 변환 후 재생
+    const pcm = Uint8Array.from(atob(audioB64), c => c.charCodeAt(0));
+    const wav = pcmToWav(pcm, 24000);
+    const blob = new Blob([wav], { type: 'audio/wav' });
+    const url = URL.createObjectURL(blob);
+    ttsAudio = new Audio(url);
+    ttsAudio.play();
+    $('ttsBtn').textContent = '⏹';
+    ttsAudio.onended = () => { ttsAudio = null; $('ttsBtn').textContent = '🔊'; };
+  } catch(e) {
+    $('ttsBtn').textContent = '🔊';
+    alert('TTS 오류: ' + e.message);
+  } finally {
+    $('ttsBtn').disabled = false;
+  }
+};
+
+function pcmToWav(pcmData, sampleRate) {
+  const numChannels = 1, bitsPerSample = 16;
+  const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+  const blockAlign = numChannels * bitsPerSample / 8;
+  const dataSize = pcmData.length;
+  const buf = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+  w(0,'RIFF'); view.setUint32(4, 36 + dataSize, true); w(8,'WAVE');
+  w(12,'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+  view.setUint16(22, numChannels, true); view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true); view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitsPerSample, true); w(36,'data');
+  view.setUint32(40, dataSize, true);
+  new Uint8Array(buf).set(pcmData, 44);
+  return buf;
+}
 
 $('copyBothBtn').onclick = function() {
   if (!state.result) return;
