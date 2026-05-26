@@ -1242,6 +1242,9 @@ async function translate() {
   state.busy = true;
   state.abortCtrl = new AbortController();
   $('translateBtn').disabled = false;
+  $('translateBtn').onclick = () => {
+    if (state.abortCtrl) state.abortCtrl.abort();
+  };
   $('translateLabel').textContent = '취소';
   setTranslateIcon('loading');
   $('resultText').style.display = 'none';
@@ -1273,6 +1276,7 @@ async function translate() {
     if (!result) throw new Error('번역 결과를 받지 못했습니다.');
     state.result = result;
     saveHistory(text, result, state.srcLang, state.tgtLang);
+    setTranslateIcon('done');
     state.originalText = text;
     state.conversation = [
       { role: 'user', parts: [{ text: buildPrompt(text) }] },
@@ -1287,11 +1291,20 @@ async function translate() {
     $('feedbackCard').classList.add('visible');
     if (state.srcLang === 'ko') fetchBackTranslation(result);
   } catch (err) {
-    $('errorBox').textContent = '오류: ' + err.message;
-    $('errorBox').style.display = 'block';
+    if (err.name === 'AbortError') {
+      $('loading').style.display = 'none';
+    } else {
+      $('errorBox').textContent = '오류: ' + err.message;
+      $('errorBox').style.display = 'block';
+      $('loading').style.display = 'none';
+    }
   } finally {
     state.busy = false;
+    state.abortCtrl = null;
     $('translateBtn').disabled = false;
+    $('translateBtn').onclick = translate;
+    $('translateLabel').textContent = '번역';
+    if (!state.result) setTranslateIcon('idle');
     $('loading').style.display = 'none';
   }
 }
