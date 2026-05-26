@@ -1223,7 +1223,10 @@ async function translate() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: buildPrompt(text) }] }],
+          contents: [{ parts: [
+            ...(state.imgData ? [{ inline_data: { mime_type: state.imgMime, data: state.imgData } }] : []),
+            { text: buildPrompt(text) }
+          ] }],
           generationConfig: { temperature: 0.3, maxOutputTokens: 2048, ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) }
         })
       }
