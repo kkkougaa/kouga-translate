@@ -1211,7 +1211,7 @@ ${text}`;
 
 async function translate() {
   const text = $('inputText').value.trim();
-  if (!text || state.busy) return;
+  if ((!text && !state.imgData) || state.busy) return;
 
   if (!getApiKey()) {
     $('overlay').classList.add('open');
@@ -1234,7 +1234,9 @@ async function translate() {
         body: JSON.stringify({
           contents: [{ parts: [
             ...(state.imgData ? [{ inline_data: { mime_type: state.imgMime, data: state.imgData } }] : []),
-            { text: buildPrompt(text) }
+            { text: state.imgData && !text
+                ? `이 이미지에 있는 텍스트를 ${state.srcLang !== 'ko' ? '한국어' : (LANG_CONFIG[state.tgtLang]?.label || '일본어')}로 번역해줘. 번역 결과 텍스트만 출력해.`
+                : buildPrompt(text) }
           ] }],
           generationConfig: { temperature: 0.3, maxOutputTokens: 2048, ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) }
         })
