@@ -270,7 +270,8 @@
     width: 100%; min-height: 130px; height: 130px; padding: 14px 16px;
     border: none; outline: none; resize: none; background: transparent;
     font-family: inherit; font-size: 16px; line-height: 1.65; color: var(--text);
-    display: block;
+    display: block; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
   .input-ta::placeholder { color: var(--text3); }
 
@@ -1348,8 +1349,8 @@ ${text}`;
   }
 
   const strictInstr = state.strict
-    ? '원문의 내용을 변경하지 말고 입력된 정보를 그대로 충실하게 번역하세요.'
-    : '원문의 핵심 의미를 유지하되, 자연스럽고 읽기 좋은 표현으로 다듬어도 좋습니다.';
+    ? `원문의 모든 단어, 표현, 뉘앙스를 빠짐없이 번역하세요. 내용 추가, 생략, 의역은 절대 하지 마세요. 단, 번역 대상 언어(${tgt})에서 사용하지 않는 표현이나 단어가 있을 경우 알맞은 문맥으로 수정하고, 해당 변경 사항을 번역문 하단에 [코멘트: ...] 형식으로 표기해주세요.`
+    : '원문의 핵심 의미를 유지하되, 자연스럽고 읽기 좋은 표현으로 자유롭게 다듬어도 좋습니다.';
 
   const extraInstr = state.extraOn && $('extraPrompt').value.trim()
     ? `\n4. 추가 요청: ${$('extraPrompt').value.trim()}` : '';
@@ -1430,9 +1431,19 @@ async function translate() {
     haptic();
     saveHistory(text, result, state.srcLang, state.tgtLang);
     state.originalText = text;
+    const feedbackSystemMsg = `당신은 번역 수정 도우미입니다. 아래는 원문과 번역 결과입니다.
+사용자의 수정 요청을 반드시 정확히 반영하세요.
+요청하지 않은 부분은 절대 바꾸지 마세요.
+수정된 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.
+
+[원문]
+${text}
+
+[번역 결과]
+${result}`;
     state.conversation = [
-      { role: 'user', parts: [{ text: buildPrompt(text) }] },
-      { role: 'model', parts: [{ text: result }] }
+      { role: 'user', parts: [{ text: feedbackSystemMsg }] },
+      { role: 'model', parts: [{ text: '네, 번역 결과를 기억했습니다. 수정 요청을 말씀해주세요.' }] }
     ];
     $('resultText').textContent = result;
     $('resultText').className = 'result-area';
@@ -1582,9 +1593,16 @@ ${text}`;
     $('feedbackCard').classList.add('visible');
     $('fbHistory').innerHTML = '';
     state.result = result;
+    const feedbackSystemMsg2 = `당신은 번역 수정 도우미입니다. 아래는 원문과 번역 결과입니다.
+사용자의 수정 요청을 반드시 정확히 반영하세요.
+요청하지 않은 부분은 절대 바꾸지 마세요.
+수정된 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.
+
+[번역/분석 결과]
+${result}`;
     state.conversation = [
-      { role: 'user', parts: [{ text: prompt }] },
-      { role: 'model', parts: [{ text: result }] }
+      { role: 'user', parts: [{ text: feedbackSystemMsg2 }] },
+      { role: 'model', parts: [{ text: '네, 결과를 기억했습니다. 수정 요청을 말씀해주세요.' }] }
     ];
   } catch (err) {
     $('errorBox').textContent = '오류: ' + err.message;
@@ -2346,8 +2364,10 @@ function preventScrollPropagation(el) {
 document.addEventListener('DOMContentLoaded', () => {
   const sheet = document.querySelector('.sheet');
   const histList = $('historyList');
+  const inputTa = $('inputText');
   if (sheet) preventScrollPropagation(sheet);
   if (histList) preventScrollPropagation(histList);
+  if (inputTa) preventScrollPropagation(inputTa);
 });
 
 // iOS 핀치 줌 방지
