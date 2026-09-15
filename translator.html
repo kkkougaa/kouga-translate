@@ -439,27 +439,6 @@
   }
   .result-area.has-ruby { line-height: 2.2; }
 
-  /* 클립보드 배너 */
-  .clip-banner {
-    display: none; align-items: center; gap: 9px;
-    padding: 9px 12px; border-radius: var(--radius-md);
-    background: var(--accent-bg); border: 0.5px solid var(--accent);
-    animation: fadeIn 0.2s ease;
-  }
-  .clip-banner.visible { display: flex; }
-  .clip-text {
-    flex: 1; min-width: 0; font-size: 12.5px; color: var(--accent-dark);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .clip-use {
-    flex-shrink: 0; padding: 5px 11px; border-radius: 14px; border: none;
-    background: var(--accent); color: #fff; font-size: 12.5px; font-weight: 500;
-    font-family: inherit; cursor: pointer;
-  }
-  .clip-dismiss {
-    flex-shrink: 0; padding: 4px 6px; border: none; background: none;
-    color: var(--accent-dark); opacity: 0.55; font-size: 13px; cursor: pointer;
-  }
   .copy-btn, .copy-both-btn {
     display: flex; align-items: center; gap: 5px;
     padding: 6px 16px; border-radius: 16px; font-size: 13px;
@@ -685,14 +664,21 @@
     margin-top: 9px; border-top: 0.5px solid var(--border); padding-top: 9px;
   }
   .dict-alts.visible { display: flex; }
-  .alt-item {
-    text-align: left; padding: 8px 10px; border-radius: 9px;
+  .alt-row { display: flex; gap: 6px; align-items: center; }
+  .alt-row input {
+    flex: 1; min-width: 0; padding: 8px 10px; border-radius: 9px;
     border: 0.5px solid var(--border2); background: var(--bg2);
-    color: var(--text); font-size: 13.5px; line-height: 1.5;
-    font-family: inherit; cursor: pointer; transition: all 0.15s;
+    color: var(--text); font-size: 13.5px; font-family: inherit; outline: none;
   }
-  .alt-item:active, .alt-item:hover { background: var(--accent-bg); border-color: var(--accent); }
-  .alt-note { display: block; font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .alt-row input:focus { border-color: var(--accent); }
+  .alt-row button {
+    flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+    border: none; background: var(--accent); color: #fff;
+    font-size: 13px; font-family: inherit; cursor: pointer;
+  }
+  .alt-row button:disabled { opacity: 0.45; cursor: default; }
+  .alt-status { font-size: 11.5px; color: var(--text3); margin-top: 6px; }
+  .alt-status:empty { display: none; }
   .dict-loading {
     font-size: 13px; color: var(--text3); text-align: center; padding: 8px 0;
   }
@@ -761,12 +747,6 @@
   </div>
 
   <div class="main">
-
-    <div class="clip-banner" id="clipBanner">
-      <span class="clip-text" id="clipText"></span>
-      <button class="clip-use" id="clipUse">붙여넣기</button>
-      <button class="clip-dismiss" id="clipDismiss">✕</button>
-    </div>
 
     <!-- 입력 -->
     <div class="card">
@@ -900,11 +880,17 @@
   <div class="dict-word" id="dictWord"></div>
   <div class="dict-actions" id="dictActions">
     <button class="dict-act" id="dictMeaningBtn">뜻</button>
-    <button class="dict-act" id="dictAltBtn">다른 표현</button>
+    <button class="dict-act" id="dictAltBtn">바꾸기</button>
   </div>
   <div class="dict-reading" id="dictReading"></div>
   <div class="dict-meaning" id="dictMeaning"></div>
-  <div class="dict-alts" id="dictAlts"></div>
+  <div class="dict-alts" id="dictAlts">
+    <div class="alt-row">
+      <input type="text" id="altInput" placeholder="예) 더 정중하게 / 다른 단어로">
+      <button id="altSend">➤</button>
+    </div>
+    <div class="alt-status" id="altStatus"></div>
+  </div>
 </div>
 
 <!-- 말투 관리 시트 -->
@@ -2167,13 +2153,12 @@ async function pasteFromClipboard() {
     }
     if (textPromise) {
       const t = (await (await textPromise).text()) || '';
-      if (t) { setInputText(t); _lastClipSeen = t.trim(); return 'text'; }
+      if (t) { setInputText(t); return 'text'; }
     }
     // read()를 못 썼을 때만 readText() 폴백
     const t2 = await navigator.clipboard.readText();
     if (!t2) return 'blocked';
     setInputText(t2);
-    _lastClipSeen = t2.trim();
     return 'text';
   } catch(e) {
     return 'blocked';
@@ -2188,73 +2173,11 @@ $('pasteBtn').onclick = async function() {
     setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('pasted'); }, 2000);
   };
   const r = await pasteFromClipboard();
-  hideClipBanner();
   if (r === 'image') flash('🖼️ 이미지!', true);
   else if (r === 'text') flash('✓', true);
   else { $('inputText').focus(); flash('길게 눌러서'); }
 };
 
-// ── 클립보드 감지 배너 ──
-// 앱으로 돌아왔을 때 붙여넣을 게 있으면 한 번 물어본다.
-// iOS는 제스처 없이 클립보드를 못 읽으므로, 그 경우엔 내용 없이 버튼만 띄우고 탭이 제스처가 된다.
-let _lastClipSeen = '';
-let _pendingClip = null;
-let _clipDismissed = false;
-let _blindBannerShown = false;
-
-function showClipBanner(text) {
-  _pendingClip = text;
-  $('clipText').textContent = text
-    ? '📋 ' + text.replace(/\s+/g, ' ').slice(0, 60)
-    : '📋 클립보드 내용 붙여넣기';
-  $('clipBanner').classList.add('visible');
-}
-
-function hideClipBanner() {
-  $('clipBanner').classList.remove('visible');
-  _pendingClip = null;
-}
-
-async function checkClipboard() {
-  if (_clipDismissed) return;
-  if ($('inputText').value.trim()) return;        // 입력 중이면 방해하지 않는다
-  if (!navigator.clipboard || !window.isSecureContext) return;
-  try {
-    const text = (await navigator.clipboard.readText() || '').trim();
-    if (!text || text.length > 2000 || text === _lastClipSeen) { hideClipBanner(); return; }
-    showClipBanner(text);
-  } catch(e) {
-    // 읽기가 막힌 기기(iOS) — 세션당 한 번만 권유한다
-    if (_blindBannerShown) return;
-    _blindBannerShown = true;
-    showClipBanner(null);
-  }
-}
-
-$('clipUse').onclick = async function() {
-  if (_pendingClip) {
-    setInputText(_pendingClip);
-    _lastClipSeen = _pendingClip;
-    hideClipBanner();
-    haptic();
-    return;
-  }
-  const r = await pasteFromClipboard();   // 이 탭 자체가 제스처가 된다
-  hideClipBanner();
-  if (r === 'blocked') { $('inputText').focus(); }
-  else haptic();
-};
-
-$('clipDismiss').onclick = () => {
-  if (_pendingClip) _lastClipSeen = _pendingClip;
-  _clipDismissed = true;
-  hideClipBanner();
-};
-
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') { _clipDismissed = false; checkClipboard(); }
-});
-window.addEventListener('focus', checkClipboard);
 
 // ── 지우기 ──
 $('clearBtn').onclick = function() {
@@ -2343,7 +2266,8 @@ function showSelectionMenu(text, index, x, y) {
   $('dictReading').textContent = '';
   $('dictMeaning').textContent = '';
   $('dictMeaning').classList.remove('visible');
-  $('dictAlts').innerHTML = '';
+  $('altInput').value = '';
+  $('altStatus').textContent = '';
   $('dictAlts').classList.remove('visible');
   $('dictMeaningBtn').classList.remove('active');
   $('dictAltBtn').classList.remove('active');
@@ -2402,64 +2326,62 @@ $('dictMeaningBtn').onclick = async function() {
   positionPopup();
 };
 
-// 다른 표현으로 바꾸기 (부분 재번역)
-$('dictAltBtn').onclick = async function() {
+// 선택 구간을 원하는 대로 바꾸기 (부분 재번역)
+$('dictAltBtn').onclick = function() {
   $('dictMeaning').classList.remove('visible');
   $('dictMeaningBtn').classList.remove('active');
   $('dictReading').textContent = '';
   this.classList.add('active');
-  const box = $('dictAlts');
-  box.classList.add('visible');
-  if (!getApiKey()) { box.innerHTML = '<div class="dict-loading">API 키를 설정해주세요.</div>'; positionPopup(); return; }
-  box.innerHTML = '<div class="dict-loading">✎ 후보 찾는 중...</div>';
+  $('altStatus').textContent = '';
+  $('dictAlts').classList.add('visible');
   positionPopup();
+  $('altInput').focus();
+};
 
+async function applyAltRequest() {
+  const req = $('altInput').value.trim();
+  if (!req) { $('altInput').focus(); return; }
+  if (!getApiKey()) { $('altStatus').textContent = 'API 키를 설정해주세요.'; return; }
+  $('altSend').disabled = true;
+  $('altStatus').textContent = '바꾸는 중...';
+  positionPopup();
   try {
-    const out = await askGemini(`아래 [전체 문장] 안에서 [선택 구간]만 바꿀 수 있는 다른 표현 3개를 제안해줘.
+    const out = await askGemini(`아래 [전체 문장] 안의 [선택 구간]을 [요청]대로 바꿔줘.
 
 [규칙]
-1. 전체 문장의 문맥과 말투에 어울려야 해.
-2. 선택 구간을 그대로 대체할 수 있는 형태로만 써. 문장 전체를 다시 쓰지 마.
-3. 한 줄에 하나씩, "표현 | 어떤 느낌인지 한국어로 10자 이내" 형식으로만 출력해.
-4. 번호나 설명, 마크다운은 쓰지 마.
+1. 선택 구간을 그대로 대체할 표현 하나만 출력해. 문장 전체를 다시 쓰지 마.
+2. 요청이 바꿀 표현 자체면 그대로 쓰고, 방향만 말한 거면 그 방향으로 알맞게 바꿔.
+3. 전체 문장의 문맥과 말투에 어울려야 해.
+4. 따옴표, 설명, 번호, 마크다운 없이 대체할 표현만 출력해.
 
 [전체 문장]
 ${state.result}
 
 [선택 구간]
-${_sel.text}`, 512);
+${_sel.text}
 
-    const items = out.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 4)
-      .map(l => { const [t, n] = l.split('|'); return { text: (t || '').trim(), note: (n || '').trim() }; })
-      .filter(it => it.text);
-    if (!items.length) throw new Error('후보를 받지 못했어요.');
-
-    box.innerHTML = '';
-    items.forEach(it => {
-      const btn = document.createElement('button');
-      btn.className = 'alt-item';
-      btn.textContent = it.text;
-      if (it.note) {
-        const note = document.createElement('span');
-        note.className = 'alt-note';
-        note.textContent = it.note;
-        btn.appendChild(note);
-      }
-      btn.onclick = () => {
-        if (replaceInResult(_sel.text, it.text, _sel.index)) closePopup();
-      };
-      box.appendChild(btn);
-    });
-    haptic();
+[요청]
+${req}`, 256);
+    const replacement = out.split('\n')[0].trim().replace(/^["'\u300c\u300e]|["'\u300d\u300f]$/g, '');
+    if (!replacement) throw new Error('결과를 받지 못했어요.');
+    if (replaceInResult(_sel.text, replacement, _sel.index)) {
+      $('altInput').value = '';
+      closePopup();
+    } else {
+      $('altStatus').textContent = '바꿀 위치를 찾지 못했어요.';
+    }
   } catch(e) {
-    box.innerHTML = '';
-    const msg = document.createElement('div');
-    msg.className = 'dict-loading';
-    msg.textContent = e.message;
-    box.appendChild(msg);
+    $('altStatus').textContent = e.message;
+  } finally {
+    $('altSend').disabled = false;
+    if (dictPopupOpen) positionPopup();
   }
-  positionPopup();
-};
+}
+
+$('altSend').onclick = applyAltRequest;
+$('altInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); applyAltRequest(); }
+});
 
 // 결과 본문에서 선택 구간만 교체
 function replaceInResult(fragment, replacement, hintIndex) {
@@ -2893,7 +2815,6 @@ document.body.addEventListener('touchmove', function(e) {
 updateLangUI();
 updateSummary();
 autoGrowInput();
-checkClipboard();
 </script>
 
 </body>
