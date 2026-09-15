@@ -822,7 +822,7 @@ button, input, textarea, a{ font-family:inherit; }
 }
 .card-footer > div:first-child{ flex:1 1 100%; height:44px; gap:2px !important; }
 .card-footer > div:last-child{ flex:1 1 100%; gap:8px !important; }
-.char-count{ order:9; margin-left:auto; font-size:12.5px; padding-right:4px; }
+.char-count{ order:0; margin-right:auto; margin-left:0; font-size:12.5px; padding-left:8px; }
 .paste-btn, .clear-btn{
   min-width:36px; height:36px; padding:0 8px; border-radius:18px;
   border:none; background:transparent; color:var(--text2);
@@ -1047,6 +1047,16 @@ button, input, textarea, a{ font-family:inherit; }
 #toneEditCancel{ background:var(--fill) !important; }
 #imgAttachBtn{ border:none !important; background:var(--fill) !important; width:32px !important; height:32px !important; }
 
+/* ── 역번역 경고 · 용어집 ── */
+.bt-warn{
+  display:none; margin-top:10px; padding:9px 12px; border-radius:10px;
+  background:var(--red-bg); color:var(--red);
+  font-size:12.5px; line-height:1.55; letter-spacing:-.2px;
+}
+.bt-warn.visible{ display:block; }
+#glossaryInput{ min-height:100px !important; font-size:15px !important; line-height:1.7 !important; }
+#glossaryLangLabel{ font-size:12px; }
+
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
 }
@@ -1169,6 +1179,14 @@ button, input, textarea, a{ font-family:inherit; }
           <button class="toggle" id="thinkingToggle"></button>
         </div>
 
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">한국식 표현 현지화</div>
+            <div class="toggle-desc" id="slangDesc">off — ㅋㅋ · ㅠㅠ 를 그대로 둠</div>
+          </div>
+          <button class="toggle" id="slangToggle"></button>
+        </div>
+
       </div>
     </div>
 
@@ -1195,7 +1213,7 @@ button, input, textarea, a{ font-family:inherit; }
       <div class="back-translation-loading" id="btLoading">
         <div class="loading-dots" style="display:flex;gap:4px;"><div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite;"></div><div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite;animation-delay:0.2s;"></div><div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite;animation-delay:0.4s;"></div></div>
       </div>
-      <div class="back-translation" id="backTranslation"><div id="backTranslationText"></div></div>
+      <div class="back-translation" id="backTranslation"><div id="backTranslationText"></div><div class="bt-warn" id="btWarn"></div></div>
       <div class="result-footer">
         <button class="copy-btn" id="ttsBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5.5 6.8 9H4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h2.8L11 18.5Z"/><path d="M15.5 9.5a3.6 3.6 0 0 1 0 5M18.4 6.6a7.6 7.6 0 0 1 0 10.8"/></svg></button>
         <a href="line://"  class="settings-btn" id="lineBtn" title="LINE" style="text-decoration:none;background:#06C755;border-color:#06C755;color:white;">
@@ -1318,6 +1336,12 @@ button, input, textarea, a{ font-family:inherit; }
     </div>
 
     <div class="field">
+      <div class="field-label">용어집 <span id="glossaryLangLabel" style="font-weight:400;color:var(--text3);"></span></div>
+      <textarea id="glossaryInput" placeholder="코우가=コウガ&#10;굿즈=グッズ"></textarea>
+      <div class="field-note">한 줄에 하나씩 <b>원문=번역</b>. 입력한 글에 그 단어가 있을 때만 프롬프트에 붙고, 반대 방향 번역에도 적용됩니다. 언어별로 따로 저장돼요.</div>
+    </div>
+
+    <div class="field">
       <div class="field-label">캐릭터 이름</div>
       <input type="text" id="charNameInput" placeholder="예: 코우가">
       <div class="field-note">말투 버튼에 표시될 이름입니다.</div>
@@ -1411,6 +1435,7 @@ const state = {
   tone: 'none',
   strict: true,
   thinking: false,
+  slang: localStorage.getItem('slang_on') === '1',   // 한국식 표현 현지화
   extraOn: false,
   imgData: null,
   imgMime: null,
@@ -1580,6 +1605,18 @@ $('thinkingToggle').onclick = function() {
   $('thinkingDesc').textContent = state.thinking ? 'on — 느리지만 정확하게' : 'off — 빠른 번역';
 };
 
+function slangDescText() {
+  return state.slang
+    ? 'on — ㅋㅋ · ㅠㅠ 를 대상 언어 표기로 바꿔서 번역'
+    : 'off — ㅋㅋ · ㅠㅠ 를 그대로 둠';
+}
+$('slangToggle').onclick = function() {
+  state.slang = !state.slang;
+  this.classList.toggle('on', state.slang);
+  localStorage.setItem('slang_on', state.slang ? '1' : '0');
+  $('slangDesc').textContent = slangDescText();
+};
+
 $('strictToggle').onclick = function() {
   state.strict = !state.strict;
   this.classList.toggle('on', state.strict);
@@ -1601,7 +1638,7 @@ function closeOverlay(el, delay) {
   el.classList.add('closing');
   setTimeout(() => { el.classList.remove('open'); el.classList.remove('closing'); }, delay || 250);
 }
-$('settingsBtn').onclick = () => $('overlay').classList.add('open');
+$('settingsBtn').onclick = () => { loadGlossaryField(); $('overlay').classList.add('open'); };
 
 $('overlay').onclick = e => { if (e.target === $('overlay')) closeOverlay($('overlay'), 250); };
 $('saveBtn').onclick = () => {
@@ -1617,6 +1654,11 @@ $('saveBtn').onclick = () => {
   if (iv) localStorage.setItem('gemini_image_model', iv);
   else localStorage.removeItem('gemini_image_model');
   // 아이콘은 iconUpload 이벤트에서 자동 저장됨
+  if ($('glossaryInput')) {
+    const gv = $('glossaryInput').value.trim();
+    if (gv) localStorage.setItem(glossaryKey(), gv);
+    else localStorage.removeItem(glossaryKey());
+  }
   if ($('charNameInput')) localStorage.setItem('char_name', $('charNameInput').value.trim());
   if ($('charXInput')) localStorage.setItem('char_x', $('charXInput').value.trim().replace('@',''));
   updateCharChip(true);
@@ -1781,8 +1823,57 @@ function updateCharChip(forceRenderChips = false) {
     .catch(() => {});
 }
 
+// ── 용어집 ──
+// 언어별로 따로 저장한다: glossary_ja, glossary_en ...
+function glossaryKey() { return 'glossary_' + state.tgtLang; }
+
+function getGlossaryPairs() {
+  const raw = localStorage.getItem(glossaryKey()) || '';
+  return raw.split('\n')
+    .map(line => line.split('='))
+    .filter(p => p.length >= 2 && p[0].trim() && p.slice(1).join('=').trim())
+    .map(p => ({ from: p[0].trim(), to: p.slice(1).join('=').trim() }))
+    .slice(0, 200);
+}
+
+// 입력한 글에 실제로 등장하는 항목만 프롬프트에 붙인다 (토큰 절약)
+function glossaryInstr(text) {
+  const t = (text || '').toLowerCase();
+  const toKO = state.srcLang !== 'ko';
+  const hits = getGlossaryPairs().filter(p =>
+    t.includes((toKO ? p.to : p.from).toLowerCase()));
+  if (!hits.length) return '';
+  const lines = hits.map(p => toKO ? `- ${p.to} → ${p.from}` : `- ${p.from} → ${p.to}`);
+  return '\n\n[용어집] 아래 단어는 반드시 지정한 번역을 그대로 사용하세요.\n' + lines.join('\n');
+}
+
+function loadGlossaryField() {
+  const cfg = LANG_CONFIG[state.tgtLang] || LANG_CONFIG['ja'];
+  if ($('glossaryLangLabel')) $('glossaryLangLabel').textContent = '한국어 ↔ ' + cfg.label;
+  if ($('glossaryInput')) $('glossaryInput').value = localStorage.getItem(glossaryKey()) || '';
+}
+
+// ── 표현 현지화 ──
+const SLANG_RULES = {
+  'ja': 'ㅋㅋ/ㅎㅎ는 w·www·草, ㅠㅠ/ㅜㅜ는 (泣)·；；, ㄷㄷ는 ガクブル, ㅇㅇ는 うん, 헐은 えぇ… 처럼',
+  'en': 'ㅋㅋ/ㅎㅎ는 lol·haha, ㅠㅠ는 :( ·T_T, ㅇㅇ는 yeah, 헐은 omg 처럼',
+  'zh-cn': 'ㅋㅋ/ㅎㅎ는 哈哈, ㅠㅠ는 呜呜·555, ㅇㅇ는 嗯嗯 처럼',
+  'zh-tw': 'ㅋㅋ/ㅎㅎ는 哈哈, ㅠㅠ는 嗚嗚, ㅇㅇ는 嗯嗯 처럼'
+};
+function slangInstr() {
+  if (!state.slang) return '';
+  if (state.srcLang !== 'ko') {
+    return '\n\n[표기 규칙] w·www·草·(泣)·lol 같은 현지 인터넷 표현은 한국어에서 같은 느낌으로 쓰는 ㅋㅋ·ㅠㅠ 등으로 바꿔서 번역하세요.';
+  }
+  const rule = SLANG_RULES[state.tgtLang] || SLANG_RULES['ja'];
+  return `\n\n[표기 규칙] ㅋㅋ, ㅠㅠ, ㄷㄷ 같은 한국식 채팅 표현은 그대로 두지 말고 대상 언어에서 같은 느낌으로 쓰는 표현으로 바꾸세요. (${rule})`;
+}
+
 function loadStorage() {
   $('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
+  loadGlossaryField();
+  $('slangToggle').classList.toggle('on', state.slang);
+  $('slangDesc').textContent = slangDescText();
   const savedIcon = localStorage.getItem('custom_icon');
   if (savedIcon) {
     applyCustomIcon(savedIcon);
@@ -1838,7 +1929,7 @@ function buildPrompt(text) {
 [번역 지침]
 1. 원문에 담긴 말투, 어조, 감정을 그대로 살려서 번역하세요. (반말이면 반말, 존댓말이면 존댓말, 거친 말투면 거칠게)
 2. 원문의 내용을 변경하지 말고 충실하게 번역하세요.
-3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.
+3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.${glossaryInstr(text)}${slangInstr()}
 
 [원문]
 ${text}`;
@@ -1881,7 +1972,7 @@ ${text}`;
 [번역 지침]
 1. ${toneInstr}
 2. ${strictInstr}
-3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.${extraInstr}
+3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.${extraInstr}${glossaryInstr(text)}${slangInstr()}
 
 [원문]
 ${text}`;
@@ -2317,12 +2408,43 @@ function closeBackTranslation() {
   $('btChev').classList.remove('open');
 }
 
+// 역번역과 원문을 기기 안에서 비교한다 (API를 더 쓰지 않는다).
+// 한국어는 같은 뜻이어도 표현이 많이 달라지므로, 확실히 이상할 때만 알린다.
+function _normText(s) { return (s || '').toLowerCase().replace(/[\s\d]/g, '').replace(/[.,!?~…"'「」『』()\[\]·:;\-]/g, ''); }
+function _textSim(a, b) {
+  a = _normText(a); b = _normText(b);
+  if (a.length < 2 || b.length < 2) return 1;
+  const gram = s => { const m = new Map(); for (let i = 0; i < s.length - 1; i++) { const g = s.slice(i, i + 2); m.set(g, (m.get(g) || 0) + 1); } return m; };
+  const A = gram(a), B = gram(b);
+  let inter = 0;
+  A.forEach((v, k) => { if (B.has(k)) inter += Math.min(v, B.get(k)); });
+  return (2 * inter) / ((a.length - 1) + (b.length - 1));
+}
+function _numbers(s) { return ((s || '').match(/\d+/g) || []).join(','); }
+
+function checkBtDivergence(bt) {
+  const warn = $('btWarn');
+  if (!warn) return;
+  const srcText = state.originalText || '';
+  let msg = '';
+  if (_numbers(srcText) !== _numbers(bt)) {
+    msg = '원문과 숫자가 다릅니다. 날짜·시간·금액을 확인해 주세요.';
+  } else if (_normText(srcText).length >= 20 && _textSim(srcText, bt) < 0.18) {
+    msg = '역번역이 원문과 많이 다릅니다. 뜻이 바뀌지 않았는지 확인해 주세요.';
+  }
+  warn.textContent = msg;
+  warn.classList.toggle('visible', !!msg);
+}
+
 function prepareBackTranslation() {
   state.btText = null;
   $('backTranslationText').textContent = '';
+  if ($('btWarn')) { $('btWarn').textContent = ''; $('btWarn').classList.remove('visible'); }
   $('btLoading').style.display = 'none';
   closeBackTranslation();
   $('btToggle').classList.toggle('visible', state.srcLang === 'ko');
+  // 역번역은 접어두지 않고 번역 직후 바로 가져와 펼친다 (줄을 누르면 다시 접힘)
+  if (state.srcLang === 'ko' && state.result) $('btToggle').click();
 }
 
 $('btToggle').onclick = async function() {
@@ -2352,6 +2474,7 @@ ${state.result}` }] }],
     if (!bt) throw new Error('no result');
     state.btText = bt;
     $('backTranslationText').textContent = bt;
+    checkBtDivergence(bt);
     $('backTranslation').style.display = 'block';
     $('btChev').classList.add('open');
   } catch(e) {
@@ -3166,10 +3289,14 @@ document.addEventListener('gesturestart', function(e) {
 }, { passive: false });
 
 // iOS 당겨서 새로고침 방지
+const SCROLLERS = '.sheet, .history-panel, .history-list, .feedback-history, .dict-popup, .lang-dropdown';
 document.body.addEventListener('touchstart', function(e) {
-  if (window.scrollY === 0) window._touchStartY = e.touches[0].clientY;
+  window._touchStartY = e.touches[0].clientY;
+  // 시트·히스토리 등 자체 스크롤 영역에서 시작한 터치는 건드리지 않는다
+  window._inScroller = !!(e.target.closest && e.target.closest(SCROLLERS));
 }, { passive: true });
 document.body.addEventListener('touchmove', function(e) {
+  if (window._inScroller) return;
   const dy = e.touches[0].clientY - (window._touchStartY || 0);
   if (window.scrollY === 0 && dy > 0) e.preventDefault();
 }, { passive: false });
