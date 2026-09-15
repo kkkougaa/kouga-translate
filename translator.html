@@ -389,10 +389,23 @@
   .toggle.on::after { transform: translateX(18px); }
 
   /* Result */
+  .result-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; padding: 11px 14px 0;
+  }
   .result-label {
     font-size: 11px; font-weight: 500; color: var(--text3);
-    padding: 11px 14px 0; text-transform: uppercase; letter-spacing: 0.5px;
+    text-transform: uppercase; letter-spacing: 0.5px;
   }
+  .view-opts { display: flex; gap: 5px; flex-shrink: 0; }
+  .view-opt {
+    padding: 4px 10px; border-radius: 12px; font-size: 11.5px;
+    border: 0.5px solid var(--border2); background: var(--bg2);
+    color: var(--text3); font-family: inherit; cursor: pointer;
+    white-space: nowrap; transition: all 0.15s;
+  }
+  .view-opt:hover { background: var(--bg3); }
+  .view-opt.active { background: var(--accent-bg); color: var(--accent-dark); border-color: var(--accent); }
   .result-area {
     padding: 9px 14px 12px; min-height: 0;
     font-family: inherit; font-size: 15px; line-height: 1.7;
@@ -419,6 +432,34 @@
     display: flex; justify-content: flex-end;
     padding: 4px 10px 10px; gap: 6px;
   }
+  /* 후리가나 */
+  .result-area ruby rt {
+    font-size: 0.48em; font-weight: 400; color: var(--text3);
+    letter-spacing: 0; line-height: 1.1;
+  }
+  .result-area.has-ruby { line-height: 2.2; }
+
+  /* 클립보드 배너 */
+  .clip-banner {
+    display: none; align-items: center; gap: 9px;
+    padding: 9px 12px; border-radius: var(--radius-md);
+    background: var(--accent-bg); border: 0.5px solid var(--accent);
+    animation: fadeIn 0.2s ease;
+  }
+  .clip-banner.visible { display: flex; }
+  .clip-text {
+    flex: 1; min-width: 0; font-size: 12.5px; color: var(--accent-dark);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .clip-use {
+    flex-shrink: 0; padding: 5px 11px; border-radius: 14px; border: none;
+    background: var(--accent); color: #fff; font-size: 12.5px; font-weight: 500;
+    font-family: inherit; cursor: pointer;
+  }
+  .clip-dismiss {
+    flex-shrink: 0; padding: 4px 6px; border: none; background: none;
+    color: var(--accent-dark); opacity: 0.55; font-size: 13px; cursor: pointer;
+  }
   .copy-btn, .copy-both-btn {
     display: flex; align-items: center; gap: 5px;
     padding: 6px 16px; border-radius: 16px; font-size: 13px;
@@ -428,6 +469,7 @@
   }
   .copy-btn:hover, .copy-both-btn:hover { background: var(--accent-bg); color: var(--accent-dark); border-color: var(--accent); }
   .copy-btn.copied, .copy-both-btn.copied { background: var(--accent-bg); color: var(--accent-dark); border-color: var(--accent); }
+  .copy-btn.active { background: var(--accent-bg); color: var(--accent-dark); border-color: var(--accent); }
 
   /* Settings sheet */
   .overlay {
@@ -474,13 +516,23 @@
   .save-btn:hover { opacity: 0.88; }
   .save-msg { font-size: 12px; color: var(--accent); text-align: center; margin-top: 8px; display: none; }
 
+  /* 역번역은 자동으로 부르지 않고 이 줄을 눌렀을 때만 가져온다 */
+  .bt-toggle {
+    display: none; width: 100%; align-items: center; justify-content: space-between;
+    padding: 9px 14px; background: none; border: none;
+    border-top: 0.5px dashed var(--border);
+    font-family: inherit; font-size: 11px; color: var(--text3);
+    cursor: pointer; text-align: left;
+  }
+  .bt-toggle.visible { display: flex; }
+  .bt-chev { font-size: 9px; transition: transform 0.2s ease; }
+  .bt-chev.open { transform: rotate(180deg); }
   .back-translation {
-    padding: 9px 14px 12px;
+    padding: 0 14px 12px;
     font-size: 10.5px;
     line-height: 1.6;
     color: var(--text3);
     word-break: break-word;
-    border-top: 0.5px dashed var(--border);
     display: none;
   }
   /* pre-wrap은 텍스트 노드에만 걸어야 태그 사이 들여쓰기가 빈 줄로 안 새어나온다 */
@@ -494,8 +546,7 @@
   }
   .back-translation-loading {
     display: none;
-    padding: 8px 14px 10px;
-    border-top: 0.5px dashed var(--border);
+    padding: 2px 14px 10px;
   }
   .back-translation-loading .dot { width: 5px; height: 5px; }
 
@@ -614,10 +665,34 @@
   .dict-reading {
     font-size: 12px; color: var(--accent); margin-bottom: 8px;
   }
+  .dict-reading:empty { display: none; }
   .dict-meaning {
     font-size: 13px; color: var(--text2); line-height: 1.6;
     border-top: 0.5px solid var(--border); padding-top: 8px;
+    display: none;
   }
+  .dict-meaning.visible { display: block; }
+  .dict-actions { display: flex; gap: 6px; margin-top: 9px; }
+  .dict-act {
+    flex: 1; padding: 7px 10px; border-radius: 9px; white-space: nowrap;
+    border: 0.5px solid var(--border2); background: var(--bg2);
+    color: var(--text2); font-size: 13px; font-family: inherit; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .dict-act.active { background: var(--accent-bg); color: var(--accent-dark); border-color: var(--accent); }
+  .dict-alts {
+    display: none; flex-direction: column; gap: 6px;
+    margin-top: 9px; border-top: 0.5px solid var(--border); padding-top: 9px;
+  }
+  .dict-alts.visible { display: flex; }
+  .alt-item {
+    text-align: left; padding: 8px 10px; border-radius: 9px;
+    border: 0.5px solid var(--border2); background: var(--bg2);
+    color: var(--text); font-size: 13.5px; line-height: 1.5;
+    font-family: inherit; cursor: pointer; transition: all 0.15s;
+  }
+  .alt-item:active, .alt-item:hover { background: var(--accent-bg); border-color: var(--accent); }
+  .alt-note { display: block; font-size: 11px; color: var(--text3); margin-top: 3px; }
   .dict-loading {
     font-size: 13px; color: var(--text3); text-align: center; padding: 8px 0;
   }
@@ -686,6 +761,12 @@
   </div>
 
   <div class="main">
+
+    <div class="clip-banner" id="clipBanner">
+      <span class="clip-text" id="clipText"></span>
+      <button class="clip-use" id="clipUse">붙여넣기</button>
+      <button class="clip-dismiss" id="clipDismiss">✕</button>
+    </div>
 
     <!-- 입력 -->
     <div class="card">
@@ -768,7 +849,13 @@
 
         <!-- 결과 -->
     <div class="card" id="resultCard">
-      <div class="result-label" id="resultLabel">결과</div>
+      <div class="result-head">
+        <span class="result-label" id="resultLabel">결과</span>
+        <div class="view-opts">
+          <button class="view-opt" id="pronBtn">독음</button>
+          <button class="view-opt" id="rubyBtn" style="display:none;">후리가나</button>
+        </div>
+      </div>
       <div class="loading" id="loading" style="display:none;">
         <div class="dot"></div><div class="dot"></div><div class="dot"></div>
       </div>
@@ -779,13 +866,13 @@
         <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">📖 독음</div>
         <div id="pronunciationText" style="font-size:14px;color:var(--text2);line-height:1.6;white-space:pre-wrap;"></div>
       </div>
+      <button class="bt-toggle" id="btToggle"><span>↩ 한국어로 보면</span><span class="bt-chev" id="btChev">▾</span></button>
       <div class="back-translation-loading" id="btLoading">
         <div class="loading-dots" style="display:flex;gap:4px;"><div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite;"></div><div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite;animation-delay:0.2s;"></div><div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite;animation-delay:0.4s;"></div></div>
       </div>
-      <div class="back-translation" id="backTranslation"><div class="back-translation-label">↩ 한국어로 보면</div><div id="backTranslationText"></div></div>
+      <div class="back-translation" id="backTranslation"><div id="backTranslationText"></div></div>
       <div class="result-footer">
         <button class="copy-btn" id="ttsBtn" style="margin-right:auto;">🔊</button>
-        <button class="copy-btn" id="pronBtn">독음</button>
         <button class="copy-both-btn" id="copyBothBtn">원문+번역</button>
         <button class="copy-btn" id="copyBtn">복사</button>
       </div>
@@ -811,8 +898,13 @@
 <div id="dictPopup" style="display:none;" class="dict-popup">
   <button class="dict-close" id="dictClose">✕</button>
   <div class="dict-word" id="dictWord"></div>
+  <div class="dict-actions" id="dictActions">
+    <button class="dict-act" id="dictMeaningBtn">뜻</button>
+    <button class="dict-act" id="dictAltBtn">다른 표현</button>
+  </div>
   <div class="dict-reading" id="dictReading"></div>
   <div class="dict-meaning" id="dictMeaning"></div>
+  <div class="dict-alts" id="dictAlts"></div>
 </div>
 
 <!-- 말투 관리 시트 -->
@@ -827,7 +919,7 @@
     <button id="toneAddBtn"  style="width:100%;padding:12px;border-radius:12px;border:1.5px dashed var(--border2);background:none;color:var(--accent);font-size:14px;font-family:inherit;cursor:pointer;">+ 새 말투 추가</button>
     <div id="toneEditSection" style="display:none;margin-top:16px;border-top:0.5px solid var(--border);padding-top:16px;">
       <input type="text" id="toneEditName" placeholder="말투 이름 (예: 츤데레)" style="width:100%;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);font-size:14px;font-family:inherit;color:var(--text);margin-bottom:8px;box-sizing:border-box;">
-      <textarea id="toneEditPrompt" id="toneEditPrompt" placeholder="프롬프트 (비워두면 기본 설정 사용)&#10;캐릭터 말투: 캐릭터 설명을 입력하세요&#10;예) 모든 문장 끝에 '~다냐' 붙이기" style="width:100%;min-height:80px;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);font-size:13px;font-family:inherit;color:var(--text);resize:none;box-sizing:border-box;"></textarea>
+      <textarea id="toneEditPrompt" placeholder="프롬프트 (비워두면 기본 설정 사용)&#10;캐릭터 말투: 캐릭터 설명을 입력하세요&#10;예) 모든 문장 끝에 '~다냐' 붙이기" style="width:100%;min-height:80px;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);font-size:13px;font-family:inherit;color:var(--text);resize:none;box-sizing:border-box;"></textarea>
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button id="toneEditCancel" style="flex:1;padding:10px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:14px;font-family:inherit;cursor:pointer;">취소</button>
         <button id="toneEditSave" style="flex:2;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;">저장</button>
@@ -986,7 +1078,10 @@ const state = {
   busy: false,
   result: '',
   originalText: '',
-  conversation: []
+  conversation: [],
+  btText: null,      // 역번역 캐시 (탭할 때만 채워진다)
+  rubyText: null,    // 후리가나 캐시
+  rubyOn: false
 };
 
 const $ = id => document.getElementById(id);
@@ -1048,6 +1143,8 @@ function updateLangUI() {
   if (isToKO) { $('optBody').classList.remove('open'); $('chevron').classList.remove('open'); }
   applyToneAvailability();
   $('spellBtn').style.display = isToKO ? 'none' : 'flex';
+  // 후리가나는 일본어 결과일 때만 의미가 있다
+  $('rubyBtn').style.display = (!isToKO && state.tgtLang === 'ja') ? '' : 'none';
   $('imgAttachBtn').style.display = isToKO ? 'inline-flex' : 'none';
   if (!isToKO) { // 한국어 원문일 땐 이미지를 못 쓰므로 초기화 (안 그러면 다음 번역에 딸려 간다)
     state.imgData = null; state.imgMime = null;
@@ -1371,9 +1468,13 @@ function clearResult() {
   $('errorBox').style.display = 'none';
   $('feedbackCard').classList.remove('visible');
   $('fbHistory').innerHTML = '';
+  state.btText = null;
+  $('btToggle').classList.remove('visible');
+  $('btChev').classList.remove('open');
   $('backTranslation').style.display = 'none';
   $('btLoading').style.display = 'none';
   $('backTranslationText').textContent = '';
+  resetRuby();
   $('pronunciationWrap').style.display = 'none';
   $('pronBtn').classList.remove('active');
   if ($('commentBox')) { $('commentBox').classList.remove('visible'); $('commentText').textContent = ''; }
@@ -1535,7 +1636,8 @@ ${result}`;
     }
     $('fbHistory').innerHTML = '';
     $('feedbackCard').classList.add('visible');
-    if (state.srcLang === 'ko') fetchBackTranslation(result);
+    resetRuby();
+    prepareBackTranslation();
   } catch (err) {
     if (_cancelled || err.name === 'AbortError') {
       $('loading').style.display = 'none';
@@ -1850,7 +1952,8 @@ async function sendFeedback() {
     $('resultText').textContent = reply;
     $('resultText').className = 'result-area';
     $('resultText').style.display = 'block';
-    if (state.srcLang === 'ko') fetchBackTranslation(reply);
+    resetRuby();
+    prepareBackTranslation();
   } catch (err) {
     addFbMsg('ai', '오류: ' + err.message);
   } finally {
@@ -1860,35 +1963,125 @@ async function sendFeedback() {
   }
 }
 
-async function fetchBackTranslation(japaneseText) {
+// 역번역은 번역 1건당 API를 한 번 더 태우므로 자동으로 부르지 않는다.
+// 결과 카드 아래 줄을 눌렀을 때만 가져오고, 한 번 받으면 캐시해서 접었다 폈다 한다.
+function closeBackTranslation() {
   $('backTranslation').style.display = 'none';
+  $('btChev').classList.remove('open');
+}
+
+function prepareBackTranslation() {
+  state.btText = null;
   $('backTranslationText').textContent = '';
+  $('btLoading').style.display = 'none';
+  closeBackTranslation();
+  $('btToggle').classList.toggle('visible', state.srcLang === 'ko');
+}
+
+$('btToggle').onclick = async function() {
+  if (state.btText) {
+    const open = $('backTranslation').style.display === 'block';
+    $('backTranslation').style.display = open ? 'none' : 'block';
+    $('btChev').classList.toggle('open', !open);
+    return;
+  }
+  if (!state.result) return;
+  if (!getApiKey()) { $('overlay').classList.add('open'); return; }
+  this.disabled = true;
   $('btLoading').style.display = 'block';
-  const cfg3 = LANG_CONFIG[state.tgtLang] || LANG_CONFIG['ja'];
-  const btLang = state.srcLang === 'ko' ? cfg3.label : '한국어';
   try {
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: `다음 ${btLang}를 자연스러운 한국어로 번역하세요. 번역 결과 텍스트만 출력하세요.
+          contents: [{ parts: [{ text: `다음 문장을 자연스러운 한국어로 번역하세요. 번역 결과 텍스트만 출력하세요.
 
-${japaneseText}` }] }],
+${state.result}` }] }],
           generationConfig: { temperature: 0.1, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } }
-        })
-      }
+        }) }
     );
     const data = await res.json();
     const bt = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if (bt) {
-      $('backTranslationText').textContent = bt;
-      $('backTranslation').style.display = 'block';
-    }
-  } catch(e) {}
-  finally { $('btLoading').style.display = 'none'; }
+    if (!bt) throw new Error('no result');
+    state.btText = bt;
+    $('backTranslationText').textContent = bt;
+    $('backTranslation').style.display = 'block';
+    $('btChev').classList.add('open');
+  } catch(e) {
+    $('backTranslationText').textContent = '역번역을 가져오지 못했어요.';
+    $('backTranslation').style.display = 'block';
+    $('btChev').classList.add('open');
+  } finally {
+    $('btLoading').style.display = 'none';
+    this.disabled = false;
+  }
+};
+
+// ── 후리가나 ──
+function resetRuby() {
+  state.rubyText = null;
+  state.rubyOn = false;
+  $('rubyBtn').classList.remove('active');
+  $('resultText').classList.remove('has-ruby');
 }
+
+// 모델이 돌려준 「漢字《かんじ》」 표기를 <ruby>로 바꾼다. 먼저 이스케이프해서 태그 주입을 막는다.
+function rubyHtml(text) {
+  const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return esc(text).replace(
+    /([\u4E00-\u9FFF\u3005\u3006\u30F6]+)\u300A([^\u300B]{1,24})\u300B/g,
+    (m, base, read) => '<ruby>' + base + '<rt>' + read + '</rt></ruby>');
+}
+
+function applyRuby() {
+  $('resultText').innerHTML = rubyHtml(state.rubyText);
+  $('resultText').classList.add('has-ruby');
+  $('rubyBtn').classList.add('active');
+  state.rubyOn = true;
+}
+
+$('rubyBtn').onclick = async function() {
+  if (!state.result) return;
+  if (state.rubyOn) {
+    $('resultText').textContent = state.result;
+    $('resultText').classList.remove('has-ruby');
+    this.classList.remove('active');
+    state.rubyOn = false;
+    return;
+  }
+  if (state.rubyText) { applyRuby(); haptic(); return; }
+  if (!getApiKey()) { $('overlay').classList.add('open'); return; }
+  this.textContent = '...';
+  this.disabled = true;
+  try {
+    const prompt = `다음 일본어 문장의 모든 한자에 후리가나를 달아줘.
+한자 바로 뒤에 《 》 안에 히라가나 읽기를 넣고, 나머지 글자는 원문 그대로 둬.
+예: 今日《きょう》は本当《ほんとう》にいい天気《てんき》ですね。
+설명 없이 결과 문장만 출력해.
+
+[원문]
+${state.result}`;
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } } }) }
+    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || `오류 ${res.status}`);
+    const out = data.candidates?.[0]?.content?.parts?.filter(p => p.text).map(p => p.text).join('').trim();
+    if (!out) throw new Error('결과 없음');
+    state.rubyText = out;
+    applyRuby();
+    haptic();
+  } catch(e) {
+    $('errorBox').textContent = '후리가나를 가져오지 못했어요.';
+    $('errorBox').style.display = 'block';
+  } finally {
+    this.textContent = '후리가나';
+    this.disabled = false;
+  }
+};
 
 $('fbSendBtn').onclick = sendFeedback;
 $('feedbackInput').addEventListener('keydown', e => {
@@ -1951,21 +2144,9 @@ function blobToDataUrl(blob) {
 // iOS Safari는 탭 한 번당 클립보드 API를 딱 한 번만 허용한다.
 // read() 후에 readText()를 또 부르면 제스처가 만료돼서 거부되므로,
 // 이미지와 텍스트를 read() 결과 하나에서 같이 꺼낸다.
-$('pasteBtn').onclick = async function() {
-  const btn = this;
-  const flash = (label, ok) => {
-    btn.textContent = label;
-    if (ok) btn.classList.add('pasted');
-    setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('pasted'); }, 2000);
-  };
-
-  if (!navigator.clipboard || !window.isSecureContext) {
-    // http나 file://에서는 클립보드 API 자체가 없다
-    $('inputText').focus();
-    flash('길게 눌러서');
-    return;
-  }
-
+// 반환값: 'image' | 'text' | 'blocked'
+async function pasteFromClipboard() {
+  if (!navigator.clipboard || !window.isSecureContext) return 'blocked';
   try {
     let imgPromise = null, textPromise = null;
     if (navigator.clipboard.read) {
@@ -1980,27 +2161,100 @@ $('pasteBtn').onclick = async function() {
         }
       }
     }
-
     if (imgPromise) {
       applyClipboardImage(await blobToDataUrl(await imgPromise));
-      flash('🖼️ 이미지!', true);
-      return;
+      return 'image';
     }
     if (textPromise) {
-      const text = (await (await textPromise).text()) || '';
-      if (text) { setInputText(text); flash('✓', true); return; }
+      const t = (await (await textPromise).text()) || '';
+      if (t) { setInputText(t); _lastClipSeen = t.trim(); return 'text'; }
     }
-
     // read()를 못 썼을 때만 readText() 폴백
-    const text = await navigator.clipboard.readText();
-    if (!text) throw new Error('empty');
-    setInputText(text);
-    flash('✓', true);
+    const t2 = await navigator.clipboard.readText();
+    if (!t2) return 'blocked';
+    setInputText(t2);
+    _lastClipSeen = t2.trim();
+    return 'text';
   } catch(e) {
-    $('inputText').focus();
-    flash('길게 눌러서');
+    return 'blocked';
   }
+}
+
+$('pasteBtn').onclick = async function() {
+  const btn = this;
+  const flash = (label, ok) => {
+    btn.textContent = label;
+    if (ok) btn.classList.add('pasted');
+    setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('pasted'); }, 2000);
+  };
+  const r = await pasteFromClipboard();
+  hideClipBanner();
+  if (r === 'image') flash('🖼️ 이미지!', true);
+  else if (r === 'text') flash('✓', true);
+  else { $('inputText').focus(); flash('길게 눌러서'); }
 };
+
+// ── 클립보드 감지 배너 ──
+// 앱으로 돌아왔을 때 붙여넣을 게 있으면 한 번 물어본다.
+// iOS는 제스처 없이 클립보드를 못 읽으므로, 그 경우엔 내용 없이 버튼만 띄우고 탭이 제스처가 된다.
+let _lastClipSeen = '';
+let _pendingClip = null;
+let _clipDismissed = false;
+let _blindBannerShown = false;
+
+function showClipBanner(text) {
+  _pendingClip = text;
+  $('clipText').textContent = text
+    ? '📋 ' + text.replace(/\s+/g, ' ').slice(0, 60)
+    : '📋 클립보드 내용 붙여넣기';
+  $('clipBanner').classList.add('visible');
+}
+
+function hideClipBanner() {
+  $('clipBanner').classList.remove('visible');
+  _pendingClip = null;
+}
+
+async function checkClipboard() {
+  if (_clipDismissed) return;
+  if ($('inputText').value.trim()) return;        // 입력 중이면 방해하지 않는다
+  if (!navigator.clipboard || !window.isSecureContext) return;
+  try {
+    const text = (await navigator.clipboard.readText() || '').trim();
+    if (!text || text.length > 2000 || text === _lastClipSeen) { hideClipBanner(); return; }
+    showClipBanner(text);
+  } catch(e) {
+    // 읽기가 막힌 기기(iOS) — 세션당 한 번만 권유한다
+    if (_blindBannerShown) return;
+    _blindBannerShown = true;
+    showClipBanner(null);
+  }
+}
+
+$('clipUse').onclick = async function() {
+  if (_pendingClip) {
+    setInputText(_pendingClip);
+    _lastClipSeen = _pendingClip;
+    hideClipBanner();
+    haptic();
+    return;
+  }
+  const r = await pasteFromClipboard();   // 이 탭 자체가 제스처가 된다
+  hideClipBanner();
+  if (r === 'blocked') { $('inputText').focus(); }
+  else haptic();
+};
+
+$('clipDismiss').onclick = () => {
+  if (_pendingClip) _lastClipSeen = _pendingClip;
+  _clipDismissed = true;
+  hideClipBanner();
+};
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') { _clipDismissed = false; checkClipboard(); }
+});
+window.addEventListener('focus', checkClipboard);
 
 // ── 지우기 ──
 $('clearBtn').onclick = function() {
@@ -2057,50 +2311,84 @@ function renderHistory() {
   });
 }
 
-// ── 단어 사전 ──
+// ── 선택 영역 메뉴 ──
+// 드래그하면 바로 뜻을 띄우지 않고 먼저 메뉴를 보여준다 (뜻 / 다른 표현)
 let dictPopupOpen = false;
+let _popupOpenedAt = 0;
+let _popupAnchor = { x: 0, y: 0 };
+let _sel = { text: '', index: -1 };
 
-function showDictPopup(word, x, y) {
-  if (!word.trim() || word.trim().length < 1) return;
+function positionPopup() {
   const popup = $('dictPopup');
-  $('dictWord').textContent = word;
-  $('dictReading').textContent = '';
-  $('dictMeaning').innerHTML = '<div class="dict-loading">🔍 검색 중...</div>';
-  popup.style.display = 'block';
-  dictPopupOpen = true;
-
-  // 위치 조정
-  const pw = 280, ph = 140;
-  let lx = x - pw / 2, ly = y - ph - 12;
+  const r = popup.getBoundingClientRect();
+  let lx = _popupAnchor.x - r.width / 2;
+  let ly = _popupAnchor.y - r.height - 12;
   if (lx < 8) lx = 8;
-  if (lx + pw > window.innerWidth - 8) lx = window.innerWidth - pw - 8;
-  if (ly < 8) ly = y + 24;
+  if (lx + r.width > window.innerWidth - 8) lx = window.innerWidth - r.width - 8;
+  if (ly < 8) ly = _popupAnchor.y + 26;
+  if (ly + r.height > window.innerHeight - 8) ly = Math.max(8, window.innerHeight - r.height - 8);
   popup.style.left = lx + 'px';
   popup.style.top = ly + 'px';
+}
 
-  if (!getApiKey()) { $('dictMeaning').textContent = 'API 키를 설정해주세요.'; return; }
+function closePopup() {
+  $('dictPopup').style.display = 'none';
+  dictPopupOpen = false;
+}
+
+function showSelectionMenu(text, index, x, y) {
+  _sel = { text, index };
+  _popupAnchor = { x, y };
+  $('dictWord').textContent = text.length > 36 ? text.slice(0, 36) + '…' : text;
+  $('dictReading').textContent = '';
+  $('dictMeaning').textContent = '';
+  $('dictMeaning').classList.remove('visible');
+  $('dictAlts').innerHTML = '';
+  $('dictAlts').classList.remove('visible');
+  $('dictMeaningBtn').classList.remove('active');
+  $('dictAltBtn').classList.remove('active');
+  // 후리가나가 켜져 있으면 본문 오프셋이 달라져 교체가 어긋난다
+  $('dictAltBtn').style.display = state.rubyOn ? 'none' : '';
+  $('dictPopup').style.display = 'block';
+  dictPopupOpen = true;
+  _popupOpenedAt = Date.now();
+  positionPopup();
+}
+
+async function askGemini(prompt, maxTokens) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: maxTokens || 1024, thinkingConfig: { thinkingBudget: 0 } } }) }
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || `오류 ${res.status}`);
+  const out = data.candidates?.[0]?.content?.parts?.filter(p => p.text).map(p => p.text).join('').trim();
+  if (!out) throw new Error('결과를 가져오지 못했어요.');
+  return out;
+}
+
+// 뜻 보기
+$('dictMeaningBtn').onclick = async function() {
+  $('dictAlts').classList.remove('visible');
+  $('dictAltBtn').classList.remove('active');
+  this.classList.add('active');
+  $('dictMeaning').classList.add('visible');
+  if (!getApiKey()) { $('dictMeaning').textContent = 'API 키를 설정해주세요.'; positionPopup(); return; }
+  $('dictMeaning').innerHTML = '<div class="dict-loading">🔍 찾는 중...</div>';
+  positionPopup();
 
   const cfg = LANG_CONFIG[state.tgtLang] || LANG_CONFIG['ja'];
   const langName = state.srcLang === 'ko' ? cfg.label : '한국어';
-  const prompt = `"${word}"의 사전 정보를 알려줘.
+  try {
+    const out = await askGemini(`"${_sel.text}"(${langName})의 사전 정보를 알려줘.
 다음 형식으로만 답해줘 (다른 설명 없이):
 읽기: (발음/읽는 법, 없으면 생략)
-뜻: (${langName === '한국어' ? '한국어' : '한국어'}로 간단한 뜻 1~3가지)
-예문: (짧은 예문 1개와 한국어 번역)`;
-
-  fetch(`https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { thinkingConfig: { thinkingBudget: 0 } } }) }
-  ).then(r => {
-    if (!r.ok) throw new Error('API 오류 ' + r.status);
-    return r.json();
-  }).then(data => {
-    const result = data.candidates?.[0]?.content?.parts?.filter(p=>p.text).map(p=>p.text).join('').trim();
-    if (!result) { $('dictMeaning').textContent = '결과를 가져오지 못했어요.'; return; }
-    const lines = result.split('\n').filter(l => l.trim());
+뜻: (한국어로 간단한 뜻 1~3가지)
+예문: (짧은 예문 1개와 한국어 번역)`, 512);
     let reading = '', meaning = '';
-    lines.forEach(l => {
+    out.split('\n').filter(l => l.trim()).forEach(l => {
       if (l.startsWith('읽기:')) reading = l.replace('읽기:', '').trim();
       else meaning += l + '\n';
     });
@@ -2108,42 +2396,114 @@ function showDictPopup(word, x, y) {
     $('dictMeaning').style.whiteSpace = 'pre-line';
     $('dictMeaning').textContent = meaning.trim();
     haptic();
-  }).catch(e => {
-    $('dictMeaning').textContent = e.message.includes('fetch') ? '네트워크 오류가 발생했어요.' : '오류: ' + e.message;
-  });
+  } catch(e) {
+    $('dictMeaning').textContent = e.message;
+  }
+  positionPopup();
+};
+
+// 다른 표현으로 바꾸기 (부분 재번역)
+$('dictAltBtn').onclick = async function() {
+  $('dictMeaning').classList.remove('visible');
+  $('dictMeaningBtn').classList.remove('active');
+  $('dictReading').textContent = '';
+  this.classList.add('active');
+  const box = $('dictAlts');
+  box.classList.add('visible');
+  if (!getApiKey()) { box.innerHTML = '<div class="dict-loading">API 키를 설정해주세요.</div>'; positionPopup(); return; }
+  box.innerHTML = '<div class="dict-loading">✎ 후보 찾는 중...</div>';
+  positionPopup();
+
+  try {
+    const out = await askGemini(`아래 [전체 문장] 안에서 [선택 구간]만 바꿀 수 있는 다른 표현 3개를 제안해줘.
+
+[규칙]
+1. 전체 문장의 문맥과 말투에 어울려야 해.
+2. 선택 구간을 그대로 대체할 수 있는 형태로만 써. 문장 전체를 다시 쓰지 마.
+3. 한 줄에 하나씩, "표현 | 어떤 느낌인지 한국어로 10자 이내" 형식으로만 출력해.
+4. 번호나 설명, 마크다운은 쓰지 마.
+
+[전체 문장]
+${state.result}
+
+[선택 구간]
+${_sel.text}`, 512);
+
+    const items = out.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 4)
+      .map(l => { const [t, n] = l.split('|'); return { text: (t || '').trim(), note: (n || '').trim() }; })
+      .filter(it => it.text);
+    if (!items.length) throw new Error('후보를 받지 못했어요.');
+
+    box.innerHTML = '';
+    items.forEach(it => {
+      const btn = document.createElement('button');
+      btn.className = 'alt-item';
+      btn.textContent = it.text;
+      if (it.note) {
+        const note = document.createElement('span');
+        note.className = 'alt-note';
+        note.textContent = it.note;
+        btn.appendChild(note);
+      }
+      btn.onclick = () => {
+        if (replaceInResult(_sel.text, it.text, _sel.index)) closePopup();
+      };
+      box.appendChild(btn);
+    });
+    haptic();
+  } catch(e) {
+    box.innerHTML = '';
+    const msg = document.createElement('div');
+    msg.className = 'dict-loading';
+    msg.textContent = e.message;
+    box.appendChild(msg);
+  }
+  positionPopup();
+};
+
+// 결과 본문에서 선택 구간만 교체
+function replaceInResult(fragment, replacement, hintIndex) {
+  let i = -1;
+  if (hintIndex >= 0 && state.result.substr(hintIndex, fragment.length) === fragment) i = hintIndex;
+  else i = state.result.indexOf(fragment);
+  if (i < 0) return false;
+  state.result = state.result.slice(0, i) + replacement + state.result.slice(i + fragment.length);
+  $('resultText').textContent = state.result;
+  resetRuby();
+  // 본문이 바뀌었으니 역번역/후리가나 캐시는 무효
+  state.btText = null;
+  $('backTranslationText').textContent = '';
+  closeBackTranslation();
+  haptic();
+  return true;
 }
 
-$('dictClose').onclick = () => {
-  $('dictPopup').style.display = 'none';
-  dictPopupOpen = false;
-};
+$('dictClose').onclick = closePopup;
 document.addEventListener('click', e => {
-  if (dictPopupOpen && !$('dictPopup').contains(e.target)) {
-    $('dictPopup').style.display = 'none';
-    dictPopupOpen = false;
-  }
+  // 팝업이 막 열린 직후의 click(터치 종료에 딸려 오는 것)은 무시
+  if (dictPopupOpen && Date.now() - _popupOpenedAt > 400 && !$('dictPopup').contains(e.target)) closePopup();
 });
 
-// 번역 결과에서 텍스트 선택 시 사전 팝업
-// 터치 기기에서만 단어 사전 활성화
-if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-  $('resultText').addEventListener('touchend', handleTextSelect);
-}
-let _dictTimer = null;
+let _selTimer = null;
 function handleTextSelect(e) {
-  // touchend일 때만 (드래그 중엔 안 나오게)
-  if (e.type !== 'touchend' && e.type !== 'mouseup') return;
-  clearTimeout(_dictTimer);
-  _dictTimer = setTimeout(() => {
+  clearTimeout(_selTimer);
+  _selTimer = setTimeout(() => {
     const sel = window.getSelection();
-    const word = sel?.toString().trim();
-    if (!word || word.length > 20) return;
-    const range = sel.getRangeAt(0);
+    const text = sel?.toString().trim();
+    if (!text || text.length > 60) return;
+    let range;
+    try { range = sel.getRangeAt(0); } catch(err) { return; }
+    if (!$('resultText').contains(range.startContainer)) return;
+    // 텍스트 노드 하나 안에서 고른 경우에만 정확한 위치를 알 수 있다
+    const idx = (range.startContainer.nodeType === 3 && range.startContainer.parentElement === $('resultText'))
+      ? range.startOffset : -1;
     const rect = range.getBoundingClientRect();
-    showDictPopup(word, rect.left + rect.width / 2, rect.top + window.scrollY);
+    showSelectionMenu(text, idx, rect.left + rect.width / 2, rect.top);
     haptic();
-  }, 1000);
+  }, e.type === 'touchend' ? 220 : 120);
 }
+$('resultText').addEventListener('touchend', handleTextSelect);
+$('resultText').addEventListener('mouseup', handleTextSelect);
 
 // ── 말투 관리 ──
 let editingToneIdx = -1;
@@ -2350,9 +2710,29 @@ ${text}`;
 
 // ── TTS (Gemini) ──
 let ttsAudio = null;
+// 같은 문장을 다시 들을 때마다 오디오를 새로 만들지 않도록 캐시한다
+const _ttsCache = new Map();
+function ttsCacheGet(key) { return _ttsCache.get(key); }
+function ttsCachePut(key, url) {
+  _ttsCache.set(key, url);
+  while (_ttsCache.size > 8) {
+    const oldest = _ttsCache.keys().next().value;
+    URL.revokeObjectURL(_ttsCache.get(oldest));
+    _ttsCache.delete(oldest);
+  }
+}
 $('ttsBtn').onclick = async function() {
   if (!state.result) return;
   if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; $('ttsBtn').textContent = '🔊'; return; }
+  const cacheKey = getTtsModel() + '|Kore|' + state.result;
+  const cached = ttsCacheGet(cacheKey);
+  if (cached) {
+    ttsAudio = new Audio(cached);
+    ttsAudio.play();
+    $('ttsBtn').textContent = '⏹';
+    ttsAudio.onended = () => { ttsAudio = null; $('ttsBtn').textContent = '🔊'; };
+    return;
+  }
   if (!getApiKey()) { $('overlay').classList.add('open'); return; }
   $('ttsBtn').textContent = '⏳';
   $('ttsBtn').disabled = true;
@@ -2378,6 +2758,7 @@ $('ttsBtn').onclick = async function() {
     const wav = pcmToWav(pcm, 24000);
     const blob = new Blob([wav], { type: 'audio/wav' });
     const url = URL.createObjectURL(blob);
+    ttsCachePut(cacheKey, url);
     ttsAudio = new Audio(url);
     ttsAudio.play();
     $('ttsBtn').textContent = '⏹';
@@ -2512,6 +2893,7 @@ document.body.addEventListener('touchmove', function(e) {
 updateLangUI();
 updateSummary();
 autoGrowInput();
+checkClipboard();
 </script>
 
 </body>
