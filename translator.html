@@ -270,15 +270,15 @@
     width: 100%; min-height: 130px; height: 130px; padding: 14px 16px;
     border: none; outline: none; resize: none; background: transparent;
     font-family: inherit; font-size: 16px; line-height: 1.65; color: var(--text);
-    display: block; overflow-y: auto; -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    display: block; overflow-y: hidden;
   }
   .input-ta::placeholder { color: var(--text3); }
 
   .card-footer {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 12px 10px; border-top: 0.5px solid var(--border);
+    gap: 8px; padding: 8px 12px 10px; border-top: 0.5px solid var(--border);
   }
+  .card-footer .char-count { flex-shrink: 0; }
   .char-count { font-size: 12px; color: var(--text3); }
   .paste-btn {
     display: flex; align-items: center; gap: 5px;
@@ -304,7 +304,7 @@
     background: var(--accent); color: #fff; border: none;
     font-size: 14px; font-weight: 500; cursor: pointer;
     font-family: inherit; transition: opacity 0.15s;
-    letter-spacing: -0.2px;
+    letter-spacing: -0.2px; white-space: nowrap; flex-shrink: 0;
   }
   .translate-btn:hover { opacity: 0.88; }
   .ticon {
@@ -323,6 +323,7 @@
     background: transparent; color: var(--accent);
     border: 1.5px solid var(--accent); font-size: 14px; font-weight: 500;
     cursor: pointer; font-family: inherit; transition: all 0.15s;
+    white-space: nowrap; flex-shrink: 0;
   }
   .grammar-btn:hover { background: var(--accent-bg); }
   .grammar-btn:disabled { opacity: 0.45; cursor: default; }
@@ -393,11 +394,11 @@
     padding: 11px 14px 0; text-transform: uppercase; letter-spacing: 0.5px;
   }
   .result-area {
-    padding: 9px 14px 12px; min-height: 90px;
+    padding: 9px 14px 12px; min-height: 0;
     font-family: inherit; font-size: 15px; line-height: 1.7;
     color: var(--text); white-space: pre-wrap; word-break: break-word;
   }
-  .result-area.placeholder { color: var(--text3); font-size: 14px; }
+  .result-area.placeholder { color: var(--text3); font-size: 14px; min-height: 70px; }
 
   .loading { display: flex; gap: 5px; padding: 18px 14px; }
   .dot {
@@ -474,16 +475,16 @@
   .save-msg { font-size: 12px; color: var(--accent); text-align: center; margin-top: 8px; display: none; }
 
   .back-translation {
-    padding: 0 14px 12px;
+    padding: 9px 14px 12px;
     font-size: 10.5px;
     line-height: 1.6;
     color: var(--text3);
-    white-space: pre-wrap;
     word-break: break-word;
     border-top: 0.5px dashed var(--border);
-    margin-top: 2px;
     display: none;
   }
+  /* pre-wrap은 텍스트 노드에만 걸어야 태그 사이 들여쓰기가 빈 줄로 안 새어나온다 */
+  #backTranslationText { white-space: pre-wrap; }
   .back-translation-label {
     font-size: 10px;
     color: var(--text3);
@@ -625,6 +626,16 @@
     font-size: 16px; color: var(--text3);
     background: none; border: none; cursor: pointer; padding: 2px 6px;
   }
+  .comment-box {
+    margin: 0 14px 10px; padding: 9px 12px;
+    background: var(--bg2); border-radius: 10px;
+    border-left: 3px solid var(--accent);
+    font-size: 12px; color: var(--text3); line-height: 1.6;
+    display: none;
+  }
+  .comment-box.visible { display: block; }
+  .comment-label { font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 3px; }
+  #commentText { white-space: pre-wrap; word-break: break-word; }
 </style>
 </head>
 <body>
@@ -763,17 +774,15 @@
       </div>
       <div class="result-area placeholder" id="resultText">번역 결과가 여기에 표시됩니다.</div>
       <div class="error-box" id="errorBox" style="display:none;"></div>
+      <div id="commentBox" class="comment-box"><div class="comment-label">📝 번역 코멘트</div><div id="commentText"></div></div>
+      <div id="pronunciationWrap" style="display:none;padding:2px 14px 10px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">📖 독음</div>
+        <div id="pronunciationText" style="font-size:14px;color:var(--text2);line-height:1.6;white-space:pre-wrap;"></div>
+      </div>
       <div class="back-translation-loading" id="btLoading">
         <div class="loading-dots" style="display:flex;gap:4px;"><div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite;"></div><div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite;animation-delay:0.2s;"></div><div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite;animation-delay:0.4s;"></div></div>
       </div>
-      <div class="back-translation" id="backTranslation">
-        <div class="back-translation-label">↩ 한국어로 보면</div>
-        <div id="backTranslationText"></div>
-      </div>
-      <div id="pronunciationWrap" style="display:none;padding:8px 14px 4px;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">📖 독음</div>
-        <div id="pronunciationText" style="font-size:14px;color:var(--text2);line-height:1.6;"></div>
-      </div>
+      <div class="back-translation" id="backTranslation"><div class="back-translation-label">↩ 한국어로 보면</div><div id="backTranslationText"></div></div>
       <div class="result-footer">
         <button class="copy-btn" id="ttsBtn" style="margin-right:auto;">🔊</button>
         <button class="copy-btn" id="pronBtn">독음</button>
@@ -871,6 +880,11 @@
       <input type="text" id="ttsModelInput" placeholder="gemini-3.1-flash-tts-preview">
       <div class="field-note">기본값: gemini-3.1-flash-tts-preview</div>
     </div>
+    <div class="field">
+      <div class="field-label">이미지 번역 모델</div>
+      <input type="text" id="imgModelInput" placeholder="gemini-3.1-flash-image">
+      <div class="field-note">기본값: gemini-3.1-flash-image</div>
+    </div>
 
     <div class="field">
       <div class="field-label">캐릭터 이름</div>
@@ -896,6 +910,13 @@ function getModel() {
 }
 function getTtsModel() {
   return localStorage.getItem('gemini_tts_model') || 'gemini-3.1-flash-tts-preview';
+}
+function getImageModel() {
+  return localStorage.getItem('gemini_image_model') || 'gemini-3.1-flash-image';
+}
+// Thinking 모드는 응답이 오래 걸려서 짧은 타임아웃에 걸린다
+function reqTimeout() {
+  return state.thinking ? 90000 : 25000;
 }
 
 const LANG_CONFIG = {
@@ -971,6 +992,26 @@ const state = {
 const $ = id => document.getElementById(id);
 let _cancelled = false;
 let _tonesCache = null;
+let _activeAbort = null;   // 진행 중인 요청 중단용
+let _reqSeq = 0;           // 늦게 도착한 응답이 최신 UI를 덮어쓰지 않게 하는 카운터
+
+// 일본어 타겟에서만 쓰는 말투는 나머지 언어에서 잠근다.
+// renderChips()가 칩을 다시 그릴 때마다 호출해야 상태가 안 풀린다.
+function applyToneAvailability() {
+  const isJA = state.tgtLang === 'ja' && state.srcLang === 'ko';
+  ['formal', 'young_male', 'adult'].forEach(id => {
+    const btn = document.querySelector(`.chip[data-tone="${id}"]`);
+    if (!btn) return;
+    btn.disabled = !isJA;
+    btn.style.opacity = isJA ? '' : '0.35';
+    btn.style.cursor = isJA ? '' : 'not-allowed';
+    if (!isJA && state.tone === id) {
+      state.tone = 'none';
+      btn.classList.remove('active');
+      updateSummary();
+    }
+  });
+}
 
 // ── 언어 바 ──
 function updateLangUI() {
@@ -1005,16 +1046,16 @@ function updateLangUI() {
 
   $('optionsCard').classList.toggle('disabled', isToKO);
   if (isToKO) { $('optBody').classList.remove('open'); $('chevron').classList.remove('open'); }
-  $('grammarBtn').style.display = isToKO ? 'flex' : 'none';
-  if (!isToKO) updateGrammarBtn();
+  applyToneAvailability();
   $('spellBtn').style.display = isToKO ? 'none' : 'flex';
   $('imgAttachBtn').style.display = isToKO ? 'inline-flex' : 'none';
-  if (isToKO) { // 한국어 원문일 때 이미지 초기화
+  if (!isToKO) { // 한국어 원문일 땐 이미지를 못 쓰므로 초기화 (안 그러면 다음 번역에 딸려 간다)
     state.imgData = null; state.imgMime = null;
     $('imgPreviewWrap').style.display = 'none';
     $('imgAttachBtn').textContent = '📷';
     $('imgAttachBtn').style.color = '';
   }
+  updateGrammarBtn();   // 이미지 정리가 끝난 뒤에 버튼 역할을 정한다
   $('optToggle').classList.toggle('disabled-mode', isToKO);
   $('disabledNotice').style.visibility = isToKO ? 'visible' : 'hidden';
   $('optSummary').style.display = isToKO ? 'none' : 'inline';
@@ -1053,9 +1094,25 @@ $('swapBtn').onclick = () => {
   clearResult();
 };
 
+// 입력이 길어지면 칸 자체를 늘린다 (내부 스크롤 없음 → 페이지가 그대로 스크롤됨)
+function autoGrowInput() {
+  const ta = $('inputText');
+  if (!ta) return;
+  ta.style.height = 'auto';
+  ta.style.height = Math.max(130, ta.scrollHeight) + 'px';
+}
+
+function setInputText(text) {
+  $('inputText').value = text;
+  $('charCount').textContent = text.length + ' / 2000';
+  autoGrowInput();
+}
+
 $('inputText').oninput = function() {
   $('charCount').textContent = this.value.length + ' / 2000';
+  autoGrowInput();
 };
+window.addEventListener('resize', autoGrowInput);
 
 // ── 옵션 ──
 $('optToggle').onclick = () => {
@@ -1071,32 +1128,7 @@ $('extraBtn').onclick = function(e) {
   if (!state.extraOn) $('extraPrompt').value = '';
 };
 
-document.querySelectorAll('.chip:not(#extraBtn)').forEach(c => {
-  c.onclick = function() {
-    const alreadyActive = this.classList.contains('active');
-    document.querySelectorAll('.chip:not(#extraBtn)').forEach(x => x.classList.remove('active'));
-    if (alreadyActive) {
-      state.tone = 'none';
-    } else {
-      this.classList.add('active');
-      state.tone = this.dataset.tone;
-    }
-    $('charSection').style.display = state.tone === 'character' ? 'block' : 'none';
-    if (state.tone === 'character') {
-      $('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
-  const savedIcon = localStorage.getItem('custom_icon');
-  if (savedIcon) {
-    applyCustomIcon(savedIcon);
-  } else {
-    $('iconPreview').src = $('headerCharImg') ? $('headerCharImg').src : '';
-  }
-  $('modelInput').value = localStorage.getItem('gemini_model') || 'gemini-2.5-flash-lite';
-      const saved = localStorage.getItem('char_prompt_default') || KOUGA_PROMPT;
-      if (!$('charPrompt').value) $('charPrompt').value = saved;
-    }
-    updateSummary();
-  };
-});
+// 말투 칩은 renderChips()가 만들면서 클릭 핸들러까지 붙인다.
 
 $('thinkingToggle').onclick = function() {
   state.thinking = !state.thinking;
@@ -1137,6 +1169,9 @@ $('saveBtn').onclick = () => {
   const tv = $('ttsModelInput').value.trim();
   if (tv) localStorage.setItem('gemini_tts_model', tv);
   else localStorage.removeItem('gemini_tts_model');
+  const iv = $('imgModelInput').value.trim();
+  if (iv) localStorage.setItem('gemini_image_model', iv);
+  else localStorage.removeItem('gemini_image_model');
   // 아이콘은 iconUpload 이벤트에서 자동 저장됨
   if ($('charNameInput')) localStorage.setItem('char_name', $('charNameInput').value.trim());
   if ($('charXInput')) localStorage.setItem('char_x', $('charXInput').value.trim().replace('@',''));
@@ -1161,19 +1196,49 @@ function applyCustomIcon(base64) {
   if ($('iconPreview')) $('iconPreview').src = base64;
 }
 
+// 원본을 그대로 넣으면 localStorage 용량(약 5MB)을 넘겨 저장이 통째로 실패한다
+function resizeIcon(file, size = 256) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('이미지를 읽지 못했어요.'));
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('이미지를 열지 못했어요.'));
+      img.onload = () => {
+        const side = Math.min(img.width, img.height);
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = size;
+        // 가운데를 정사각형으로 크롭
+        cv.getContext('2d').drawImage(
+          img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+        resolve(cv.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const upload = $('iconUpload');
   if (!upload) return;
-  upload.onchange = function() {
+  upload.onchange = async function() {
     const file = this.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const base64 = e.target.result;
-      localStorage.setItem('custom_icon', base64);
+    try {
+      const base64 = await resizeIcon(file);
+      try {
+        localStorage.setItem('custom_icon', base64);
+      } catch(err) {
+        alert('저장 공간이 부족해요. 히스토리를 비운 뒤 다시 시도해주세요.');
+        return;
+      }
       applyCustomIcon(base64);
-    };
-    reader.readAsDataURL(file);
+    } catch(err) {
+      alert(err.message);
+    } finally {
+      this.value = '';
+    }
   };
 });
 
@@ -1246,6 +1311,7 @@ function renderChips() {
     };
     chips.insertBefore(btn, extraBtn);
   });
+  applyToneAvailability();
 }
 
 function updateCharChip(forceRenderChips = false) {
@@ -1280,6 +1346,8 @@ function loadStorage() {
     $('iconPreview').src = $('headerCharImg') ? $('headerCharImg').src : '';
   }
   $('modelInput').value = localStorage.getItem('gemini_model') || 'gemini-2.5-flash-lite';
+  $('ttsModelInput').value = localStorage.getItem('gemini_tts_model') || '';
+  $('imgModelInput').value = localStorage.getItem('gemini_image_model') || '';
   const saved = localStorage.getItem('char_prompt_default') || KOUGA_PROMPT;
   $('charPrompt').value = saved;
   const name = localStorage.getItem('char_name') || '코우가';
@@ -1306,6 +1374,9 @@ function clearResult() {
   $('backTranslation').style.display = 'none';
   $('btLoading').style.display = 'none';
   $('backTranslationText').textContent = '';
+  $('pronunciationWrap').style.display = 'none';
+  $('pronBtn').classList.remove('active');
+  if ($('commentBox')) { $('commentBox').classList.remove('visible'); $('commentText').textContent = ''; }
 }
 
 function buildPrompt(text) {
@@ -1314,7 +1385,7 @@ function buildPrompt(text) {
   const tgt = state.srcLang === 'ko' ? cfg.label : '한국어';
 
   if (state.srcLang !== 'ko') {
-    return `당신은 ${src}→한국어 전문 번역가입니다.
+    return `당신은 전문 번역가입니다.
 
 [번역 지침]
 1. 원문에 담긴 말투, 어조, 감정을 그대로 살려서 번역하세요. (반말이면 반말, 존댓말이면 존댓말, 거친 말투면 거칠게)
@@ -1331,14 +1402,16 @@ ${text}`;
     toneInstr = cfg.toneInstr.none + ` 단, 다음 캐릭터 설명에 맞는 말투로 번역하세요 (반드시 ${tgt}로 번역): "${prompt}"`;
   } else if (state.tone !== 'none') {
     const customTone = getTones().find(t => t.id === state.tone);
-    const customPrompt = customTone?.prompt && customTone.prompt !== 'USE_CHAR_PROMPT' ? customTone.prompt : null;
-    if (customPrompt) {
-      // 기본 번역 지침(언어) 유지 + 말투 지시 추가
-      toneInstr = cfg.toneInstr.none + ' 단, 말투는 다음과 같이 해줘: ' + customPrompt;
-    } else if (state.tone === 'formal') {
-      toneInstr = cfg.toneInstr.formal;
-    } else if (state.tone === 'young_male') {
-      toneInstr = cfg.toneInstr.young_male;
+    const defaultTone = DEFAULT_TONES.find(t => t.id === state.tone);
+    const userPrompt = customTone?.prompt && customTone.prompt !== 'USE_CHAR_PROMPT' ? customTone.prompt : null;
+    // 기본 말투를 손대지 않았으면 LANG_CONFIG의 언어별 전용 지시문을 쓴다.
+    // (일본어 정중체/1인칭 같은 디테일이 거기에만 있다)
+    const untouched = !userPrompt || (defaultTone && userPrompt === defaultTone.prompt);
+    if (untouched && cfg.toneInstr[state.tone]) {
+      toneInstr = cfg.toneInstr[state.tone];
+    } else if (userPrompt) {
+      // 사용자가 직접 쓴 말투: 기본 번역 지침(언어) 유지 + 말투 지시 추가
+      toneInstr = cfg.toneInstr.none + ' 단, 말투는 다음과 같이 해줘: ' + userPrompt;
     } else if (state.tone === 'adult') {
       toneInstr = cfg.toneInstr.adult || `성적인 내용을 번역합니다. 해당 언어에서 실제로 사용하는 성적 은어를 자연스럽고 적극적으로 사용하세요.`;
     } else {
@@ -1349,13 +1422,13 @@ ${text}`;
   }
 
   const strictInstr = state.strict
-    ? `원문의 모든 단어, 표현, 뉘앙스를 빠짐없이 번역하세요. 내용 추가, 생략, 의역은 절대 하지 마세요. 단, 번역 대상 언어(${tgt})에서 사용하지 않는 표현이나 단어가 있을 경우 알맞은 문맥으로 수정하고, 해당 변경 사항을 번역문 하단에 [코멘트: ...] 형식으로 표기해주세요.`
+    ? `원문의 모든 단어, 표현, 뉘앙스를 빠짐없이 번역하세요. 내용 추가, 생략, 의역은 절대 하지 마세요. 단, 번역 대상 언어(${tgt})에서 사용하지 않는 표현이나 단어가 있을 경우 알맞은 문맥으로 수정하세요. 변경한 내용이 있으면 번역문 맨 마지막에 "---COMMENT---" 구분자를 넣고 그 아래에 변경 이유를 간단히 적어주세요. 변경 없으면 구분자 없이 번역만 출력하세요.`
     : '원문의 핵심 의미를 유지하되, 자연스럽고 읽기 좋은 표현으로 자유롭게 다듬어도 좋습니다.';
 
   const extraInstr = state.extraOn && $('extraPrompt').value.trim()
     ? `\n4. 추가 요청: ${$('extraPrompt').value.trim()}` : '';
 
-  return `당신은 ${src}→${tgt} 전문 번역가입니다.
+  return `당신은 전문 번역가입니다. ${src}를 ${tgt}로 번역해주세요.
 
 [번역 지침]
 1. ${toneInstr}
@@ -1366,18 +1439,21 @@ ${text}`;
 ${text}`;
 }
 
+function cancelTranslate() {
+  _cancelled = true;
+  _reqSeq++;                                  // 뒤늦게 온 응답은 무시한다
+  if (_activeAbort) { try { _activeAbort.abort(); } catch(e) {} _activeAbort = null; }
+  state.busy = false;
+  $('translateBtn').onclick = translate;
+  $('translateLabel').textContent = '번역';
+  $('loading').style.display = 'none';
+  setTranslateIcon('idle');
+}
+
 async function translate() {
   const text = $('inputText').value.trim();
   // 번역 중이면 취소
-  if (state.busy) {
-    _cancelled = true;
-    state.busy = false;
-    $("translateBtn").onclick = translate;
-    $("translateLabel").textContent = "번역";
-    $("loading").style.display = "none";
-    setTranslateIcon("idle");
-    return;
-  }
+  if (state.busy) { cancelTranslate(); return; }
   if (!text && !state.imgData) return;
 
   if (!getApiKey()) {
@@ -1388,15 +1464,9 @@ async function translate() {
 
   state.busy = true;
   _cancelled = false;
+  const myReq = ++_reqSeq;
   $('translateBtn').disabled = false;
-  $('translateBtn').onclick = () => {
-    _cancelled = true;
-    state.busy = false;
-    $('translateBtn').onclick = translate;
-    $('translateLabel').textContent = '번역';
-    $('loading').style.display = 'none';
-    setTranslateIcon('idle');
-  };
+  $('translateBtn').onclick = cancelTranslate;
   $('translateLabel').textContent = '취소';
   setTranslateIcon('loading');
   $('resultText').style.display = 'none';
@@ -1418,14 +1488,15 @@ async function translate() {
           ] }],
           generationConfig: { temperature: 0.3, maxOutputTokens: 2048, ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) }
         })
-      }
+      },
+      1, reqTimeout()
     );
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || `오류 ${res.status}`);
     const parts = data.candidates?.[0]?.content?.parts || [];
     const result = parts.filter(p => p.text).map(p => p.text).join('').trim();
     if (!result) throw new Error('번역 결과를 받지 못했습니다.');
-    if (_cancelled) return;
+    if (_cancelled || myReq !== _reqSeq) return;
     state.result = result;
     _succeeded = true;
     haptic();
@@ -1445,16 +1516,28 @@ ${result}`;
       { role: 'user', parts: [{ text: feedbackSystemMsg }] },
       { role: 'model', parts: [{ text: '네, 번역 결과를 기억했습니다. 수정 요청을 말씀해주세요.' }] }
     ];
-    $('resultText').textContent = result;
+    // ---COMMENT--- 파싱
+    const commentSplit = result.split('---COMMENT---');
+    const cleanResult = commentSplit[0].trim();
+    const comment = commentSplit[1]?.trim() || '';
+    state.result = cleanResult;
+    $('resultText').textContent = cleanResult;
     $('resultText').className = 'result-area';
     $('pronunciationWrap').style.display = 'none';
     if ($('pronBtn')) { $('pronBtn').classList.remove('active'); }
     $('resultText').style.display = 'block';
+    if (comment) {
+      $('commentText').textContent = comment;
+      $('commentBox').classList.add('visible');
+    } else {
+      $('commentBox').classList.remove('visible');
+      $('commentText').textContent = '';
+    }
     $('fbHistory').innerHTML = '';
     $('feedbackCard').classList.add('visible');
     if (state.srcLang === 'ko') fetchBackTranslation(result);
   } catch (err) {
-    if (err.name === 'AbortError') {
+    if (_cancelled || err.name === 'AbortError') {
       $('loading').style.display = 'none';
     } else {
       $('errorBox').textContent = '오류: ' + err.message;
@@ -1462,13 +1545,16 @@ ${result}`;
       $('loading').style.display = 'none';
     }
   } finally {
-    state.busy = false;
-    $('translateBtn').disabled = false;
-    $('translateBtn').onclick = translate;
-    $('translateLabel').textContent = '번역';
-    $('loading').style.display = 'none';
-    setTranslateIcon(_succeeded ? 'done' : 'idle');
-    updateGrammarBtn();
+    // 취소했거나 더 최신 요청이 시작됐으면 UI는 그쪽에 맡긴다
+    if (myReq === _reqSeq) {
+      state.busy = false;
+      $('translateBtn').disabled = false;
+      $('translateBtn').onclick = translate;
+      $('translateLabel').textContent = '번역';
+      $('loading').style.display = 'none';
+      setTranslateIcon(_succeeded ? 'done' : 'idle');
+      updateGrammarBtn();
+    }
   }
 }
 
@@ -1476,10 +1562,13 @@ ${result}`;
 async function fetchWithRetry(url, options, maxRetries = 1, timeoutMs = 20000) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    _activeAbort = controller;               // 취소 버튼이 이걸 abort한다
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
     try {
       const res = await fetch(url, { ...options, signal: controller.signal });
       clearTimeout(timer);
+      _activeAbort = null;
       // 429(rate limit), 5xx 서버 에러는 재시도
       if (!res.ok && attempt < maxRetries && (res.status === 429 || res.status >= 500)) {
         const wait = (attempt + 1) * 800;
@@ -1489,11 +1578,13 @@ async function fetchWithRetry(url, options, maxRetries = 1, timeoutMs = 20000) {
       return res;
     } catch(e) {
       clearTimeout(timer);
+      _activeAbort = null;
       if (_cancelled) throw e;
       if (attempt < maxRetries && (e.name === 'AbortError' || e.message.includes('fetch'))) {
         await new Promise(r => setTimeout(r, (attempt + 1) * 800));
         continue;
       }
+      if (timedOut) throw new Error('응답이 너무 오래 걸려요. 다시 시도해주세요.');
       throw e;
     }
   }
@@ -1618,12 +1709,19 @@ ${result}`;
 $('grammarBtn').onclick = checkGrammar;
 
 function updateGrammarBtn() {
-  if (state.imgData && state.srcLang !== 'ko') {
-    $('grammarBtn').textContent = '🖼️ 이미지 번역';
-    $('grammarBtn').onclick = translateImage;
+  const btn = $('grammarBtn');
+  const reverse = state.srcLang !== 'ko';     // 외국어 → 한국어
+  if (reverse && state.imgData) {
+    btn.textContent = '🖼️ 이미지 번역';
+    btn.onclick = translateImage;
+    btn.style.display = 'flex';
+  } else if (reverse && state.tgtLang === 'ja') {
+    // 문법 체크 프롬프트가 일본어 전용이라 일본어일 때만 노출한다
+    btn.textContent = '문법';
+    btn.onclick = checkGrammar;
+    btn.style.display = 'flex';
   } else {
-    $('grammarBtn').textContent = '문법';
-    $('grammarBtn').onclick = checkGrammar;
+    btn.style.display = 'none';
   }
 }
 
@@ -1647,7 +1745,7 @@ async function translateImage() {
   try {
     // 이미지 생성은 오래 걸리므로 타임아웃 없이 직접 fetch
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${getApiKey()}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${getImageModel()}:generateContent?key=${getApiKey()}`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [
@@ -1720,6 +1818,7 @@ function addFbMsg(role, text) {
 async function sendFeedback() {
   const msg = $('feedbackInput').value.trim();
   if (!msg || state.busy) return;
+  if (!getApiKey()) { $('overlay').classList.add('open'); return; }
 
   addFbMsg('user', msg);
   $('feedbackInput').value = '';
@@ -1736,7 +1835,8 @@ async function sendFeedback() {
       `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: state.conversation,
-          generationConfig: { temperature: 0.3, maxOutputTokens: 2048, ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) } }) }
+          generationConfig: { temperature: 0.3, maxOutputTokens: 2048, ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) } }) },
+      1, reqTimeout()
     );
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || `오류 ${res.status}`);
@@ -1828,56 +1928,83 @@ $('imgRemoveBtn').onclick = () => {
   updateGrammarBtn();
 };
 
-$('pasteBtn').onclick = async function() {
-  try {
-    const items = await navigator.clipboard.read();
-    let handled = false;
+function applyClipboardImage(dataUrl) {
+  const [header, b64] = dataUrl.split(',');
+  state.imgData = b64;
+  state.imgMime = header.match(/:(.*?);/)[1];
+  $('imgPreview').src = dataUrl;
+  $('imgPreviewWrap').style.display = 'block';
+  $('imgAttachBtn').textContent = '📷✓';
+  $('imgAttachBtn').style.color = 'var(--accent)';
+  updateGrammarBtn();
+}
 
-    // 이미지가 있으면 우선 처리
-    for (const item of items) {
-      const imgType = item.types.find(t => t.startsWith('image/'));
-      if (imgType) {
-        const blob = await item.getType(imgType);
-        const reader = new FileReader();
-        reader.onload = e => {
-          const dataUrl = e.target.result;
-          const [header, b64] = dataUrl.split(',');
-          const mime = header.match(/:(.*?);/)[1];
-          state.imgData = b64;
-          state.imgMime = mime;
-          $('imgPreview').src = dataUrl;
-          $('imgPreviewWrap').style.display = 'block';
-          $('imgAttachBtn').textContent = '📷✓';
-          $('imgAttachBtn').style.color = 'var(--accent)';
-          updateGrammarBtn();
-        };
-        reader.readAsDataURL(blob);
-        this.textContent = '🖼️ 이미지!';
-        setTimeout(() => { this.textContent = '📋'; }, 2000);
-        handled = true;
-        break;
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = () => reject(new Error('read failed'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+// iOS Safari는 탭 한 번당 클립보드 API를 딱 한 번만 허용한다.
+// read() 후에 readText()를 또 부르면 제스처가 만료돼서 거부되므로,
+// 이미지와 텍스트를 read() 결과 하나에서 같이 꺼낸다.
+$('pasteBtn').onclick = async function() {
+  const btn = this;
+  const flash = (label, ok) => {
+    btn.textContent = label;
+    if (ok) btn.classList.add('pasted');
+    setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('pasted'); }, 2000);
+  };
+
+  if (!navigator.clipboard || !window.isSecureContext) {
+    // http나 file://에서는 클립보드 API 자체가 없다
+    $('inputText').focus();
+    flash('길게 눌러서');
+    return;
+  }
+
+  try {
+    let imgPromise = null, textPromise = null;
+    if (navigator.clipboard.read) {
+      let items = null;
+      try { items = await navigator.clipboard.read(); } catch(e) { items = null; }
+      if (items) {
+        // getType 프로미스를 먼저 전부 만들어 두고 나중에 await (Safari 안전)
+        for (const item of items) {
+          const imgType = item.types.find(t => t.startsWith('image/'));
+          if (imgType && !imgPromise) imgPromise = item.getType(imgType);
+          if (item.types.includes('text/plain') && !textPromise) textPromise = item.getType('text/plain');
+        }
       }
     }
 
-    // 이미지 없으면 텍스트 처리
-    if (!handled) {
-      const text = await navigator.clipboard.readText();
-      $('inputText').value = text;
-      $('charCount').textContent = text.length + ' / 2000';
-      this.textContent = '✓';
-      setTimeout(() => { this.textContent = '📋'; }, 2000);
+    if (imgPromise) {
+      applyClipboardImage(await blobToDataUrl(await imgPromise));
+      flash('🖼️ 이미지!', true);
+      return;
     }
+    if (textPromise) {
+      const text = (await (await textPromise).text()) || '';
+      if (text) { setInputText(text); flash('✓', true); return; }
+    }
+
+    // read()를 못 썼을 때만 readText() 폴백
+    const text = await navigator.clipboard.readText();
+    if (!text) throw new Error('empty');
+    setInputText(text);
+    flash('✓', true);
   } catch(e) {
     $('inputText').focus();
-    this.textContent = '길게 눌러서';
-    setTimeout(() => { this.textContent = '📋'; }, 2000);
+    flash('길게 눌러서');
   }
 };
 
 // ── 지우기 ──
 $('clearBtn').onclick = function() {
-  $('inputText').value = '';
-  $('charCount').textContent = '0 / 2000';
+  setInputText('');
   clearResult();
 };
 
@@ -1924,8 +2051,7 @@ function renderHistory() {
   el.querySelectorAll('.history-item').forEach(item => {
     item.onclick = () => {
       const h = list[+item.dataset.idx];
-      $('inputText').value = h.src;
-      $('charCount').textContent = h.src.length + ' / 2000';
+      setInputText(h.src);
       closeOverlay($('historyOverlay'), 250);
     };
   });
@@ -2362,12 +2488,9 @@ function preventScrollPropagation(el) {
   }, { passive: false });
 }
 document.addEventListener('DOMContentLoaded', () => {
-  const sheet = document.querySelector('.sheet');
+  document.querySelectorAll('.sheet').forEach(preventScrollPropagation);
   const histList = $('historyList');
-  const inputTa = $('inputText');
-  if (sheet) preventScrollPropagation(sheet);
   if (histList) preventScrollPropagation(histList);
-  if (inputTa) preventScrollPropagation(inputTa);
 });
 
 // iOS 핀치 줌 방지
@@ -2388,6 +2511,7 @@ document.body.addEventListener('touchmove', function(e) {
 }, { passive: false });
 updateLangUI();
 updateSummary();
+autoGrowInput();
 </script>
 
 </body>
