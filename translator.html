@@ -1047,6 +1047,16 @@ button, input, textarea, a{ font-family:inherit; }
 #toneEditCancel{ background:var(--fill) !important; }
 #imgAttachBtn{ border:none !important; background:var(--fill) !important; width:32px !important; height:32px !important; }
 
+/* ── 설렉트 ── */
+.field select{
+  width:100%; padding:12px 14px; border:none; border-radius:var(--radius-md);
+  background:var(--fill); color:var(--text); font-size:16px; font-family:inherit;
+  outline:none; -webkit-appearance:none; appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='rgb(140,140,145)' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat:no-repeat; background-position:right 14px center;
+  padding-right:38px;
+}
+
 /* ── 역번역 경고 · 용어집 ── */
 .bt-warn{
   display:none; margin-top:10px; padding:9px 12px; border-radius:10px;
@@ -1330,6 +1340,43 @@ button, input, textarea, a{ font-family:inherit; }
       <div class="field-note">기본값: gemini-3.1-flash-tts-preview</div>
     </div>
     <div class="field">
+      <div class="field-label">TTS 목소리</div>
+      <select id="ttsVoiceInput">
+        <option value="Zephyr">Zephyr — 밝음</option>
+        <option value="Puck">Puck — 경쾌함</option>
+        <option value="Charon">Charon — 설명조</option>
+        <option value="Kore">Kore — 단단함</option>
+        <option value="Fenrir">Fenrir — 들뜸</option>
+        <option value="Leda">Leda — 앳됨</option>
+        <option value="Orus">Orus — 단단함</option>
+        <option value="Aoede">Aoede — 산뜻함</option>
+        <option value="Callirrhoe">Callirrhoe — 느긋함</option>
+        <option value="Autonoe">Autonoe — 밝음</option>
+        <option value="Enceladus">Enceladus — 숨소리 섞임</option>
+        <option value="Iapetus">Iapetus — 또렷함</option>
+        <option value="Umbriel">Umbriel — 느긋함</option>
+        <option value="Algieba">Algieba — 부드러움</option>
+        <option value="Despina">Despina — 부드러움</option>
+        <option value="Erinome">Erinome — 또렷함</option>
+        <option value="Algenib">Algenib — 거친 음색</option>
+        <option value="Rasalgethi">Rasalgethi — 설명조</option>
+        <option value="Laomedeia">Laomedeia — 경쾌함</option>
+        <option value="Achernar">Achernar — 여림</option>
+        <option value="Alnilam">Alnilam — 단단함</option>
+        <option value="Schedar">Schedar — 평탄함</option>
+        <option value="Gacrux">Gacrux — 중후함</option>
+        <option value="Pulcherrima">Pulcherrima — 적극적</option>
+        <option value="Achird">Achird — 친근함</option>
+        <option value="Zubenelgenubi">Zubenelgenubi — 편안함</option>
+        <option value="Vindemiatrix">Vindemiatrix — 차분함</option>
+        <option value="Sadachbia">Sadachbia — 활기참</option>
+        <option value="Sadaltager">Sadaltager — 박식함</option>
+        <option value="Sulafat">Sulafat — 따뜻함</option>
+      </select>
+      <div class="field-note">저장하면 다음 재생부터 적용됩니다. 목소리별 미리 듣기는 Google AI Studio에서 할 수 있어요.</div>
+    </div>
+
+    <div class="field">
       <div class="field-label">이미지 번역 모델</div>
       <input type="text" id="imgModelInput" placeholder="gemini-3.1-flash-image">
       <div class="field-note">기본값: gemini-3.1-flash-image</div>
@@ -1365,6 +1412,9 @@ function getModel() {
 }
 function getTtsModel() {
   return localStorage.getItem('gemini_tts_model') || 'gemini-3.1-flash-tts-preview';
+}
+function getTtsVoice() {
+  return localStorage.getItem('gemini_tts_voice') || 'Kore';
 }
 function getImageModel() {
   return localStorage.getItem('gemini_image_model') || 'gemini-3.1-flash-image';
@@ -1650,6 +1700,7 @@ $('saveBtn').onclick = () => {
   const tv = $('ttsModelInput').value.trim();
   if (tv) localStorage.setItem('gemini_tts_model', tv);
   else localStorage.removeItem('gemini_tts_model');
+  if ($('ttsVoiceInput')) localStorage.setItem('gemini_tts_voice', $('ttsVoiceInput').value);
   const iv = $('imgModelInput').value.trim();
   if (iv) localStorage.setItem('gemini_image_model', iv);
   else localStorage.removeItem('gemini_image_model');
@@ -1883,6 +1934,7 @@ function loadStorage() {
   $('modelInput').value = localStorage.getItem('gemini_model') || 'gemini-2.5-flash-lite';
   $('ttsModelInput').value = localStorage.getItem('gemini_tts_model') || '';
   $('imgModelInput').value = localStorage.getItem('gemini_image_model') || '';
+  if ($('ttsVoiceInput')) $('ttsVoiceInput').value = getTtsVoice();
   const saved = localStorage.getItem('char_prompt_default') || KOUGA_PROMPT;
   $('charPrompt').value = saved;
   const name = localStorage.getItem('char_name') || '코우가';
@@ -3130,7 +3182,7 @@ function ttsCachePut(key, url) {
 $('ttsBtn').onclick = async function() {
   if (!state.result) return;
   if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; $('ttsBtn').innerHTML = ICN.speak; return; }
-  const cacheKey = getTtsModel() + '|Kore|' + state.result;
+  const cacheKey = getTtsModel() + '|' + getTtsVoice() + '|' + state.result;
   const cached = ttsCacheGet(cacheKey);
   if (cached) {
     ttsAudio = new Audio(cached);
@@ -3150,7 +3202,7 @@ $('ttsBtn').onclick = async function() {
           contents: [{ parts: [{ text: state.result }] }],
           generationConfig: {
             responseModalities: ['AUDIO'],
-            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } }
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: getTtsVoice() } } }
           }
         })
       }
