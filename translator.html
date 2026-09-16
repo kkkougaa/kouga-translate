@@ -1477,6 +1477,89 @@ button, input, textarea, a{ font-family:inherit; }
   font-size:13px; color:var(--accent); text-decoration:none;
 }
 
+/* 22 · 액션 시트 — 카메라/앨범처럼 갈래가 둘뿐일 때 쓰는 가벼운 선택지 */
+.act-sheet{
+  position:fixed; inset:0; z-index:650; display:none;
+  align-items:flex-end; justify-content:center;
+  background:rgba(0,0,0,.28); padding:0 8px calc(var(--safe-bottom) + 8px);
+}
+.act-sheet.open{ display:flex; animation:fadeIn .16s ease; }
+.act-wrap{ width:100%; max-width:464px; }
+.act-panel{
+  background:var(--bg); border-radius:14px; overflow:hidden; margin-bottom:8px;
+  animation:sheetUp .22s cubic-bezier(.32,.72,0,1) both;
+}
+.act-item{
+  display:flex; align-items:center; gap:12px; width:100%;
+  height:56px; padding:0 20px; border:none; background:none; cursor:pointer;
+  font-family:inherit; font-size:17px; color:var(--text); text-align:left;
+}
+.act-item + .act-item{ border-top:.5px solid var(--border); }
+.act-item:active{ background:var(--fill); }
+.act-item svg{ flex:none; color:var(--text2); }
+.act-cancel{
+  width:100%; height:56px; border:none; border-radius:14px; cursor:pointer;
+  background:var(--bg); color:var(--accent);
+  font-family:inherit; font-size:17px; font-weight:600;
+  animation:sheetUp .22s cubic-bezier(.32,.72,0,1) both;
+}
+.act-cancel:active{ background:var(--fill); }
+@keyframes sheetUp{ from{ transform:translateY(14px); opacity:0 } to{ transform:none; opacity:1 } }
+
+/* 23 · 글자수는 절반을 넘겨야 나타난다. 평소엔 눈에 걸릴 이유가 없다 */
+.char-count{
+  opacity:0; transition:opacity .2s ease, color .2s ease;
+  font-variant-numeric:tabular-nums;   /* 숫자 폭이 흔들리지 않게 */
+}
+.char-count.show{ opacity:1; }
+.char-count.near{ color:var(--red); }
+
+
+/* 26 · 키보드가 덮으면 번역 줄만 떼어내 키보드 위로 띄운다 */
+.key-slot{ flex:1 1 100%; }
+.key-bar{
+  position:fixed; left:10px; right:10px; top:0; z-index:40;
+  padding:8px; display:none; pointer-events:none;
+}
+.key-bar.on{ display:block; pointer-events:auto; }
+.key-bar > #keyRow{ position:relative; }
+.key-bar-bg{
+  position:absolute; inset:0; border-radius:18px;
+  background:var(--bg);
+  box-shadow:0 0 0 .5px rgba(0,0,0,.07), 0 6px 16px rgba(0,0,0,.14), 0 16px 38px rgba(0,0,0,.15);
+  opacity:0; transform:scale(.94);
+  transition:opacity .18s ease, transform .34s cubic-bezier(.3,1.5,.5,1);
+}
+.key-bar.show .key-bar-bg{ opacity:1; transform:none; }
+@media (prefers-color-scheme: dark){
+  .key-bar-bg{ box-shadow:0 0 0 .5px rgba(255,255,255,.14), 0 6px 16px rgba(0,0,0,.5), 0 16px 38px rgba(0,0,0,.45); }
+}
+
+/* 25 · 액센트 색 고르기 */
+.ac-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.ac-dot{
+  width:34px; height:34px; border-radius:17px; border:none; cursor:pointer; padding:0;
+  position:relative; flex:none;
+  transition:transform .12s cubic-bezier(.3,.7,.4,1);
+}
+.ac-dot:active{ transform:scale(.9); }
+.ac-dot.on::after{
+  content:''; position:absolute; inset:-4px; border-radius:21px;
+  border:2px solid var(--text2);
+}
+.ac-custom{
+  width:34px; height:34px; border-radius:17px; padding:0; border:none; cursor:pointer;
+  background:conic-gradient(#e2574c,#e2b04c,#5fbf6a,#4c9be2,#8a5fd6,#e2574c);
+  position:relative; flex:none;
+}
+.ac-custom input{
+  position:absolute; inset:0; opacity:0; width:100%; height:100%; border:none; cursor:pointer;
+}
+.ac-custom.on::after{
+  content:''; position:absolute; inset:-4px; border-radius:21px;
+  border:2px solid var(--text2);
+}
+
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
 }
@@ -1539,14 +1622,17 @@ button, input, textarea, a{ font-family:inherit; }
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="char-count" id="charCount">0 / 2000</span>
           <input type="file" id="imgFileInput" accept="image/*" style="display:none;">
+          <input type="file" id="imgCamInput" accept="image/*" capture="environment" style="display:none;">
           <button class="paste-btn" id="pasteBtn"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2.4"/><path d="M16 8V5.4A1.4 1.4 0 0 0 14.6 4H5.4A1.4 1.4 0 0 0 4 5.4v9.2A1.4 1.4 0 0 0 5.4 16H8"/></svg></button>
           <button class="paste-btn" id="dictateBtn" title="말로 입력" style="display:none;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg></button>
           <button class="clear-btn" id="clearBtn"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/></svg></button>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
+        <div class="key-slot" id="keySlot">
+        <div id="keyRow" style="display:flex;gap:8px;align-items:center;">
           <button class="grammar-btn" id="spellBtn" style="display:none;">문법</button>
           <button class="grammar-btn" id="grammarBtn" style="display:none;">문법</button>
           <button class="translate-btn" id="translateBtn"><span id="translateLabel">번역</span><span id="translateIcon" class="ticon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M8 4.6v14.8L19.5 12z"/></svg></span></button>
+        </div>
         </div>
       </div>
     </div>
@@ -1564,10 +1650,7 @@ button, input, textarea, a{ font-family:inherit; }
       <div class="opt-body" id="optBody">
 
         <div class="opt-section">
-          <div class="opt-label" style="display:flex;align-items:center;justify-content:space-between;">
-            <span>말투</span>
-            <button id="toneManagerBtn" style="font-size:13px;color:var(--accent);background:var(--accent-bg);border:0.5px solid var(--accent);border-radius:8px;cursor:pointer;font-family:inherit;padding:3px 10px;font-weight:500;">관리</button>
-          </div>
+          <div class="opt-label"><span>말투</span></div>
           <div class="chips">
             <button class="chip" data-tone="formal">정중하게</button>
             <button class="chip" data-tone="young_male">20대 남성 말투</button>
@@ -1702,6 +1785,27 @@ button, input, textarea, a{ font-family:inherit; }
   </div>
 </div>
 
+<!-- 피드백 칩 관리 -->
+<div class="overlay" id="chipManagerOverlay">
+  <div class="sheet" style="padding-bottom:env(safe-area-inset-bottom);">
+    <div class="handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px;">
+      <div class="sheet-title" style="padding:0;">피드백 칩 <span id="chipLangLabel" style="font-size:13px;font-weight:400;color:var(--text3);"></span></div>
+      <button id="chipResetBtn" style="font-size:12px;color:var(--text3);background:none;border:0.5px solid var(--border2);border-radius:8px;cursor:pointer;font-family:inherit;padding:4px 10px;">초기화</button>
+    </div>
+    <div id="chipList" style="margin-bottom:12px;"></div>
+    <button id="chipAddBtn" style="width:100%;padding:12px;border-radius:12px;border:1.5px dashed var(--border2);background:none;color:var(--accent);font-size:14px;font-family:inherit;cursor:pointer;">+ 새 칩 추가</button>
+    <div id="chipEditSection" style="display:none;margin-top:16px;border-top:0.5px solid var(--border);padding-top:16px;">
+      <input type="text" id="chipEditLabel" placeholder="칩에 쓸 이름 (예: 더 짧게)" style="width:100%;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);font-size:14px;font-family:inherit;color:var(--text);margin-bottom:8px;box-sizing:border-box;">
+      <textarea id="chipEditPrompt" placeholder="누르면 보낼 요청 (예: 뜻은 그대로 두고 더 짧게 줄여줘)" style="width:100%;min-height:72px;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);font-size:14px;font-family:inherit;line-height:1.6;color:var(--text);resize:none;box-sizing:border-box;"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button id="chipEditCancel" style="flex:1;padding:10px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:14px;font-family:inherit;cursor:pointer;">취소</button>
+        <button id="chipEditSave" style="flex:2;padding:10px;border-radius:10px;border:none;background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 히스토리 패널 -->
 <div class="history-overlay" id="historyOverlay">
   <div class="history-panel" id="historyPanel">
@@ -1712,6 +1816,19 @@ button, input, textarea, a{ font-family:inherit; }
     <div class="history-list" id="historyList">
       <div class="history-empty">아직 번역 기록이 없어요</div>
     </div>
+  </div>
+</div>
+
+<!-- 사진 가져오기 -->
+<div class="key-bar" id="keyBar" aria-hidden="true"><span class="key-bar-bg"></span></div>
+
+<div class="act-sheet" id="imgSheet">
+  <div class="act-wrap">
+    <div class="act-panel">
+      <button class="act-item" type="button" id="imgFromCamera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.5h15A1.5 1.5 0 0 1 21 9v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18V9a1.5 1.5 0 0 1 1.5-1.5Z"/><path d="M9 7.5 10.3 5h3.4L15 7.5"/><circle cx="12" cy="13.4" r="3.1"/></svg>사진 찍기</button>
+      <button class="act-item" type="button" id="imgFromAlbum"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.2"/><circle cx="8.5" cy="10" r="1.6"/><path d="m4 17 5-5 4.5 4.5L16.5 13l3.5 3.5"/></svg>앨범에서 선택</button>
+    </div>
+    <button class="act-cancel" type="button" id="imgSheetCancel">취소</button>
   </div>
 </div>
 
@@ -1801,6 +1918,13 @@ button, input, textarea, a{ font-family:inherit; }
         <div class="field-note">한 줄에 하나씩 <b>원문=번역</b></div>
       </div>
       <div class="field">
+        <div class="field-label">말투 · 피드백 칩</div>
+        <div class="btn-row">
+          <button type="button" id="toneManagerBtn">말투 관리</button>
+          <button type="button" id="chipManagerBtn">피드백 칩</button>
+        </div>
+    </div>
+    <div class="field">
         <div class="field-label">결과 글자 크기</div>
         <div class="seg3" id="rsizeSeg">
           <button type="button" data-rsize="sm">작게</button>
@@ -1883,9 +2007,10 @@ button, input, textarea, a{ font-family:inherit; }
       <div class="field">
         <div class="field-label">이미지 번역 출력 크기</div>
         <select id="imgSizeInput">
-          <option value="512x512">512 × 512</option>
-          <option value="1024x1024">1024 × 1024</option>
-          <option value="2048x2048">2048 × 2048</option>
+          <option value="512">512</option>
+          <option value="1K">1K</option>
+          <option value="2K">2K</option>
+          <option value="4K">4K</option>
         </select>
       </div>
       </div>
@@ -1894,6 +2019,18 @@ button, input, textarea, a{ font-family:inherit; }
       <button class="set-head" type="button"><span>모양</span><span class="set-chev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
       <div class="set-body">
       <div class="field">
+        <div class="field-label">강조 색</div>
+        <div class="ac-row" id="accentRow">
+          <button type="button" class="ac-dot" data-ac="" style="background:#0E8A6F" title="기본"></button>
+          <button type="button" class="ac-dot" data-ac="#842A4F" style="background:#842A4F" title="버건디"></button>
+          <button type="button" class="ac-dot" data-ac="#2C5896" style="background:#2C5896" title="남색"></button>
+          <button type="button" class="ac-dot" data-ac="#9E601A" style="background:#9E601A" title="주황"></button>
+          <button type="button" class="ac-dot" data-ac="#6B4BA8" style="background:#6B4BA8" title="보라"></button>
+          <button type="button" class="ac-dot" data-ac="#3F4A55" style="background:#3F4A55" title="회색"></button>
+          <span class="ac-custom" id="accentCustom"><input type="color" id="accentPicker" value="#0E8A6F"></span>
+        </div>
+    </div>
+    <div class="field">
         <div class="field-label">캐릭터 이름</div>
         <input type="text" id="charNameInput" placeholder="예: 코우가">
       </div>
@@ -1947,6 +2084,10 @@ const MODEL_MIGRATION = 2;
     if (+(localStorage.getItem('model_migration') || 0) >= MODEL_MIGRATION) return;
     const cur = (localStorage.getItem('gemini_model') || '').trim();
     if (LEGACY_DEFAULT_MODELS.indexOf(cur) >= 0) localStorage.removeItem('gemini_model');
+    // 이미지 크기도 '1024x1024' 같은 옛 형식이 저장돼 있으면 등급 값으로 바꾼다
+    const sz = (localStorage.getItem('image_out_size') || '').trim();
+    const mapped = { '512x512': '512', '1024x1024': '1K', '2048x2048': '2K' }[sz];
+    if (mapped) localStorage.setItem('image_out_size', mapped);
     localStorage.setItem('model_migration', String(MODEL_MIGRATION));
   } catch(e) {}
 })();
@@ -1963,6 +2104,92 @@ function getTtsModel() {
 function getTtsVoice() {
   return localStorage.getItem('gemini_tts_voice') || 'Kore';
 }
+// ── 강조 색 ──
+// 고른 색 하나에서 라이트/다크에 필요한 네 가지 토큰을 만들어 낸다.
+// 아무것도 안 고르면 원래 색(v2 레이어)이 그대로 쓰인다.
+function hexToHsl(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  let r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  let h = 0, sat = 0;
+  const l = (mx + mn) / 2;
+  if (mx !== mn) {
+    const d = mx - mn;
+    sat = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+    h = mx === r ? ((g - b) / d + (g < b ? 6 : 0)) : mx === g ? ((b - r) / d + 2) : ((r - g) / d + 4);
+    h *= 60;
+  }
+  return [h, sat, l];
+}
+function hslRgb(h, s, l) {
+  h = ((h % 360) + 360) % 360;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))));
+  };
+  return [f(0), f(8), f(4)];
+}
+const hslHex = (h, s, l) => '#' + hslRgb(h, s, l).map(v => v.toString(16).padStart(2, '0')).join('');
+const hslRgba = (h, s, l, a) => 'rgba(' + hslRgb(h, s, l).join(',') + ',' + a + ')';
+
+function getAccent() { return localStorage.getItem('accent_color') || ''; }
+
+// 색은 너무 흐리거나 너무 쨍하면 글자가 안 읽히니 채도만 손본다.
+// 회색·검정처럼 아예 무채색으로 고른 건 그 뜻대로 무채색으로 둔다.
+function accentHS(hex) {
+  const v = hexToHsl(hex);
+  if (!v) return null;
+  return [v[0], v[1] < .08 ? 0 : Math.min(Math.max(v[1], .18), .85)];
+}
+const ACCENT_L = .31, ACCENT_L_DARK = .66;
+
+function applyAccent(hex) {
+  let el = document.getElementById('accentStyle');
+  if (!el) { el = document.createElement('style'); el.id = 'accentStyle'; document.head.appendChild(el); }
+  const hs = hex ? accentHS(hex) : null;
+  if (!hs) { el.textContent = ''; return; }
+  const [h, s] = hs;
+  const sd = Math.min(s, .7);
+  const lt = { a: hslHex(h, s, ACCENT_L), d: hslHex(h, Math.min(s + .05, .9), .23), bg: hslRgba(h, s, ACCENT_L, .10) };
+  const dk = { a: hslHex(h, sd, ACCENT_L_DARK), d: hslHex(h, sd, .78), bg: hslRgba(h, sd, ACCENT_L_DARK, .16), on: hslHex(h, Math.min(s, .6), .08) };
+  el.textContent =
+    ':root{--accent:' + lt.a + ';--accent-dark:' + lt.d + ';--accent-bg:' + lt.bg + ';--on-accent:#FFFFFF;}' +
+    '@media (prefers-color-scheme: dark){:root{--accent:' + dk.a + ';--accent-dark:' + dk.d +
+    ';--accent-bg:' + dk.bg + ';--on-accent:' + dk.on + ';}}';
+}
+
+// 스와치는 눌렀을 때 실제로 적용될 색을 그대로 보여 준다
+function paintAccentSwatches() {
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.querySelectorAll('.ac-dot').forEach(b => {
+    const v = b.dataset.ac;
+    if (!v) { b.style.background = dark ? '#3ECBA8' : '#0E8A6F'; return; }
+    const hs = accentHS(v);
+    b.style.background = dark ? hslHex(hs[0], Math.min(hs[1], .7), ACCENT_L_DARK) : hslHex(hs[0], hs[1], ACCENT_L);
+  });
+}
+try {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paintAccentSwatches);
+} catch(e) {}
+
+function markAccentChoice(hex) {
+  document.querySelectorAll('.ac-dot').forEach(b => b.classList.toggle('on', (b.dataset.ac || '') === (hex || '')));
+  const known = [...document.querySelectorAll('.ac-dot')].some(b => (b.dataset.ac || '') === (hex || ''));
+  $('accentCustom').classList.toggle('on', !!hex && !known);
+  if (hex) $('accentPicker').value = hex;
+}
+
+function setAccent(hex) {
+  if (hex) localStorage.setItem('accent_color', hex);
+  else localStorage.removeItem('accent_color');
+  applyAccent(hex);
+  markAccentChoice(hex);
+  haptic();
+}
+
 function getTtsStyle() {
   return localStorage.getItem('gemini_tts_style') || 'natural';
 }
@@ -1994,8 +2221,15 @@ function applyResultSize(v) {
     b.classList.toggle('on', b.dataset.rsize === v);
   });
 }
+// 이 API는 '가로x세로'가 아니라 크기 등급을 받는다.
+// 받는 값: 512 / 512P / 512PX / 1K / 2K / 4K
+const IMAGE_SIZES = ['512', '512P', '512PX', '1K', '2K', '4K'];
+const LEGACY_IMAGE_SIZES = { '512x512': '512', '1024x1024': '1K', '2048x2048': '2K' };
+
 function getImageOutSize() {
-  return localStorage.getItem('image_out_size') || '1024x1024';
+  let v = (localStorage.getItem('image_out_size') || '').trim();
+  if (LEGACY_IMAGE_SIZES[v]) v = LEGACY_IMAGE_SIZES[v];
+  return IMAGE_SIZES.indexOf(v) >= 0 ? v : '1K';   // 모르는 값이면 기본으로 되돌린다
 }
 // Thinking 모드는 응답이 오래 걸려서 짧은 타임아웃에 걸린다
 function reqTimeout() {
@@ -2060,6 +2294,7 @@ const KOUGA_PROMPT = `너는 이제부터 '코우가(KOUGA)'라는 이름의 캐
 const state = {
   srcLang: 'ko',
   tgtLang: 'ja',
+  userTgt: 'ja',                                     // 직접 고른 대상 언어 — 자동 감지가 바꿔도 여기로 돌아온다
   tone: 'none',
   strict: true,
   thinking: false,
@@ -2145,15 +2380,10 @@ function updateLangUI() {
   $('optionsCard').classList.toggle('disabled', isToKO);
   if (isToKO) { $('optBody').classList.remove('open'); $('chevron').classList.remove('open'); }
   applyToneAvailability();
-  $('spellBtn').style.display = isToKO ? 'none' : 'flex';
-  $('imgAttachBtn').style.display = isToKO ? 'inline-flex' : 'none';
-  if (!isToKO) { // 한국어 원문일 땐 이미지를 못 쓰므로 초기화 (안 그러면 다음 번역에 딸려 간다)
-    state.imgData = null; state.imgMime = null;
-    $('imgPreviewWrap').style.display = 'none';
-    $('imgAttachBtn').innerHTML = ICN.camera;
-    $('imgAttachBtn').style.color = '';
-  }
-  updateGrammarBtn();   // 이미지 정리가 끝난 뒤에 버튼 역할을 정한다
+  // 사진은 어느 방향이든 붙일 수 있다. 방향을 바꿔도 지우지 않는다 —
+  // 미리보기가 계속 보이니 딸려 가는 걸 모를 일이 없고, 같은 사진을 반대로 번역할 수도 있다.
+  $('imgAttachBtn').style.display = 'inline-flex';
+  updateGrammarBtn();
   $('optToggle').classList.toggle('disabled-mode', isToKO);
   $('disabledNotice').style.visibility = isToKO ? 'visible' : 'hidden';
   $('optSummary').style.display = isToKO ? 'none' : 'inline';
@@ -2172,7 +2402,7 @@ document.querySelectorAll('.lang-opt').forEach(o => {
   o.onclick = (e) => {
     e.stopPropagation();
     state.langLocked = true;
-    state.tgtLang = o.dataset.lang;
+    state.tgtLang = state.userTgt = o.dataset.lang;
     _tonesCache = null;
     $('langDropdown').style.display = 'none';
     updateLangUI(); fadeResult(clearResult);
@@ -2211,19 +2441,27 @@ function detectInputLang(text) {
   if (hangul / total > 0.2) return 'ko';
   if (kana > 0) return 'ja';
   if (han / total > 0.3) return 'foreign';
-  if (latin / total > 0.6) return 'en';
+  // USJ·LINE 같은 고유명사가 한둘 섞였다고 영어 입력으로 볼 수는 없다.
+  // 어느 정도 문장 꼴이 돼야 영어로 본다.
+  const words = (text.match(/[A-Za-z][A-Za-z'’-]*/g) || []).length;
+  if (latin / total > 0.6 && latin >= 8 && words >= 2) return 'en';
   return null;
 }
 
 function applyAutoDetect() {
   if (!state.autoDetect || state.langLocked || state.imgData) return;
-  const det = detectInputLang($('inputText').value);
-  if (!det) return;
+  const raw = $('inputText').value;
   let src = state.srcLang, tgt = state.tgtLang;
-  if (det === 'ko') src = 'ko';
-  else if (det === 'ja') { tgt = 'ja'; src = 'ja'; }
-  else if (det === 'en') { tgt = 'en'; src = 'en'; }
-  else if (det === 'foreign') src = state.tgtLang;   // 한자만 — 언어는 지금 선택을 따른다
+  // 감지가 바꾼 대상 언어는 임시다. 한국어로 돌아오면 고른 언어를 되살린다.
+  if (!raw.trim()) { src = 'ko'; tgt = state.userTgt; }
+  else {
+    const det = detectInputLang(raw);
+    if (!det) return;
+    if (det === 'ko') { src = 'ko'; tgt = state.userTgt; }
+    else if (det === 'ja') { tgt = 'ja'; src = 'ja'; }
+    else if (det === 'en') { tgt = 'en'; src = 'en'; }
+    else if (det === 'foreign') src = state.tgtLang;   // 한자만 — 언어는 지금 선택을 따른다
+  }
   if (src === state.srcLang && tgt === state.tgtLang) return;
   state.srcLang = src;
   state.tgtLang = tgt;
@@ -2254,9 +2492,18 @@ function renderInputBackdrop() {
     .replace(/\(\([\s\S]*?\)\)/g, m => '<mark>' + m + '</mark>') + '\n';
 }
 
+// 1000자를 넘기기 전엔 굳이 보여줄 이유가 없다
+function updateCharCount() {
+  const n = $('inputText').value.length;
+  const el = $('charCount');
+  el.textContent = n + ' / 2000';
+  el.classList.toggle('show', n >= 1000);
+  el.classList.toggle('near', n >= 1800);
+}
+
 function setInputText(text) {
   $('inputText').value = text;
-  $('charCount').textContent = text.length + ' / 2000';
+  updateCharCount();
   autoGrowInput();
   renderInputBackdrop();
   if (!text) state.langLocked = false;
@@ -2264,7 +2511,7 @@ function setInputText(text) {
 }
 
 $('inputText').oninput = function() {
-  $('charCount').textContent = this.value.length + ' / 2000';
+  updateCharCount();
   autoGrowInput();
   renderInputBackdrop();
   if (!this.value) state.langLocked = false;
@@ -2330,6 +2577,13 @@ function closeOverlay(el, delay) {
 }
 $('settingsBtn').onclick = () => { loadGlossaryField(); $('overlay').classList.add('open'); };
 
+document.querySelectorAll('.ac-dot').forEach(b => {
+  b.onclick = () => setAccent(b.dataset.ac || '');
+});
+// 끄는 동안엔 미리보기만, 손 떼면 저장한다
+$('accentPicker').oninput = function() { applyAccent(this.value); };
+$('accentPicker').onchange = function() { setAccent(this.value); };
+
 document.querySelectorAll('#rsizeSeg button').forEach(b => {
   b.onclick = () => {
     localStorage.setItem('result_size', b.dataset.rsize);
@@ -2344,7 +2598,12 @@ document.querySelectorAll('.set-group .set-head').forEach(head => {
     const group = head.parentElement;
     const wasOpen = group.classList.contains('open');
     document.querySelectorAll('.set-group').forEach(g => g.classList.remove('open'));
-    if (!wasOpen) group.classList.add('open');
+    if (wasOpen) return;
+    group.classList.add('open');
+    // 아래쪽 섹션을 열면 내용이 화면 밖으로 밀린다. 머리글이 위로 오게 따라간다
+    setTimeout(() => {
+      try { group.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch(e) {}
+    }, 60);
   };
 });
 
@@ -2381,7 +2640,9 @@ $('saveBtn').onclick = () => {
     if (bv) localStorage.setItem(bannedKey(), bv);
     else localStorage.removeItem(bannedKey());
   }
-  if ($('imgSizeInput')) localStorage.setItem('image_out_size', $('imgSizeInput').value);
+  if ($('imgSizeInput') && IMAGE_SIZES.indexOf($('imgSizeInput').value) >= 0) {
+    localStorage.setItem('image_out_size', $('imgSizeInput').value);
+  }
   if ($('charNameInput')) localStorage.setItem('char_name', $('charNameInput').value.trim());
   if ($('charXInput')) localStorage.setItem('char_x', $('charXInput').value.trim().replace('@',''));
   updateCharChip(true);
@@ -2551,14 +2812,14 @@ function updateCharChip(forceRenderChips = false) {
 const BACKUP_KEYS = [
   'gemini_api_key', 'gemini_model', 'gemini_tts_model', 'gemini_tts_voice',
   'gemini_image_model', 'gemini_tts_style', 'image_out_size', 'custom_icon', 'custom_tones',
-  'char_name', 'char_x', 'char_prompt_default', 'auto_detect', 'result_size', 'trans_history'
+  'char_name', 'char_x', 'char_prompt_default', 'auto_detect', 'result_size', 'accent_color', 'trans_history'
 ];
 
 function collectBackup() {
   const data = {};
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (BACKUP_KEYS.includes(k) || k.startsWith('glossary_') || k.startsWith('banned_')) {
+    if (BACKUP_KEYS.includes(k) || k.startsWith('glossary_') || k.startsWith('banned_') || k.startsWith('fb_chips_')) {
       data[k] = localStorage.getItem(k);
     }
   }
@@ -2683,6 +2944,9 @@ function loadStorage() {
   if ($('ttsStyleInput')) $('ttsStyleInput').value = getTtsStyle();
   if ($('imgSizeInput')) $('imgSizeInput').value = getImageOutSize();
   applyResultSize(getResultSize());
+  applyAccent(getAccent());
+  paintAccentSwatches();
+  markAccentChoice(getAccent());
   $('autoDetectToggle').classList.toggle('on', state.autoDetect);
   // API 키가 없으면 첫 화면에서 바로 넣을 수 있게 '연결'만 펼쳐 둔다
   if (!getApiKey()) { const g = document.getElementById('set-connect'); if (g) g.classList.add('open'); }
@@ -2898,6 +3162,7 @@ async function translate() {
   // 번역 중이면 취소
   if (state.busy) { cancelTranslate(); return; }
   if (!text && !state.imgData) return;
+  $('inputText').blur();          // 결과가 키보드에 가리지 않게
 
   if (!getApiKey()) {
     $('overlay').classList.add('open');
@@ -3303,7 +3568,9 @@ $('grammarBtn').onclick = checkGrammar;
 function updateGrammarBtn() {
   const btn = $('grammarBtn');
   const reverse = state.srcLang !== 'ko';     // 외국어 → 한국어
-  if (reverse && state.imgData) {
+  const hasImg = !!state.imgData;
+  if (hasImg) {
+    // 사진이 붙어 있으면 방향과 무관하게 이미지 번역을 내민다
     btn.textContent = '이미지';
     btn.onclick = overlayTranslateImage;
     btn.style.display = 'flex';
@@ -3315,6 +3582,8 @@ function updateGrammarBtn() {
   } else {
     btn.style.display = 'none';
   }
+  // 맞춤법은 한국어를 직접 칠 때만 의미가 있다. 사진이 붙으면 자리를 내준다
+  $('spellBtn').style.display = (!reverse && !hasImg) ? 'flex' : 'none';
 }
 
 // ── 이미지 번역 ──
@@ -3632,11 +3901,30 @@ const FB_PRESETS = {
             ['더 짧게', '뜻은 그대로 두고 더 짧게 줄여줘']]
 };
 
+// 칩은 결과 언어별로 따로 저장한다. 손대기 전엔 기본 목록을 쓴다.
+function chipKey() {
+  return 'fb_chips_' + (state.srcLang === 'ko' ? state.tgtLang : 'ko');
+}
+function getChips() {
+  const outLang = state.srcLang === 'ko' ? state.tgtLang : 'ko';
+  try {
+    const saved = localStorage.getItem(chipKey());
+    if (saved) {
+      const arr = JSON.parse(saved);
+      if (Array.isArray(arr)) return arr.filter(c => c && c.label && c.prompt);
+    }
+  } catch(e) {}
+  return (FB_PRESETS[outLang] || FB_PRESETS['ko']).map(([label, prompt]) => ({ label, prompt }));
+}
+function saveChips(list) {
+  localStorage.setItem(chipKey(), JSON.stringify(list));
+  renderFbChips();
+}
+
 function renderFbChips() {
   const box = $('fbChips');
   if (!box) return;
-  const outLang = state.srcLang === 'ko' ? state.tgtLang : 'ko';
-  const list = FB_PRESETS[outLang] || FB_PRESETS['ko'];
+  const list = getChips().map(c => [c.label, c.prompt]);
   box.innerHTML = '';
   list.forEach(([label, prompt]) => {
     const b = document.createElement('button');
@@ -3879,14 +4167,116 @@ $('feedbackInput').addEventListener('input', function() {
 });
 
 // ── 이미지 첨부 ──
-$('imgAttachBtn').onclick = () => $('imgFileInput').click();
-$('imgFileInput').onchange = async function() {
-  const file = this.files[0];
-  this.value = '';
+// 카메라와 앨범을 갈라 놓는다. accept만 준 input 하나로는 기기마다 뜨는 게 달라서
+// 어느 쪽이 열릴지 예측이 안 된다. capture 를 붙인 input 을 따로 두고 직접 고르게 한다.
+// ── 키보드 위 번역 바 ──
+// 줄을 복제하지 않고 원본을 그대로 옮긴다. 그래서 번역 버튼이 둘로 보일 일이 없다.
+// 옮기기 전후 좌표를 재서 되돌린 뒤 0으로 푸는 FLIP — 카드에서 뿅 하고 떨어져 나온다.
+const kbar = { on:false, raf:0, t:0 };
+const SPRING_IN  = 'transform .40s cubic-bezier(.26,1.44,.42,1)';
+const SPRING_OUT = 'transform .22s cubic-bezier(.4,0,.55,1)';
+const kbarStill = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// 높이는 줄을 넣은 뒤에 재야 한다. 빈 바로 재면 키보드 뒤로 들어간다.
+// 폭도 카드에 맞춘다. 안 맞추면 떼어내는 순간 버튼 길이가 튄다.
+function kbarPlace(edge) {
+  const bar = $('keyBar'), s = $('keySlot').getBoundingClientRect();
+  const vwWidth = document.documentElement.clientWidth;
+  bar.style.left = Math.round(s.left - 8) + 'px';
+  bar.style.right = Math.round(vwWidth - s.right - 8) + 'px';
+  bar.style.top = Math.round(edge - bar.offsetHeight - 8) + 'px';
+}
+
+function kbarOn(edge) {
+  const bar = $('keyBar'), slot = $('keySlot'), row = $('keyRow');
+  if (kbar.on) { kbarPlace(edge); return; }
+  kbar.on = true;
+  clearTimeout(kbar.t);
+
+  const from = row.getBoundingClientRect();
+  slot.style.height = slot.offsetHeight + 'px';   // 카드 자리는 그대로 비워 둔다
+  bar.classList.add('on');
+  bar.appendChild(row);
+  bar.style.top = '0px';
+  kbarPlace(edge);
+
+  const to = row.getBoundingClientRect();
+  bar.style.transition = 'none';
+  bar.style.transform = 'translate(' + (from.left - to.left) + 'px,' + (from.top - to.top) + 'px) scale(.97)';
+  void bar.offsetHeight;                          // 여기서 한 번 끊어 줘야 되돌린 자리에서 시작한다
+  bar.style.transition = kbarStill() ? 'none' : SPRING_IN;
+  bar.style.transform = 'translate(0,0) scale(1)';
+  bar.classList.add('show');
+}
+
+function kbarOff() {
+  if (!kbar.on) return;
+  kbar.on = false;
+  const bar = $('keyBar'), slot = $('keySlot'), row = $('keyRow');
+  const from = row.getBoundingClientRect();
+  const to = slot.getBoundingClientRect();        // 높이를 잡아 둔 덕에 원래 자리가 남아 있다
+  bar.classList.remove('show');
+  bar.style.transition = kbarStill() ? 'none' : SPRING_OUT;
+  bar.style.transform = 'translate(' + (to.left - from.left) + 'px,' + (to.top - from.top) + 'px) scale(.97)';
+  clearTimeout(kbar.t);
+  kbar.t = setTimeout(() => {
+    slot.appendChild(row);
+    slot.style.height = '';
+    bar.classList.remove('on');
+    bar.style.transition = 'none';
+    bar.style.transform = '';
+    bar.style.left = bar.style.right = bar.style.top = '';
+  }, kbarStill() ? 0 : 200);
+}
+
+function kbarUpdate() {
+  const vv = window.visualViewport;
+  if (!vv || document.activeElement !== $('inputText')) return kbarOff();
+  // 키보드가 올라온 만큼 보이는 높이가 줄어든다. 데스크톱에선 늘 0이라 바가 안 뜬다.
+  const kb = window.innerHeight - vv.height - vv.offsetTop;
+  if (kb < 120) return kbarOff();
+  const edge = vv.offsetTop + vv.height;
+  const slot = $('keySlot').getBoundingClientRect();
+  if (slot.bottom <= edge - 1) return kbarOff();  // 아직 다 보이면 카드에 그대로 둔다
+  kbarOn(edge);
+}
+
+function kbarTick() {
+  if (kbar.raf) return;
+  kbar.raf = requestAnimationFrame(() => { kbar.raf = 0; kbarUpdate(); });
+}
+
+['focus', 'blur', 'input'].forEach(e => $('inputText').addEventListener(e, kbarTick));
+window.addEventListener('scroll', kbarTick, { passive:true });
+window.addEventListener('resize', kbarTick);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', kbarTick);
+  window.visualViewport.addEventListener('scroll', kbarTick);
+}
+// 바를 눌러도 입력창 포커스를 놓지 않아야 클릭이 살아서 버튼까지 간다
+$('keyBar').addEventListener('pointerdown', e => { if (e.target.closest('button')) e.preventDefault(); });
+$('keyBar').addEventListener('mousedown', e => { if (e.target.closest('button')) e.preventDefault(); });
+
+function openImgSheet() { $('imgSheet').classList.add('open'); }
+function closeImgSheet() { $('imgSheet').classList.remove('open'); }
+
+$('imgAttachBtn').onclick = openImgSheet;
+$('imgSheetCancel').onclick = closeImgSheet;
+$('imgSheet').onclick = e => { if (e.target === $('imgSheet')) closeImgSheet(); };
+
+// 사용자 제스처 안에서 바로 click() 해야 파일 선택창이 열린다. 닫기는 그 뒤에.
+$('imgFromCamera').onclick = () => { $('imgCamInput').click(); closeImgSheet(); };
+$('imgFromAlbum').onclick = () => { $('imgFileInput').click(); closeImgSheet(); };
+
+async function handlePickedImage(input) {
+  const file = input.files[0];
+  input.value = '';
   if (!file) return;
   try { applyClipboardImage(await downscaleImage(file)); }
   catch(e) { showAttachError(e.message); }
-};
+}
+$('imgFileInput').onchange = function() { handlePickedImage(this); };
+$('imgCamInput').onchange = function() { handlePickedImage(this); };
 $('imgRemoveBtn').onclick = () => {
   state.imgData = null; state.imgMime = null;
   $('imgPreviewWrap').style.display = 'none';
@@ -4389,6 +4779,81 @@ $('toneEditSave').onclick = () => {
   haptic();
 };
 
+// ── 피드백 칩 관리 ──
+let editingChipIdx = -1;
+
+function renderChipList() {
+  const list = getChips();
+  const el = $('chipList');
+  const cfg = LANG_CONFIG[state.tgtLang] || LANG_CONFIG['ja'];
+  $('chipLangLabel').textContent = state.srcLang === 'ko' ? cfg.label + ' 결과' : '한국어 결과';
+  if (!list.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px;">칩이 없어요</div>';
+    return;
+  }
+  el.innerHTML = list.map((c, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:0.5px solid var(--border);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;">${c.label.replace(/</g, '&lt;')}</div>
+        <div style="font-size:12px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.prompt.replace(/</g, '&lt;')}</div>
+      </div>
+      <button onclick="editChip(${i})" style="padding:4px 10px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:12px;font-family:inherit;cursor:pointer;flex:none;">편집</button>
+      <button onclick="deleteChip(${i})" style="padding:4px 10px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:#e55;font-size:12px;font-family:inherit;cursor:pointer;flex:none;">삭제</button>
+    </div>`).join('');
+}
+
+function editChip(i) {
+  const list = getChips();
+  editingChipIdx = i;
+  $('chipEditLabel').value = list[i].label;
+  $('chipEditPrompt').value = list[i].prompt;
+  $('chipEditSection').style.display = 'block';
+}
+
+function deleteChip(i) {
+  const list = getChips();
+  list.splice(i, 1);
+  saveChips(list);
+  renderChipList();
+  haptic();
+}
+
+$('chipManagerBtn').onclick = () => {
+  renderChipList();
+  $('chipEditSection').style.display = 'none';
+  editingChipIdx = -1;
+  $('chipManagerOverlay').classList.add('open');
+};
+$('chipManagerOverlay').onclick = e => {
+  if (e.target === $('chipManagerOverlay')) closeOverlay($('chipManagerOverlay'), 250);
+};
+$('chipAddBtn').onclick = () => {
+  editingChipIdx = -1;
+  $('chipEditLabel').value = '';
+  $('chipEditPrompt').value = '';
+  $('chipEditSection').style.display = 'block';
+  $('chipEditLabel').focus();
+};
+$('chipEditCancel').onclick = () => { $('chipEditSection').style.display = 'none'; };
+$('chipEditSave').onclick = () => {
+  const label = $('chipEditLabel').value.trim();
+  const prompt = $('chipEditPrompt').value.trim();
+  if (!label || !prompt) { $('chipEditLabel').focus(); return; }
+  const list = getChips();
+  if (editingChipIdx >= 0) list[editingChipIdx] = { label, prompt };
+  else list.push({ label, prompt });
+  saveChips(list);
+  renderChipList();
+  $('chipEditSection').style.display = 'none';
+  haptic();
+};
+$('chipResetBtn').onclick = () => {
+  localStorage.removeItem(chipKey());
+  renderFbChips();
+  renderChipList();
+  haptic();
+};
+
 $('historyBtn').onclick = () => {
   renderHistory();
   $('historyOverlay').classList.add('open');
@@ -4489,9 +4954,14 @@ async function synthesizeSpeech(text, voice) {
   return url;
 }
 
+function endTts() {
+  ttsAudio = null;
+  $('ttsBtn').innerHTML = ICN.speak;
+}
+
 $('ttsBtn').onclick = async function() {
   if (!state.result) return;
-  if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; $('ttsBtn').innerHTML = ICN.speak; return; }
+  if (ttsAudio) { ttsAudio.pause(); endTts(); return; }
   if (!getApiKey()) { $('overlay').classList.add('open'); return; }
   const spoken = cleanForCopy(state.result);
   const wasCached = !!ttsCacheGet(getTtsModel() + '|' + getTtsVoice() + '|' + getTtsStyle() + '|' + spoken);
@@ -4501,10 +4971,11 @@ $('ttsBtn').onclick = async function() {
     ttsAudio = new Audio(url);
     ttsAudio.play();
     $('ttsBtn').innerHTML = ICN.stop;
-    ttsAudio.onended = () => { ttsAudio = null; $('ttsBtn').innerHTML = ICN.speak; };
+    ttsAudio.onended = endTts;
+    ttsAudio.onerror = endTts;
   } catch(e) {
-    $('ttsBtn').innerHTML = ICN.speak;
-    alert('TTS 오류: ' + e.message);
+    endTts();
+    showAttachError('TTS 오류: ' + e.message);
   } finally {
     $('ttsBtn').disabled = false;
   }
@@ -4791,7 +5262,7 @@ $('dictateBtn').onclick = function() {
     onProgress: (fin, interim) => {
       const joined = (base ? base + ' ' : '') + fin + interim;
       $('inputText').value = joined.slice(0, 2000);
-      $('charCount').textContent = $('inputText').value.length + ' / 2000';
+      updateCharCount();
       autoGrowInput();
     },
     onDone: () => { _dictation = null; btn.classList.remove('pasted'); scheduleAutoDetect(); },
@@ -5111,6 +5582,7 @@ updateLangUI();
 updateSummary();
 autoGrowInput();
 renderInputBackdrop();
+updateCharCount();
 </script>
 
 </body>
