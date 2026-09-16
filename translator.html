@@ -1706,8 +1706,8 @@ button, input, textarea, a{ font-family:inherit; }
       <div class="set-body">
       <div class="field">
         <div class="field-label">번역 모델</div>
-        <input type="text" id="modelInput" placeholder="gemini-2.5-flash-lite">
-        <div class="field-note">기본값: gemini-2.5-flash-lite · <a href="https://ai.google.dev/gemini-api/docs/models" target="_blank" style="color:var(--accent);">모델 목록 보기</a></div>
+        <input type="text" id="modelInput" placeholder="gemini-3.6-flash">
+        <div class="field-note">기본값: gemini-3.6-flash · <a href="https://ai.google.dev/gemini-api/docs/models" target="_blank" style="color:var(--accent);">모델 목록 보기</a></div>
       </div>
       <div class="toggle-row">
         <div class="toggle-info">
@@ -1845,11 +1845,27 @@ button, input, textarea, a{ font-family:inherit; }
 </div>
 
 <script>
+// 기본 번역 모델을 올릴 때, 예전 기본값을 그대로 쓰던 사람은 자동으로 따라오게 한다.
+// 직접 다른 모델을 적어 넣은 사람은 그 값을 그대로 존중한다.
+const DEFAULT_MODEL = 'gemini-3.6-flash';
+const LEGACY_DEFAULT_MODELS = [
+  'gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'
+];
+const MODEL_MIGRATION = 2;
+(function migrateModel() {
+  try {
+    if (+(localStorage.getItem('model_migration') || 0) >= MODEL_MIGRATION) return;
+    const cur = (localStorage.getItem('gemini_model') || '').trim();
+    if (LEGACY_DEFAULT_MODELS.indexOf(cur) >= 0) localStorage.removeItem('gemini_model');
+    localStorage.setItem('model_migration', String(MODEL_MIGRATION));
+  } catch(e) {}
+})();
+
 function getApiKey() {
   return localStorage.getItem('gemini_api_key') || '';
 }
 function getModel() {
-  return localStorage.getItem('gemini_model') || 'gemini-2.5-flash-lite';
+  return localStorage.getItem('gemini_model') || DEFAULT_MODEL;
 }
 function getTtsModel() {
   return localStorage.getItem('gemini_tts_model') || 'gemini-3.1-flash-tts-preview';
@@ -2527,7 +2543,7 @@ function loadStorage() {
   } else {
     $('iconPreview').src = $('headerCharImg') ? $('headerCharImg').src : '';
   }
-  $('modelInput').value = localStorage.getItem('gemini_model') || 'gemini-2.5-flash-lite';
+  $('modelInput').value = localStorage.getItem('gemini_model') || DEFAULT_MODEL;
   $('ttsModelInput').value = localStorage.getItem('gemini_tts_model') || '';
   $('imgModelInput').value = localStorage.getItem('gemini_image_model') || '';
   if ($('ttsVoiceInput')) $('ttsVoiceInput').value = getTtsVoice();
@@ -2557,6 +2573,72 @@ function fadeResult(fn) {
   setTimeout(() => { fn(); card.classList.remove('fading'); }, 160);
 }
 
+// ══════ 대상 언어가 아닌 글자 섞임 검사 ══════
+// 일본어로 번역했는데 한글이 끼어 나오는 경우를 잡아 조용히 한 번 더 부른다.
+const SCRIPT_TEST = {
+  hangul: /[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/,
+  kana:   /[\u3040-\u309F\u30A0-\u30FF\u31F0-\u31FF]/,
+  han:    /[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]/,
+  latin:  /[A-Za-z\u00C0-\u024F]/,
+  cyril:  /[\u0400-\u04FF]/,
+  greek:  /[\u0370-\u03FF]/,
+  arabic: /[\u0600-\u06FF\u0750-\u077F]/,
+  hebrew: /[\u0590-\u05FF]/,
+  thai:   /[\u0E00-\u0E7F]/,
+  deva:   /[\u0900-\u097F]/
+};
+// 그 언어 번역문에 섞여 있어도 이상하지 않은 문자 계열
+const OK_SCRIPTS = {
+  'ja': ['kana', 'han', 'latin'],
+  'ko': ['hangul', 'latin', 'han'],
+  'en': ['latin'],
+  'zh-cn': ['han', 'latin'],
+  'zh-tw': ['han', 'latin']
+};
+// 그 언어가 주로 쓰는 문자 계열. 원문에 있었다는 이유만으로 봐주면 안 되는 쪽이다
+const MAIN_SCRIPTS = {
+  'ko': ['hangul'], 'ja': ['kana', 'han'], 'en': ['latin'],
+  'zh-cn': ['han'], 'zh-tw': ['han']
+};
+
+function scriptOf(ch) {
+  for (const name in SCRIPT_TEST) if (SCRIPT_TEST[name].test(ch)) return name;
+  return null;    // 숫자·구두점·이모지는 언어를 안 가린다
+}
+
+// 사용자가 "이렇게 써 달라"고 지정한 글자는 섞여 있어도 손대지 않는다
+function allowedExtraChars(srcLang, srcBody, reqs) {
+  let pool = '';
+  try { pool += (localStorage.getItem(glossaryKey()) || '') + (localStorage.getItem(bannedKey()) || ''); } catch(e) {}
+  pool += (reqs || []).join(' ');
+  if (state.extraOn && $('extraPrompt')) pool += ' ' + $('extraPrompt').value;
+  if (state.tone === 'character' && $('charPrompt')) pool += ' ' + $('charPrompt').value;
+  // 원문에 있던 글자도 봐주되, 원문 언어의 주 문자는 제외한다
+  const main = MAIN_SCRIPTS[srcLang] || [];
+  for (const ch of String(srcBody || '')) {
+    const sc = scriptOf(ch);
+    if (sc && main.indexOf(sc) < 0) pool += ch;
+  }
+  return new Set(pool);
+}
+
+function strayChars(text, tgtLang, allowSet) {
+  const ok = OK_SCRIPTS[tgtLang] || OK_SCRIPTS['ja'];
+  const out = [];
+  for (const ch of String(text || '')) {
+    const sc = scriptOf(ch);
+    if (!sc || ok.indexOf(sc) >= 0) continue;
+    if (allowSet.has(ch)) continue;
+    if (out.indexOf(ch) < 0) out.push(ch);
+  }
+  return out;
+}
+
+function retryFixPrompt(basePrompt, strays, tgtName) {
+  return basePrompt + `\n\n[다시 요청]\n앞선 번역에 ${tgtName}가 아닌 글자(${strays.slice(0, 6).join('')})가 섞여 나왔습니다. `
+    + `인명과 고유명사까지 모두 ${tgtName} 표기로 옮겨서, 번역문 전체를 ${tgtName}로만 작성하세요.`;
+}
+
 // ── 번역 ──
 function clearResult() {
   state.result = '';
@@ -2580,7 +2662,32 @@ function clearResult() {
   if ($('commentBox')) { $('commentBox').classList.remove('visible'); $('commentText').textContent = ''; }
 }
 
+// ((...)) 안의 글은 번역할 문장이 아니라 이번 번역에만 적용할 요청으로 본다
+const INLINE_REQ_RE = /\(\(([\s\S]*?)\)\)/g;
+function parseInput(text) {
+  const reqs = [];
+  const body = String(text == null ? '' : text).replace(INLINE_REQ_RE, (m, inner) => {
+    const t = inner.trim();
+    if (t) reqs.push(t);
+    return ' ';
+  });
+  return {
+    body: body.replace(/[ \t]{2,}/g, ' ').replace(/[ \t]*\n[ \t]*/g, '\n').trim(),
+    reqs
+  };
+}
+
+function inlineInstrOf(reqs) {
+  if (!reqs.length) return '';
+  return '\n\n[이번 번역에만 적용할 요청]\n'
+    + reqs.map(r => '- ' + r).join('\n')
+    + '\n이 요청은 위 번역 지침보다 우선합니다.';
+}
+
 function buildPrompt(text) {
+  const parsed = parseInput(text);
+  text = parsed.body;
+  const inlineInstr = inlineInstrOf(parsed.reqs);
   const cfg = LANG_CONFIG[state.tgtLang] || LANG_CONFIG['ja'];
   const src = state.srcLang === 'ko' ? '한국어' : cfg.label;
   const tgt = state.srcLang === 'ko' ? cfg.label : '한국어';
@@ -2591,7 +2698,7 @@ function buildPrompt(text) {
 [번역 지침]
 1. 원문에 담긴 말투, 어조, 감정을 그대로 살려서 번역하세요. (반말이면 반말, 존댓말이면 존댓말, 거친 말투면 거칠게)
 2. 원문의 내용을 변경하지 말고 충실하게 번역하세요.
-3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.${glossaryInstr(text)}${bannedInstr()}
+3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.${glossaryInstr(text)}${bannedInstr()}${inlineInstr}
 
 [원문]
 ${text}`;
@@ -2634,7 +2741,7 @@ ${text}`;
 [번역 지침]
 1. ${toneInstr}
 2. ${strictInstr}
-3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.${extraInstr}${glossaryInstr(text)}${bannedInstr()}
+3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.${extraInstr}${glossaryInstr(text)}${bannedInstr()}${inlineInstr}
 
 [원문]
 ${text}`;
@@ -2675,17 +2782,20 @@ async function translate() {
   $('loading').style.display = 'flex';
   let _succeeded = false;
   try {
+    const parsed = parseInput(text);
+    const promptText = state.imgData && !text
+      ? `이 이미지에 있는 텍스트를 ${state.srcLang !== 'ko' ? '한국어' : (LANG_CONFIG[state.tgtLang]?.label || '일본어')}로 번역해줘. 번역 결과 텍스트만 출력해.`
+      : buildPrompt(text);
+    const genCfg = { temperature: 0.3, maxOutputTokens: 2048, ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) };
     const reqBody = {
       contents: [{ parts: [
         ...(state.imgData ? [{ inline_data: { mime_type: state.imgMime, data: state.imgData } }] : []),
-        { text: state.imgData && !text
-            ? `이 이미지에 있는 텍스트를 ${state.srcLang !== 'ko' ? '한국어' : (LANG_CONFIG[state.tgtLang]?.label || '일본어')}로 번역해줘. 번역 결과 텍스트만 출력해.`
-            : buildPrompt(text) }
+        { text: promptText }
       ] }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 2048, ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) }
+      generationConfig: genCfg
     };
     let streaming = false;
-    const result = (await streamGemini(reqBody, full => {
+    const draw = full => {
       if (_cancelled || myReq !== _reqSeq) return;
       if (!streaming) {
         streaming = true;
@@ -2694,21 +2804,46 @@ async function translate() {
         $('resultText').style.display = 'block';
       }
       $('resultText').textContent = splitComment(full).body.trimStart();
-    }, reqTimeout())).trim();
+    };
+    let result = (await streamGemini(reqBody, draw, reqTimeout())).trim();
     if (!result) throw new Error('번역 결과를 받지 못했습니다.');
+
+    // 대상 언어가 아닌 글자가 섞였으면 알리지 않고 한 번만 다시 부른다
+    if (!state.imgData && !_cancelled && myReq === _reqSeq) {
+      const outLang = state.srcLang === 'ko' ? state.tgtLang : 'ko';
+      const outName = state.srcLang === 'ko' ? (LANG_CONFIG[state.tgtLang]?.label || '일본어') : '한국어';
+      const allowSet = allowedExtraChars(state.srcLang, parsed.body, parsed.reqs);
+      const strays = strayChars(splitComment(result).body, outLang, allowSet);
+      if (strays.length) {
+        try {
+          const retried = (await streamGemini({
+            contents: [{ parts: [{ text: retryFixPrompt(promptText, strays, outName) }] }],
+            generationConfig: genCfg
+          }, draw, reqTimeout())).trim();
+          // 실제로 줄었을 때만 바꾼다. 아니면 처음 것을 그대로 쓴다
+          if (retried && strayChars(splitComment(retried).body, outLang, allowSet).length < strays.length) {
+            result = retried;
+          } else {
+            draw(result);
+          }
+        } catch(e) {
+          draw(result);   // 재요청 실패는 조용히 넘긴다
+        }
+      }
+    }
     if (_cancelled || myReq !== _reqSeq) return;
     state.result = result;
     _succeeded = true;
     haptic();
     saveHistory(text, result, state.srcLang, state.tgtLang);
-    state.originalText = text;
+    state.originalText = parsed.body;   // 역번역 비교는 요청문을 뺀 본문으로
     const feedbackSystemMsg = `당신은 번역 수정 도우미입니다. 아래는 원문과 번역 결과입니다.
 사용자의 수정 요청을 반드시 정확히 반영하세요.
 요청하지 않은 부분은 절대 바꾸지 마세요.
 수정된 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.
 
 [원문]
-${text}
+${parsed.body}
 
 [번역 결과]
 ${result}`;
