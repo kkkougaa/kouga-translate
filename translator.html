@@ -430,12 +430,6 @@
     display: flex; justify-content: flex-end;
     padding: 4px 10px 10px; gap: 6px;
   }
-  /* 후리가나 */
-  .result-area ruby rt {
-    font-size: 0.48em; font-weight: 400; color: var(--text3);
-    letter-spacing: 0; line-height: 1.1;
-  }
-  .result-area.has-ruby { line-height: 2.2; }
 
   .copy-btn, .copy-both-btn {
     display: flex; align-items: center; gap: 5px;
@@ -905,8 +899,6 @@ button, input, textarea, a{ font-family:inherit; }
 .view-opt.active{ background:var(--accent); color:var(--on-accent); border:none; }
 .result-area{ font-size:17px; line-height:1.75; padding:10px 16px 12px; }
 .result-area.placeholder{ font-size:15px; }
-.result-area.has-ruby{ line-height:2.3; }
-.result-area ruby rt{ font-size:.44em; }
 .error-box{ margin:8px 16px 10px; border-radius:var(--radius-md); font-size:13.5px; }
 .comment-box{
   margin:0 16px 10px; padding:10px 13px; border-left:none;
@@ -1256,7 +1248,6 @@ button, input, textarea, a{ font-family:inherit; }
 .result-head{ padding-top:14px; }
 .result-area{ font-size:19px; line-height:1.7; padding-top:8px; padding-bottom:16px; }
 .result-area.placeholder{ font-size:15px; }
-.result-area.has-ruby{ line-height:2.2; }
 
 /* 8 · 결과 카드 안을 얇은 선으로 나눈다 (지금은 전부 붙어 있다) */
 .result-footer{ border-top:.5px solid var(--border); padding-top:8px; }
@@ -1287,6 +1278,130 @@ button, input, textarea, a{ font-family:inherit; }
   letter-spacing:0; margin-bottom:3px;
 }
 
+/* 12 · 누르면 반응한다 — 터치에는 :hover가 없어서 지금은 아무 반응이 없었다 */
+.settings-btn, .paste-btn, .clear-btn, .copy-btn, .copy-both-btn, .grammar-btn,
+.translate-btn, .chip, .view-opt, .lang-btn, .lang-opt, .fb-send-btn, .save-btn,
+.set-head, .bt-toggle, .dict-act, .alt-item, .history-item, .talk-tool, .talk-go,
+.talk-enter, #voicePreviewBtn, .btn-row button, .toggle{
+  transition: transform .11s cubic-bezier(.3,.7,.4,1), background .15s, color .15s, opacity .15s;
+}
+.settings-btn:active, .paste-btn:active, .clear-btn:active, .copy-btn:active,
+.copy-both-btn:active, .grammar-btn:active, .chip:active, .view-opt:active,
+.lang-opt:active, .fb-send-btn:active, .dict-act:active, .alt-item:active,
+.talk-tool:active, #voicePreviewBtn:active, .btn-row button:active{
+  transform: scale(.93);
+}
+/* 큰 면적은 덜 줄여야 자연스럽다 */
+.translate-btn:active, .save-btn:active, .talk-go:active, .talk-enter:active{ transform: scale(.975); }
+.lang-btn:active{ transform: scale(.96); }
+.set-head:active, .bt-toggle:active, .history-item:active{ transform: scale(.99); }
+.toggle:active{ transform: scale(.94); }
+
+/* 13 · 언어를 바꾸면 결과가 툭 사라지지 않고 넘어간다 */
+#resultCard .result-head, #resultCard .result-area, #resultCard .comment-box,
+#resultCard #pronunciationWrap, #resultCard .back-translation{
+  transition: opacity .16s ease;
+}
+#resultCard.fading .result-head, #resultCard.fading .result-area,
+#resultCard.fading .comment-box, #resultCard.fading #pronunciationWrap,
+#resultCard.fading .back-translation{ opacity:0; }
+
+/* 14 · 결과 글자 크기 */
+:root[data-rsize="sm"] .result-area{ font-size:17px; }
+:root[data-rsize="lg"] .result-area{ font-size:22px; line-height:1.65; }
+
+.seg3{ display:flex; gap:3px; background:var(--fill); border-radius:12px; padding:3px; }
+.seg3 button{
+  flex:1; height:36px; border:none; border-radius:9px; background:none; cursor:pointer;
+  font-family:inherit; font-size:14px; font-weight:500; color:var(--text2);
+  transition:background .15s, color .15s, transform .11s;
+}
+.seg3 button:active{ transform:scale(.96); }
+.seg3 button.on{ background:var(--bg); color:var(--text); font-weight:600; }
+
+/* 15 · 크게 보기 — 상대에게 화면을 보여줄 때 */
+.big-overlay{
+  position:fixed; inset:0; z-index:700; background:var(--bg);
+  display:none; flex-direction:column;
+  padding:calc(var(--safe-top) + 56px) 24px calc(var(--safe-bottom) + 32px);
+}
+.big-overlay.open{ display:flex; }
+.big-close{
+  position:absolute; top:calc(var(--safe-top) + 10px); right:14px;
+  width:40px; height:40px; border-radius:20px; border:none; background:var(--fill);
+  color:var(--text2); display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.big-close:active{ transform:scale(.93); }
+.big-text{
+  flex:1; display:flex; align-items:center; justify-content:center; text-align:center;
+  font-weight:500; line-height:1.45; letter-spacing:-.4px;
+  white-space:pre-wrap; word-break:break-word; overflow-y:auto;
+}
+.big-sub{
+  flex:none; text-align:center; font-size:14px; line-height:1.6;
+  color:var(--text3); padding-top:18px; border-top:.5px solid var(--border);
+}
+.big-sub:empty{ display:none; }
+
+/* 16 · 확인 피드백 — 아이콘이 톡 올라온다 */
+@keyframes pop{
+  0%{ transform:scale(.55); opacity:0 }
+  60%{ transform:scale(1.14) }
+  100%{ transform:scale(1); opacity:1 }
+}
+@keyframes nudge{
+  0%,100%{ transform:translateX(0) } 25%{ transform:translateX(-3px) } 75%{ transform:translateX(3px) }
+}
+@keyframes rise{
+  from{ opacity:0; transform:translateY(5px) } to{ opacity:1; transform:none }
+}
+.flash{
+  background:var(--accent-bg) !important;
+  color:var(--accent-dark) !important;
+}
+.flash svg, .flash .pop{ animation:pop .3s cubic-bezier(.34,1.56,.64,1) both; }
+.nudge{ animation:nudge .28s ease; }
+
+/* 새로 나타나는 것들은 살짝 올라오며 */
+#pronunciationWrap, #backTranslation, .comment-box.visible,
+.feedback-card.visible, .meta-pills.visible{
+  animation:rise .22s ease both;
+}
+.big-overlay.open .big-text, .big-overlay.open .big-sub{ animation:rise .26s ease both; }
+.talk-overlay.open .talk-card{ animation:rise .24s ease both; }
+
+/* 17 · 결과 메타 배지 */
+.meta-pills{ display:none; gap:5px; flex-wrap:wrap; padding:0 16px 14px; }
+.meta-pills.visible{ display:flex; }
+.mpill{
+  height:24px; padding:0 10px; border-radius:999px;
+  font-size:12px; font-weight:600; letter-spacing:-.1px;
+  display:flex; align-items:center;
+  background:var(--fill); color:var(--text2);
+}
+.mpill.warn{ background:rgba(184,97,31,.12); color:#A6551A; }
+@media (prefers-color-scheme: dark){
+  .mpill.warn{ background:rgba(224,164,106,.16); color:#E0A46A; }
+}
+
+/* 18 · 역번역 경고 — 빨간 박스는 오류처럼 읽힌다. 호박색 한 줄로 */
+.bt-warn{
+  display:none; margin-top:10px; padding:0; background:none;
+  color:#A6551A; font-size:12.5px; line-height:1.55;
+  gap:8px; align-items:flex-start;
+}
+.bt-warn.visible{ display:flex; animation:rise .22s ease both; }
+.bt-warn svg{ flex:none; margin-top:1px; }
+.bt-warn b{ font-weight:600; }
+.num-hi{
+  background:rgba(184,97,31,.16); color:inherit;
+  border-radius:4px; padding:0 3px;
+}
+@media (prefers-color-scheme: dark){
+  .bt-warn{ color:#E0A46A; }
+  .num-hi{ background:rgba(224,164,106,.2); }
+}
+
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
 }
@@ -1305,6 +1420,7 @@ button, input, textarea, a{ font-family:inherit; }
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
+      <button class="settings-btn" id="talkEnterBtn" title="대화 모드"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10H8.5L4 19z"/><path d="M8.5 10.5h7"/></svg></button>
       <button class="settings-btn" id="historyBtn" title="번역 히스토리"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg></button>
       
       <button class="settings-btn" id="settingsBtn"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 14.5a1.6 1.6 0 0 0 .32 1.77l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.6 1.6 0 0 0-1.77-.32 1.6 1.6 0 0 0-.97 1.47V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.77.32l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.47-.97H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.32-1.77l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.6 1.6 0 0 0 9 4.6h.08A1.6 1.6 0 0 0 10 3.13V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 .97 1.47 1.6 1.6 0 0 0 1.77-.32l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.6 1.6 0 0 0 19.4 9v.08a1.6 1.6 0 0 0 1.47.97H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5.97Z"/></svg></button>
@@ -1410,14 +1526,6 @@ button, input, textarea, a{ font-family:inherit; }
           <button class="toggle" id="thinkingToggle"></button>
         </div>
 
-        <div class="toggle-row">
-          <div class="toggle-info">
-            <div class="toggle-name">한국식 표현 현지화</div>
-            <div class="toggle-desc" id="slangDesc">off — ㅋㅋ · ㅠㅠ 를 그대로 둠</div>
-          </div>
-          <button class="toggle" id="slangToggle"></button>
-        </div>
-
       </div>
     </div>
 
@@ -1427,7 +1535,7 @@ button, input, textarea, a{ font-family:inherit; }
         <span class="result-label" id="resultLabel">결과</span>
         <div class="view-opts">
           <button class="view-opt" id="pronBtn">독음</button>
-          <button class="view-opt" id="rubyBtn" style="display:none;">후리가나</button>
+          <button class="view-opt" id="bigBtn" title="크게 보기"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H4v5M15 4h5v5M15 20h5v-5M9 20H4v-5"/></svg></button>
         </div>
       </div>
       <div class="loading" id="loading" style="display:none;">
@@ -1435,6 +1543,7 @@ button, input, textarea, a{ font-family:inherit; }
       </div>
       <div class="result-area placeholder" id="resultText">번역 결과가 여기에 표시됩니다.</div>
       <div class="error-box" id="errorBox" style="display:none;"></div>
+      <div class="meta-pills" id="metaPills"></div>
       <div id="commentBox" class="comment-box"><div class="comment-label">번역 코멘트</div><div id="commentText"></div></div>
       <div id="pronunciationWrap" style="display:none;padding:2px 14px 10px;">
         <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">독음</div>
@@ -1459,12 +1568,6 @@ button, input, textarea, a{ font-family:inherit; }
         <button class="copy-btn" id="copyBtn">복사</button>
       </div>
     </div>
-
-    <button class="talk-enter" id="talkEnterBtn">
-      <span class="talk-enter-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10H8.5L4 19z"/><path d="M8.5 10.5h7"/></svg></span>
-      <span class="talk-enter-t">대화 모드</span>
-      <span class="talk-enter-c"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
-    </button>
 
     <!-- 피드백 -->
     <div class="feedback-card" id="feedbackCard">
@@ -1533,6 +1636,13 @@ button, input, textarea, a{ font-family:inherit; }
       <div class="history-empty">아직 번역 기록이 없어요</div>
     </div>
   </div>
+</div>
+
+<!-- 크게 보기 -->
+<div class="big-overlay" id="bigOverlay">
+  <button class="big-close" id="bigClose"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/></svg></button>
+  <div class="big-text" id="bigText"></div>
+  <div class="big-sub" id="bigSub"></div>
 </div>
 
 <!-- 대화 모드 -->
@@ -1611,6 +1721,14 @@ button, input, textarea, a{ font-family:inherit; }
         <div class="field-note">한 줄에 하나씩 <b>원문=번역</b></div>
       </div>
       <div class="field">
+        <div class="field-label">결과 글자 크기</div>
+        <div class="seg3" id="rsizeSeg">
+          <button type="button" data-rsize="sm">작게</button>
+          <button type="button" data-rsize="md">보통</button>
+          <button type="button" data-rsize="lg">크게</button>
+        </div>
+    </div>
+    <div class="field">
         <div class="field-label">금지 표현 <span id="bannedLangLabel" style="font-weight:400;color:var(--text3);"></span></div>
         <textarea id="bannedInput" placeholder="〜っす&#10;〜だぜ → 〜だよ"></textarea>
       </div>
@@ -1742,6 +1860,15 @@ function getTtsVoice() {
 function getImageModel() {
   return localStorage.getItem('gemini_image_model') || 'gemini-3.1-flash-image';
 }
+function getResultSize() {
+  return localStorage.getItem('result_size') || 'md';
+}
+function applyResultSize(v) {
+  document.documentElement.dataset.rsize = v;
+  document.querySelectorAll('#rsizeSeg button').forEach(b => {
+    b.classList.toggle('on', b.dataset.rsize === v);
+  });
+}
 function getImageOutSize() {
   return localStorage.getItem('image_out_size') || '1024x1024';
 }
@@ -1811,7 +1938,6 @@ const state = {
   tone: 'none',
   strict: true,
   thinking: false,
-  slang: localStorage.getItem('slang_on') === '1',   // 한국식 표현 현지화
   autoDetect: localStorage.getItem('auto_detect') !== '0',
   langLocked: false,                                 // 직접 언어를 고르면 자동 감지를 멈춘다
   extraOn: false,
@@ -1822,7 +1948,7 @@ const state = {
   originalText: '',
   conversation: [],
   btText: null,      // 역번역 캐시 (탭할 때만 채워진다)
-  rubyText: null,    // 후리가나 캐시
+  rubyText: null,
   rubyOn: false
 };
 
@@ -1895,8 +2021,6 @@ function updateLangUI() {
   if (isToKO) { $('optBody').classList.remove('open'); $('chevron').classList.remove('open'); }
   applyToneAvailability();
   $('spellBtn').style.display = isToKO ? 'none' : 'flex';
-  // 후리가나는 일본어 결과일 때만 의미가 있다
-  $('rubyBtn').style.display = (!isToKO && state.tgtLang === 'ja') ? '' : 'none';
   $('imgAttachBtn').style.display = isToKO ? 'inline-flex' : 'none';
   if (!isToKO) { // 한국어 원문일 땐 이미지를 못 쓰므로 초기화 (안 그러면 다음 번역에 딸려 간다)
     state.imgData = null; state.imgMime = null;
@@ -1912,7 +2036,7 @@ function updateLangUI() {
 
 $('btnKO').onclick = () => {
   state.langLocked = true;
-  if (state.srcLang !== 'ko') { state.srcLang = 'ko'; updateLangUI(); clearResult(); }
+  if (state.srcLang !== 'ko') { state.srcLang = 'ko'; updateLangUI(); fadeResult(clearResult); }
 };
 $('btnTgt').onclick = (e) => {
   e.stopPropagation();
@@ -1926,7 +2050,7 @@ document.querySelectorAll('.lang-opt').forEach(o => {
     state.tgtLang = o.dataset.lang;
     _tonesCache = null;
     $('langDropdown').style.display = 'none';
-    updateLangUI(); clearResult();
+    updateLangUI(); fadeResult(clearResult);
     $('btnTgt').style.transform = 'scale(0.93)';
     setTimeout(() => { $('btnTgt').style.transform = ''; }, 80);
   };
@@ -1943,7 +2067,7 @@ $('swapBtn').onclick = () => {
     $('btnTgt').style.transform = '';
     updateLangUI();
   }, 100);
-  clearResult();
+  fadeResult(clearResult);
 };
 
 // ── 입력 언어 자동 감지 ──
@@ -2034,17 +2158,6 @@ $('thinkingToggle').onclick = function() {
   $('thinkingDesc').textContent = state.thinking ? 'on — 느리지만 정확하게' : 'off — 빠른 번역';
 };
 
-function slangDescText() {
-  return state.slang
-    ? 'on — ㅋㅋ · ㅠㅠ 를 대상 언어 표기로 바꿔서 번역'
-    : 'off — ㅋㅋ · ㅠㅠ 를 그대로 둠';
-}
-$('slangToggle').onclick = function() {
-  state.slang = !state.slang;
-  this.classList.toggle('on', state.slang);
-  localStorage.setItem('slang_on', state.slang ? '1' : '0');
-  $('slangDesc').textContent = slangDescText();
-};
 
 $('strictToggle').onclick = function() {
   state.strict = !state.strict;
@@ -2068,6 +2181,14 @@ function closeOverlay(el, delay) {
   setTimeout(() => { el.classList.remove('open'); el.classList.remove('closing'); }, delay || 250);
 }
 $('settingsBtn').onclick = () => { loadGlossaryField(); $('overlay').classList.add('open'); };
+
+document.querySelectorAll('#rsizeSeg button').forEach(b => {
+  b.onclick = () => {
+    localStorage.setItem('result_size', b.dataset.rsize);
+    applyResultSize(b.dataset.rsize);
+    haptic();
+  };
+});
 
 // 설정 섹션은 한 번에 하나만 펼친다
 document.querySelectorAll('.set-group .set-head').forEach(head => {
@@ -2281,7 +2402,7 @@ function updateCharChip(forceRenderChips = false) {
 const BACKUP_KEYS = [
   'gemini_api_key', 'gemini_model', 'gemini_tts_model', 'gemini_tts_voice',
   'gemini_image_model', 'image_out_size', 'custom_icon', 'custom_tones',
-  'char_name', 'char_x', 'char_prompt_default', 'slang_on', 'auto_detect', 'trans_history'
+  'char_name', 'char_x', 'char_prompt_default', 'auto_detect', 'result_size', 'trans_history'
 ];
 
 function collectBackup() {
@@ -2396,27 +2517,10 @@ function bannedInstr() {
     + items.join('\n');
 }
 
-// ── 표현 현지화 ──
-const SLANG_RULES = {
-  'ja': 'ㅋㅋ/ㅎㅎ는 w·www·草, ㅠㅠ/ㅜㅜ는 (泣)·；；, ㄷㄷ는 ガクブル, ㅇㅇ는 うん, 헐은 えぇ… 처럼',
-  'en': 'ㅋㅋ/ㅎㅎ는 lol·haha, ㅠㅠ는 :( ·T_T, ㅇㅇ는 yeah, 헐은 omg 처럼',
-  'zh-cn': 'ㅋㅋ/ㅎㅎ는 哈哈, ㅠㅠ는 呜呜·555, ㅇㅇ는 嗯嗯 처럼',
-  'zh-tw': 'ㅋㅋ/ㅎㅎ는 哈哈, ㅠㅠ는 嗚嗚, ㅇㅇ는 嗯嗯 처럼'
-};
-function slangInstr() {
-  if (!state.slang) return '';
-  if (state.srcLang !== 'ko') {
-    return '\n\n[표기 규칙] w·www·草·(泣)·lol 같은 현지 인터넷 표현은 한국어에서 같은 느낌으로 쓰는 ㅋㅋ·ㅠㅠ 등으로 바꿔서 번역하세요.';
-  }
-  const rule = SLANG_RULES[state.tgtLang] || SLANG_RULES['ja'];
-  return `\n\n[표기 규칙] ㅋㅋ, ㅠㅠ, ㄷㄷ 같은 한국식 채팅 표현은 그대로 두지 말고 대상 언어에서 같은 느낌으로 쓰는 표현으로 바꾸세요. (${rule})`;
-}
 
 function loadStorage() {
   $('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
   loadGlossaryField();
-  $('slangToggle').classList.toggle('on', state.slang);
-  $('slangDesc').textContent = slangDescText();
   const savedIcon = localStorage.getItem('custom_icon');
   if (savedIcon) {
     applyCustomIcon(savedIcon);
@@ -2428,6 +2532,7 @@ function loadStorage() {
   $('imgModelInput').value = localStorage.getItem('gemini_image_model') || '';
   if ($('ttsVoiceInput')) $('ttsVoiceInput').value = getTtsVoice();
   if ($('imgSizeInput')) $('imgSizeInput').value = getImageOutSize();
+  applyResultSize(getResultSize());
   $('autoDetectToggle').classList.toggle('on', state.autoDetect);
   // API 키가 없으면 첫 화면에서 바로 넣을 수 있게 '연결'만 펼쳐 둔다
   if (!getApiKey()) { const g = document.getElementById('set-connect'); if (g) g.classList.add('open'); }
@@ -2442,6 +2547,14 @@ function loadStorage() {
     saveTones(JSON.parse(JSON.stringify(DEFAULT_TONES)));
   }
   updateCharChip(true); // 칩 초기 렌더링
+}
+
+// 언어를 바꿀 때 결과가 툭 사라지지 않도록 한 번 흐려졌다 돌아온다
+function fadeResult(fn) {
+  const card = $('resultCard');
+  if (!card || !state.result) { fn(); return; }
+  card.classList.add('fading');
+  setTimeout(() => { fn(); card.classList.remove('fading'); }, 160);
 }
 
 // ── 번역 ──
@@ -2461,6 +2574,7 @@ function clearResult() {
   $('btLoading').style.display = 'none';
   $('backTranslationText').textContent = '';
   resetRuby();
+  if ($('metaPills')) { $('metaPills').innerHTML = ''; $('metaPills').classList.remove('visible'); }
   $('pronunciationWrap').style.display = 'none';
   $('pronBtn').classList.remove('active');
   if ($('commentBox')) { $('commentBox').classList.remove('visible'); $('commentText').textContent = ''; }
@@ -2477,7 +2591,7 @@ function buildPrompt(text) {
 [번역 지침]
 1. 원문에 담긴 말투, 어조, 감정을 그대로 살려서 번역하세요. (반말이면 반말, 존댓말이면 존댓말, 거친 말투면 거칠게)
 2. 원문의 내용을 변경하지 말고 충실하게 번역하세요.
-3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.${glossaryInstr(text)}${bannedInstr()}${slangInstr()}
+3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.${glossaryInstr(text)}${bannedInstr()}
 
 [원문]
 ${text}`;
@@ -2520,7 +2634,7 @@ ${text}`;
 [번역 지침]
 1. ${toneInstr}
 2. ${strictInstr}
-3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.${extraInstr}${glossaryInstr(text)}${bannedInstr()}${slangInstr()}
+3. 번역 결과 텍스트만 출력하세요. 설명이나 주석은 불필요합니다.${extraInstr}${glossaryInstr(text)}${bannedInstr()}
 
 [원문]
 ${text}`;
@@ -2622,6 +2736,7 @@ ${result}`;
     $('fbHistory').innerHTML = '';
     $('feedbackCard').classList.add('visible');
     resetRuby();
+    renderMetaPills('');
     prepareBackTranslation();
   } catch (err) {
     if (_cancelled || err.name === 'AbortError') {
@@ -2757,12 +2872,44 @@ async function fetchWithRetry(url, options, maxRetries = 1, timeoutMs = 20000) {
   }
 }
 
+// ── 버튼 확인 피드백 ──
+// 라벨을 글로 바꾸는 대신 체크가 톡 올라왔다가 원래대로 돌아온다
+ICN.check = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+
+function flashButton(btn, html, ms) {
+  if (!btn) return;
+  if (btn._flashTimer) clearTimeout(btn._flashTimer);
+  else btn._flashHtml = btn.innerHTML;          // 첫 호출에만 원래 모습을 기억한다
+  btn.innerHTML = html;
+  btn.classList.add('flash');
+  btn._flashTimer = setTimeout(() => {
+    btn.innerHTML = btn._flashHtml;
+    btn.classList.remove('flash');
+    btn._flashTimer = null;
+    btn._flashHtml = null;
+  }, ms || 1300);
+}
+
+function nudgeButton(btn) {
+  if (!btn) return;
+  btn.classList.remove('nudge');
+  void btn.offsetWidth;
+  btn.classList.add('nudge');
+  setTimeout(() => btn.classList.remove('nudge'), 320);
+}
+
 // ── 햅틱 피드백 (iOS checkbox switch 방식) ──
+// iOS Safari는 navigator.vibrate를 지원하지 않는다.
+// 17.4+의 <input type="checkbox" switch>를 토글하면 햅틱이 울리는 우회가 있는데,
+// 크기가 0이면 렌더링 박스가 없어 아예 울리지 않는다. 화면 밖에 두되 실제 크기를 준다.
 const _hapticEl = (() => {
   const el = document.createElement('input');
   el.type = 'checkbox';
   el.setAttribute('switch', '');
-  el.style.cssText = 'position:fixed;opacity:0;pointer-events:none;width:0;height:0;';
+  el.setAttribute('aria-hidden', 'true');
+  el.tabIndex = -1;
+  el.style.cssText = 'position:fixed;left:-120px;bottom:0;width:52px;height:32px;' +
+                     'opacity:.01;pointer-events:none;';
   document.documentElement.appendChild(el);
   return el;
 })();
@@ -3028,6 +3175,7 @@ async function sendFeedback() {
     $('resultText').className = 'result-area';
     $('resultText').style.display = 'block';
     resetRuby();
+    renderMetaPills('');
     prepareBackTranslation();
   } catch (err) {
     addFbMsg('ai', '오류: ' + err.message);
@@ -3061,16 +3209,89 @@ function _numbers(s) { return ((s || '').match(/\d+/g) || []).join(','); }
 
 function checkBtDivergence(bt) {
   const warn = $('btWarn');
-  if (!warn) return;
+  if (!warn) return '';
   const srcText = state.originalText || '';
+  const a = srcText.match(/\d[\d,.]*/g) || [];
+  const b = (bt || '').match(/\d[\d,.]*/g) || [];
   let msg = '';
-  if (_numbers(srcText) !== _numbers(bt)) {
-    msg = '원문과 숫자가 다릅니다. 날짜·시간·금액을 확인해 주세요.';
+  let marks = [];
+
+  if (a.join(',') !== b.join(',')) {
+    const onlyA = a.filter(x => b.indexOf(x) < 0);
+    const onlyB = b.filter(x => a.indexOf(x) < 0);
+    const j = xs => xs.slice(0, 2).join(', ');
+    if (onlyA.length && onlyB.length) {
+      msg = `원문은 <b>${j(onlyA)}</b>인데 번역은 <b>${j(onlyB)}</b>입니다.`;
+    } else if (onlyA.length) {
+      msg = `원문의 <b>${j(onlyA)}</b>가 번역에서 빠졌습니다.`;
+    } else if (onlyB.length) {
+      msg = `번역에 원문에 없는 <b>${j(onlyB)}</b>가 있습니다.`;
+    } else {
+      msg = '원문과 숫자의 순서가 다릅니다. 날짜·시간·금액을 확인해 주세요.';
+    }
+    marks = onlyB;
   } else if (_normText(srcText).length >= 20 && _textSim(srcText, bt) < 0.18) {
     msg = '역번역이 원문과 많이 다릅니다. 뜻이 바뀌지 않았는지 확인해 주세요.';
   }
-  warn.textContent = msg;
-  warn.classList.toggle('visible', !!msg);
+
+  if (msg) {
+    warn.innerHTML = TALK_WARN_ICON + '<span>' + msg + '</span>';
+    warn.classList.add('visible');
+    if (marks.length) highlightNumbers($('backTranslationText'), bt, marks);
+  } else {
+    warn.textContent = '';
+    warn.classList.remove('visible');
+  }
+  return msg;
+}
+
+const TALK_WARN_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5 2.8 19.5h18.4Z"/><path d="M12 10.5v4M12 17.2h.01"/></svg>';
+
+// 어긋난 숫자를 역번역문에서 직접 짚어준다
+function highlightNumbers(el, text, nums) {
+  const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  let html = esc(text);
+  nums.slice(0, 4).forEach(n => {
+    html = html.split(esc(n)).join('<mark class="num-hi">' + esc(n) + '</mark>');
+  });
+  el.innerHTML = html;
+}
+
+// 결과 텍스트만 보고 말투 단계를 추정한다 (API를 더 쓰지 않는다)
+function politenessOf(text, lang) {
+  const t = (text || '').trim();
+  if (!t) return '';
+  if (lang === 'ja') {
+    if (/(でございます|いたします|申し上げ|くださいませ)/.test(t)) return '격식체';
+    // ましょう·ましたら 처럼 「ます」가 활용된 꼴도 잡아야 한다
+    if (/(です|ます|まし|ましょ|ません|でしょ|ください|ございま)/.test(t)) return '정중체';
+    if (/(だよ|だね|じゃん|だろ|かな|さ|ぜ|ぞ)[。！？]?\s*$/m.test(t)) return '반말';
+    return '';
+  }
+  if (lang === 'ko') {
+    // 합쇼체/해요체를 나누지 않고 정중체 하나로 묶는다
+    if (/(습니다|습니까|십시오|드립니다|세요|예요|이에요|시죠|요[.!?]?\s*$)/m.test(t)) return '정중체';
+    if (/[가-힣](야|어|지|다|래|자|니|군|네)[.!?]?\s*$/m.test(t)) return '반말';
+    return '';
+  }
+  return '';   // 영어·중국어는 이런 단계로 안 나뉜다
+}
+
+function renderMetaPills(warnMsg) {
+  const box = $('metaPills');
+  if (!box) return;
+  box.innerHTML = '';
+  const outLang = state.srcLang === 'ko' ? state.tgtLang : 'ko';
+  const p = politenessOf(state.result, outLang);
+  const add = (label, warn) => {
+    const el = document.createElement('span');
+    el.className = 'mpill' + (warn ? ' warn' : '');
+    el.textContent = label;
+    box.appendChild(el);
+  };
+  if (p) add(p, false);
+  if (warnMsg) add('확인 권장', true);
+  box.classList.toggle('visible', box.children.length > 0);
 }
 
 function prepareBackTranslation() {
@@ -3111,7 +3332,7 @@ ${state.result}` }] }],
     if (!bt) throw new Error('no result');
     state.btText = bt;
     $('backTranslationText').textContent = bt;
-    checkBtDivergence(bt);
+    renderMetaPills(checkBtDivergence(bt));
     $('backTranslation').style.display = 'block';
     $('btChev').classList.add('open');
   } catch(e) {
@@ -3124,71 +3345,12 @@ ${state.result}` }] }],
   }
 };
 
-// ── 후리가나 ──
+// ── 결과 렌더 상태 초기화 ──
 function resetRuby() {
   state.rubyText = null;
   state.rubyOn = false;
-  $('rubyBtn').classList.remove('active');
   $('resultText').classList.remove('has-ruby');
 }
-
-// 모델이 돌려준 「漢字《かんじ》」 표기를 <ruby>로 바꾼다. 먼저 이스케이프해서 태그 주입을 막는다.
-function rubyHtml(text) {
-  const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return esc(text).replace(
-    /([\u4E00-\u9FFF\u3005\u3006\u30F6]+)\u300A([^\u300B]{1,24})\u300B/g,
-    (m, base, read) => '<ruby>' + base + '<rt>' + read + '</rt></ruby>');
-}
-
-function applyRuby() {
-  $('resultText').innerHTML = rubyHtml(state.rubyText);
-  $('resultText').classList.add('has-ruby');
-  $('rubyBtn').classList.add('active');
-  state.rubyOn = true;
-}
-
-$('rubyBtn').onclick = async function() {
-  if (!state.result) return;
-  if (state.rubyOn) {
-    $('resultText').textContent = state.result;
-    $('resultText').classList.remove('has-ruby');
-    this.classList.remove('active');
-    state.rubyOn = false;
-    return;
-  }
-  if (state.rubyText) { applyRuby(); haptic(); return; }
-  if (!getApiKey()) { $('overlay').classList.add('open'); return; }
-  this.textContent = '...';
-  this.disabled = true;
-  try {
-    const prompt = `다음 일본어 문장의 모든 한자에 후리가나를 달아줘.
-한자 바로 뒤에 《 》 안에 히라가나 읽기를 넣고, 나머지 글자는 원문 그대로 둬.
-예: 今日《きょう》は本当《ほんとう》にいい天気《てんき》ですね。
-설명 없이 결과 문장만 출력해.
-
-[원문]
-${state.result}`;
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } } }) }
-    );
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || `오류 ${res.status}`);
-    const out = data.candidates?.[0]?.content?.parts?.filter(p => p.text).map(p => p.text).join('').trim();
-    if (!out) throw new Error('결과 없음');
-    state.rubyText = out;
-    applyRuby();
-    haptic();
-  } catch(e) {
-    $('errorBox').textContent = '후리가나를 가져오지 못했어요.';
-    $('errorBox').style.display = 'block';
-  } finally {
-    this.textContent = '후리가나';
-    this.disabled = false;
-  }
-};
 
 $('fbSendBtn').onclick = sendFeedback;
 $('feedbackInput').addEventListener('keydown', e => {
@@ -3305,15 +3467,15 @@ async function pasteFromClipboard() {
 
 $('pasteBtn').onclick = async function() {
   const btn = this;
-  const flash = (label, ok) => {
-    btn.textContent = label;
-    if (ok) btn.classList.add('pasted');
-    setTimeout(() => { btn.innerHTML = ICN.paste; btn.classList.remove('pasted'); }, 2000);
-  };
   const r = await pasteFromClipboard();
-  if (r === 'image') flash('이미지 첨부', true);
-  else if (r === 'text') flash('✓', true);
-  else { $('inputText').focus(); flash('길게 눌러서'); }
+  if (r === 'image' || r === 'text') {
+    flashButton(btn, ICN.check);
+    haptic();
+  } else {
+    // 클립보드를 못 읽는 기기 — 설명 대신 입력창으로 보낸다
+    nudgeButton(btn);
+    $('inputText').focus();
+  }
 };
 
 
@@ -3942,25 +4104,45 @@ function cleanForCopy(t) {
     .trim();
 }
 
+// ── 크게 보기 ──
+// 아이폰에서 롱프레스는 텍스트 선택에 쓰이므로 아이콘 버튼으로 연다
+function openBig() {
+  if (!state.result) return;
+  const text = cleanForCopy(state.result);
+  const el = $('bigText');
+  el.textContent = text;
+  // 글자 수에 맞춰 최대한 크게
+  const n = text.replace(/\s/g, '').length;
+  el.style.fontSize = n <= 12 ? '46px' : n <= 30 ? '36px' : n <= 70 ? '28px' : n <= 140 ? '23px' : '19px';
+  $('bigSub').textContent = state.srcLang === 'ko' ? cleanForCopy($('inputText').value) : '';
+  $('bigOverlay').classList.add('open');
+  haptic();
+}
+function closeBig() { $('bigOverlay').classList.remove('open'); }
+
+$('bigBtn').onclick = openBig;
+$('bigClose').onclick = closeBig;
+$('bigOverlay').onclick = e => { if (e.target !== $('bigClose')) closeBig(); };
+
 $('copyBothBtn').onclick = function() {
   if (!state.result) return;
   const orig = cleanForCopy($('inputText').value);
   // 원문이 비어 있으면 앞에 빈 줄만 남는다
   const text = [orig, cleanForCopy(state.result)].filter(Boolean).join('\n\n');
+  const btn = this;
   navigator.clipboard.writeText(text).then(() => {
-    this.textContent = '✓ 복사됨';
-    this.classList.add('copied');
-    setTimeout(() => { this.textContent = '원문+번역'; this.classList.remove('copied'); }, 2000);
-  });
+    flashButton(btn, ICN.check + '<span class="pop">복사됨</span>');
+    haptic();
+  }).catch(() => nudgeButton(btn));
 };
 
 $('copyBtn').onclick = function() {
   if (!state.result) return;
+  const btn = this;
   navigator.clipboard.writeText(cleanForCopy(state.result)).then(() => {
-    this.textContent = '✓ 복사됨';
-    this.classList.add('copied');
-    setTimeout(() => { this.textContent = '복사'; this.classList.remove('copied'); }, 2000);
-  });
+    flashButton(btn, ICN.check + '<span class="pop">복사됨</span>');
+    haptic();
+  }).catch(() => nudgeButton(btn));
 };
 
 
