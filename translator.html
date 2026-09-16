@@ -1857,6 +1857,16 @@ button, input, textarea, a{ font-family:inherit; }
         </select>
         <button type="button" id="voicePreviewBtn" title="미리듣기"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2v13.6L19 12z"/></svg></button>
         </div>
+    </div>
+    <div class="field">
+        <div class="field-label">읽기 스타일</div>
+        <select id="ttsStyleInput">
+          <option value="natural">자연스럽게</option>
+          <option value="calm">차분하게</option>
+          <option value="bright">밝게</option>
+          <option value="clear">또박또박</option>
+          <option value="none">그대로</option>
+        </select>
       </div>
       </div>
     </div>
@@ -1950,6 +1960,25 @@ function getTtsModel() {
 }
 function getTtsVoice() {
   return localStorage.getItem('gemini_tts_voice') || 'Kore';
+}
+function getTtsStyle() {
+  return localStorage.getItem('gemini_tts_style') || 'natural';
+}
+
+// Gemini TTS는 SSML을 안 받는다. 대신 "이렇게 읽어줘: 본문" 형태의 자연어 지시를 따른다.
+// 지시가 길고 세면 낭독·연극조가 되어 오히려 어색해지므로 한 줄로 짧게 쓴다.
+const TTS_STYLES = {
+  natural: ['자연스럽게',
+    '평소 대화하듯 편안하게, 문장 사이에 숨 쉬는 호흡을 자연스럽게 살려서 읽어줘. 낭독하듯 과장하지 말고:'],
+  calm:    ['차분하게', '차분하고 낮은 톤으로 천천히, 과장 없이 읽어줘:'],
+  bright:  ['밝게', '밝고 친근한 톤으로 편안하게 읽어줘. 들뜨지는 말고:'],
+  clear:   ['또박또박', '조금 천천히, 한 마디씩 또렷하게 읽어줘:'],
+  none:    ['그대로', '']
+};
+
+function ttsPrompt(text, styleKey) {
+  const st = TTS_STYLES[styleKey] || TTS_STYLES.natural;
+  return st[1] ? st[1] + ' ' + text : text;
 }
 function getImageModel() {
   return localStorage.getItem('gemini_image_model') || 'gemini-3.1-flash-image';
@@ -2335,6 +2364,7 @@ $('saveBtn').onclick = () => {
   if (tv) localStorage.setItem('gemini_tts_model', tv);
   else localStorage.removeItem('gemini_tts_model');
   if ($('ttsVoiceInput')) localStorage.setItem('gemini_tts_voice', $('ttsVoiceInput').value);
+  if ($('ttsStyleInput')) localStorage.setItem('gemini_tts_style', $('ttsStyleInput').value);
   const iv = $('imgModelInput').value.trim();
   if (iv) localStorage.setItem('gemini_image_model', iv);
   else localStorage.removeItem('gemini_image_model');
@@ -2518,7 +2548,7 @@ function updateCharChip(forceRenderChips = false) {
 // 설정이 전부 localStorage에만 있어서, 기기를 바꾸거나 브라우저가 저장소를 비우면 통째로 사라진다.
 const BACKUP_KEYS = [
   'gemini_api_key', 'gemini_model', 'gemini_tts_model', 'gemini_tts_voice',
-  'gemini_image_model', 'image_out_size', 'custom_icon', 'custom_tones',
+  'gemini_image_model', 'gemini_tts_style', 'image_out_size', 'custom_icon', 'custom_tones',
   'char_name', 'char_x', 'char_prompt_default', 'auto_detect', 'result_size', 'trans_history'
 ];
 
@@ -2648,6 +2678,7 @@ function loadStorage() {
   $('ttsModelInput').value = localStorage.getItem('gemini_tts_model') || '';
   $('imgModelInput').value = localStorage.getItem('gemini_image_model') || '';
   if ($('ttsVoiceInput')) $('ttsVoiceInput').value = getTtsVoice();
+  if ($('ttsStyleInput')) $('ttsStyleInput').value = getTtsStyle();
   if ($('imgSizeInput')) $('imgSizeInput').value = getImageOutSize();
   applyResultSize(getResultSize());
   $('autoDetectToggle').classList.toggle('on', state.autoDetect);
@@ -4430,14 +4461,15 @@ function ttsCachePut(key, url) {
 }
 // 목소리를 바꿔 미리 들을 수 있어야 해서 합성 부분을 따로 뺐다
 async function synthesizeSpeech(text, voice) {
-  const key = getTtsModel() + '|' + voice + '|' + text;
+  const style = getTtsStyle();
+  const key = getTtsModel() + '|' + voice + '|' + style + '|' + text;
   const hit = ttsCacheGet(key);
   if (hit) return hit;
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${getTtsModel()}:generateContent?key=${getApiKey()}`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text }] }],
+        contents: [{ parts: [{ text: ttsPrompt(text, style) }] }],
         generationConfig: {
           responseModalities: ['AUDIO'],
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } }
@@ -4460,7 +4492,7 @@ $('ttsBtn').onclick = async function() {
   if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; $('ttsBtn').innerHTML = ICN.speak; return; }
   if (!getApiKey()) { $('overlay').classList.add('open'); return; }
   const spoken = cleanForCopy(state.result);
-  const wasCached = !!ttsCacheGet(getTtsModel() + '|' + getTtsVoice() + '|' + spoken);
+  const wasCached = !!ttsCacheGet(getTtsModel() + '|' + getTtsVoice() + '|' + getTtsStyle() + '|' + spoken);
   if (!wasCached) { $('ttsBtn').innerHTML = ICN.wait; $('ttsBtn').disabled = true; }
   try {
     const url = await synthesizeSpeech(spoken, getTtsVoice());
@@ -4495,6 +4527,14 @@ $('voicePreviewBtn').onclick = async function() {
     return;
   }
   const voice = $('ttsVoiceInput').value;
+  // 저장하기 전 고른 스타일로 들려줘야 비교가 된다
+  const pickedStyle = $('ttsStyleInput') ? $('ttsStyleInput').value : getTtsStyle();
+  const savedStyle = localStorage.getItem('gemini_tts_style');
+  localStorage.setItem('gemini_tts_style', pickedStyle);
+  const restoreStyle = () => {
+    if (savedStyle === null) localStorage.removeItem('gemini_tts_style');
+    else localStorage.setItem('gemini_tts_style', savedStyle);
+  };
   const text = VOICE_SAMPLE[state.tgtLang] || VOICE_SAMPLE['ja'];
   btn.innerHTML = ICN.wait;
   btn.disabled = true;
@@ -4508,6 +4548,7 @@ $('voicePreviewBtn').onclick = async function() {
     btn.innerHTML = ICN.play;
     alert('미리듣기 오류: ' + e.message);
   } finally {
+    restoreStyle();
     btn.disabled = false;
   }
 };
