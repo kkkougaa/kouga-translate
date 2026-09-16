@@ -1424,6 +1424,8 @@ button, input, textarea, a{ font-family:inherit; }
   border-radius:4px; box-shadow:0 0 0 1px var(--accent-bg);
 }
 .input-ta{ position:relative; z-index:1; }
+/* 입력창이 z-index를 갖게 되면서 그 위에 얹힌 버튼들이 뒤로 깔린다 */
+#imgAttachBtn{ z-index:2; }
 
 /* 20 · 피드백 프리셋 칩 */
 .fb-chips{
