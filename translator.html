@@ -1199,6 +1199,94 @@ button, input, textarea, a{ font-family:inherit; }
 }
 @keyframes talkbounce{ 0%,100%{ transform:scaleY(.4) } 50%{ transform:scaleY(1) } }
 
+/* ═══════════════════════════════════════════════════════════
+   폴리시 레이어 — 구조·요소·순서는 그대로.
+   여백 리듬 / 정렬선 / 아이콘 규격 / 버튼 단계만 정리한다.
+   ═══════════════════════════════════════════════════════════ */
+
+/* 1 · 좌우 정렬선을 16px 하나로 (14·16·12·10이 섞여 있었다) */
+.result-head, #pronunciationWrap, .back-translation,
+.bt-toggle, .back-translation-loading, .error-box{
+  padding-left:16px; padding-right:16px;
+}
+.result-area{ padding-left:16px; padding-right:16px; }
+.comment-box{ margin-left:16px; margin-right:16px; }
+.result-footer{ padding-left:10px; padding-right:10px; }
+.card-footer{ padding-left:10px; padding-right:10px; }
+.feedback-header{ padding-left:16px; padding-right:16px; }
+.feedback-history{ padding-left:16px; padding-right:16px; }
+
+/* 2 · 카드 간격에 리듬을 준다 — 같은 작업끼리는 붙이고 덩어리 사이는 벌린다 */
+.main{ gap:0; }
+.main > * + *{ margin-top:18px; }
+.main > #optionsCard{ margin-top:8px; }   /* 입력과 한 덩어리 */
+
+/* 3 · 아이콘을 한 세트로 (20px · 굵기 1.75) */
+.settings-btn svg, .swap-btn svg, .paste-btn svg, .clear-btn svg, #ttsBtn svg{
+  width:20px; height:20px; stroke-width:1.75;
+}
+.chevron svg, .bt-chev svg, .talk-enter-c svg{ width:14px; height:14px; stroke-width:2.4; }
+.dict-close svg{ width:18px; height:18px; }
+#lineBtn svg{ width:18px; height:18px; }
+#twitterBtn svg{ width:16px; height:16px; }
+
+/* 4 · 손가락이 닿는 넓이를 40으로 (보이는 아이콘 크기는 그대로) */
+.settings-btn, .swap-btn, .paste-btn, .clear-btn{
+  width:40px; height:40px; border-radius:20px; padding:0;
+}
+#ttsBtn, #lineBtn, #twitterBtn{
+  width:40px !important; height:40px !important; border-radius:20px !important;
+  background:none !important; padding:0 !important;
+}
+#imgAttachBtn{ width:34px !important; height:34px !important; }
+
+/* 5 · radius 단계를 셋으로 — 카드 14 / 컨트롤 10 / 원형 */
+.copy-btn, .copy-both-btn, .grammar-btn, .translate-btn, .chip{ border-radius:10px; }
+.view-opt{ border-radius:999px; }
+
+/* 6 · 버튼 높이도 셋으로 — 주요 44 / 보조 36 / 토글 28 */
+.translate-btn{ height:44px; font-size:16px; }
+.copy-btn, .copy-both-btn, .grammar-btn{ height:36px; }
+.view-opt{
+  height:28px; padding:0 11px; font-size:12.5px;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* 7 · 결과가 입력보다 커야 결과가 주인공으로 읽힌다 (17 → 19) */
+.result-head{ padding-top:14px; }
+.result-area{ font-size:19px; line-height:1.7; padding-top:8px; padding-bottom:16px; }
+.result-area.placeholder{ font-size:15px; }
+.result-area.has-ruby{ line-height:2.2; }
+
+/* 8 · 결과 카드 안을 얇은 선으로 나눈다 (지금은 전부 붙어 있다) */
+.result-footer{ border-top:.5px solid var(--border); padding-top:8px; }
+
+/* 9 · 회색 단계를 덜어낸다 */
+.result-label, .opt-summary, .char-count, .field-note{ color:var(--text3); }
+.chevron, .bt-chev{ opacity:.6; }
+.comment-label{ letter-spacing:0; }
+
+/* 10 · 입력 푸터: 아이콘 줄과 버튼 줄 사이 간격을 줄인다 */
+.card-footer{ row-gap:4px; padding-bottom:8px; }
+.card-footer > div:first-child{ height:40px !important; }
+/* 같은 줄에 선 버튼은 높이가 같아야 한다. 폭도 고정해서 라벨이 바뀌어도 안 흔들린다 */
+.card-footer .grammar-btn{
+  height:44px; width:72px; padding:0; flex:none;
+  justify-content:center; white-space:nowrap; overflow:hidden;
+}
+.ticon{ display:flex; align-items:center; width:auto; opacity:.85; }
+.ticon svg{ display:block; }
+
+/* 11 · 번역 코멘트는 본문보다 뒤에 있어야 한다 */
+.comment-box{
+  background:var(--fill); border-left:none;
+  color:var(--text3); font-size:12.5px;
+}
+.comment-label{
+  color:var(--text2); font-size:11.5px; font-weight:600;
+  letter-spacing:0; margin-bottom:3px;
+}
+
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
 }
@@ -1264,9 +1352,9 @@ button, input, textarea, a{ font-family:inherit; }
           <button class="clear-btn" id="clearBtn"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/></svg></button>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <button class="grammar-btn" id="spellBtn" style="display:none;">맞춤법</button>
+          <button class="grammar-btn" id="spellBtn" style="display:none;">문법</button>
           <button class="grammar-btn" id="grammarBtn" style="display:none;">문법</button>
-          <button class="translate-btn" id="translateBtn"><span id="translateLabel">번역</span><span id="translateIcon" class="ticon">▶</span></button>
+          <button class="translate-btn" id="translateBtn"><span id="translateLabel">번역</span><span id="translateIcon" class="ticon"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M8 4.6v14.8L19.5 12z"/></svg></span></button>
         </div>
       </div>
     </div>
@@ -2688,6 +2776,13 @@ function haptic() {
   }
 }
 
+// 번역 버튼 아이콘 (다른 아이콘과 같은 규격의 SVG)
+const TICON = {
+  idle: '<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M8 4.6v14.8L19.5 12z"/></svg>',
+  loading: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3.8a8.2 8.2 0 1 1-7.1 4.1"/></svg>',
+  done: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m4.8 12.6 4.8 4.8L19.2 7.8"/></svg>'
+};
+
 function setTranslateIcon(iconState) {
   const icon = $('translateIcon');
   if (!icon) return;
@@ -2697,20 +2792,20 @@ function setTranslateIcon(iconState) {
   void icon.offsetWidth; // reflow 강제
 
   if (iconState === 'loading') {
-    icon.textContent = '↻';
+    icon.innerHTML = TICON.loading;
     icon.style.animation = '';
     icon.classList.add('spinning');
   } else if (iconState === 'done') {
     icon.style.animation = '';
-    icon.textContent = '✓';
+    icon.innerHTML = TICON.done;
     icon.classList.add('check');
     setTimeout(() => {
       icon.classList.remove('check');
-      icon.textContent = '▶';
+      icon.innerHTML = TICON.idle;
     }, 1800);
   } else {
     icon.style.animation = '';
-    icon.textContent = '▶';
+    icon.innerHTML = TICON.idle;
   }
 }
 
@@ -2791,7 +2886,7 @@ function updateGrammarBtn() {
   const btn = $('grammarBtn');
   const reverse = state.srcLang !== 'ko';     // 외국어 → 한국어
   if (reverse && state.imgData) {
-    btn.textContent = '이미지 번역';
+    btn.textContent = '이미지';
     btn.onclick = translateImage;
     btn.style.display = 'flex';
   } else if (reverse && state.tgtLang === 'ja') {
@@ -3636,7 +3731,7 @@ $('spellBtn').onclick = async function() {
   if (!getApiKey()) { $('overlay').classList.add('open'); return; }
   state.busy = true;
   $('spellBtn').disabled = true;
-  $('spellBtn').textContent = '검사 중...';
+  $('spellBtn').textContent = '검사 중';
   $('resultText').textContent = '맞춤법을 검사하고 있습니다...';
   $('resultText').className = 'result-area placeholder';
   $('resultText').style.display = 'block';
@@ -3670,7 +3765,7 @@ ${text}`;
   } finally {
     state.busy = false;
     $('spellBtn').disabled = false;
-    $('spellBtn').textContent = '맞춤법';
+    $('spellBtn').textContent = '문법';
   }
 };
 
