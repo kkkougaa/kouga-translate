@@ -1530,6 +1530,61 @@ button, input, textarea, a{ font-family:inherit; }
   .header{ background:var(--bg2); }
 }
 
+/* 39 · 잠깐 뜨는 알림 */
+.toast{
+  position:fixed; left:50%; bottom:calc(var(--safe-bottom) + 28px);
+  transform:translateX(-50%) translateY(10px);
+  max-width:calc(100% - 40px); text-align:center;
+  background:rgba(28,28,30,.94); color:#fff;
+  font-size:14px; line-height:1.45; font-weight:500;
+  padding:11px 18px; border-radius:999px;
+  box-shadow:0 8px 24px rgba(0,0,0,.24);
+  z-index:900; opacity:0; pointer-events:none;
+  transition:opacity .2s ease, transform .22s cubic-bezier(.3,.8,.4,1);
+}
+.toast.on{ opacity:1; transform:translateX(-50%) translateY(0); }
+@media (prefers-color-scheme: dark){
+  .toast{ background:rgba(58,58,62,.96); }
+}
+
+/* 38 · display 를 정해 준 요소는 hidden 속성을 무시해 버린다. 되돌려 놓는다. */
+[hidden]{ display:none !important; }
+
+/* 37 · 화자 이름 — 작아서 안 보이던 것 키우고, 직접 붙일 수 있게 */
+.rt-name{
+  font-size:12.5px !important; font-weight:700 !important;
+  color:var(--text2) !important; padding:0 4px 1px !important;
+  display:flex; align-items:center; gap:5px;
+}
+
+#rtWhoOverlay .sheet{ padding-bottom:20px; }
+.rt-set-h{
+  font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--text3);
+  margin:16px 0 4px;
+}
+.rt-set-row{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:9px 0; font-size:15px;
+}
+.rt-name i{
+  width:7px; height:7px; border-radius:4px; flex:none;
+  background:currentColor; display:inline-block;
+}
+.rt-who-row{ display:flex; align-items:center; gap:10px; padding:9px 0; }
+.rt-who-row + .rt-who-row{ border-top:.5px solid var(--border); }
+.rt-who-tag{
+  width:34px; height:34px; flex:none; border-radius:17px;
+  background:var(--fill); color:var(--text2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:700;
+}
+.rt-who-row input{
+  flex:1; min-width:0; padding:10px 12px; border-radius:10px;
+  border:.5px solid var(--border2); background:var(--bg2); color:var(--text);
+  font-size:16px; font-family:inherit;
+}
+.rt-who-none{ color:var(--text3); font-size:14px; padding:14px 2px; line-height:1.6; }
+
 /* 35 · 대화 모드 — 타자 입력 · 번역 미리보기 */
 .rt-compose{
   flex:none; margin:0 14px 8px; padding:11px 12px 11px;
@@ -1858,28 +1913,28 @@ button, input, textarea, a{ font-family:inherit; }
 
 /* 27 · 설정 위에서 여는 창은 가운데 팝업으로.
    시트 위에 같은 모양 시트가 겹치면 뭐가 앞인지 안 보인다. */
-#toneManagerOverlay, #chipManagerOverlay, #glossaryEditOverlay{
+#toneManagerOverlay, #chipManagerOverlay, #glossaryEditOverlay, #rtWhoOverlay{
   z-index:800;                     /* 설정 페이지(500)보다 위 */
   align-items:center; padding:20px;
 }
-#toneManagerOverlay .sheet, #chipManagerOverlay .sheet, #glossaryEditOverlay .sheet{
+#toneManagerOverlay .sheet, #chipManagerOverlay .sheet, #glossaryEditOverlay .sheet, #rtWhoOverlay .sheet{
   border-radius:20px;
   max-height:min(76vh, 620px);
   padding:0 20px 20px;
   box-shadow:0 24px 64px rgba(0,0,0,.30), 0 4px 14px rgba(0,0,0,.14);
 }
-#toneManagerOverlay .handle, #chipManagerOverlay .handle, #glossaryEditOverlay .handle{ display:none; }
+#toneManagerOverlay .handle, #chipManagerOverlay .handle, #glossaryEditOverlay .handle, #rtWhoOverlay .handle{ display:none; }
 /* 아래에서 올라오지 말고 가운데서 커지게 */
-#toneManagerOverlay.open .sheet, #chipManagerOverlay.open .sheet, #glossaryEditOverlay.open .sheet{
+#toneManagerOverlay.open .sheet, #chipManagerOverlay.open .sheet, #glossaryEditOverlay.open .sheet, #rtWhoOverlay.open .sheet{
   animation:popIn .26s cubic-bezier(.2,1.12,.4,1);
 }
-#toneManagerOverlay.closing .sheet, #chipManagerOverlay.closing .sheet, #glossaryEditOverlay.closing .sheet{
+#toneManagerOverlay.closing .sheet, #chipManagerOverlay.closing .sheet, #glossaryEditOverlay.closing .sheet, #rtWhoOverlay.closing .sheet{
   animation:popOut .18s ease forwards;
 }
 @keyframes popIn{ from{ opacity:0; transform:scale(.93); } to{ opacity:1; transform:none; } }
 @keyframes popOut{ from{ opacity:1; transform:none; } to{ opacity:0; transform:scale(.96); } }
 @media (prefers-color-scheme: dark){
-  #toneManagerOverlay .sheet, #chipManagerOverlay .sheet, #glossaryEditOverlay .sheet{
+  #toneManagerOverlay .sheet, #chipManagerOverlay .sheet, #glossaryEditOverlay .sheet, #rtWhoOverlay .sheet{
     box-shadow:0 24px 64px rgba(0,0,0,.6), 0 4px 14px rgba(0,0,0,.45);
   }
 }
@@ -2241,6 +2296,8 @@ button, input, textarea, a{ font-family:inherit; }
   </div>
 </div>
 
+<div class="toast" id="appToast"></div>
+
 <div class="key-bar" id="keyBar" aria-hidden="true"><span class="key-bar-bg"></span></div>
 
 <div class="act-sheet" id="imgSheet">
@@ -2264,13 +2321,28 @@ button, input, textarea, a{ font-family:inherit; }
 </div>
 
 <!-- 대화 모드 -->
+<div class="overlay" id="rtWhoOverlay">
+  <div class="sheet">
+    <div class="sheet-title" style="padding-top:18px;">대화 설정</div>
+    <div class="rt-set-h">번역</div>
+    <label class="rt-set-row">
+      <span>Gemini로 다시 번역</span>
+      <button class="toggle" id="rtRefineSw" type="button"></button>
+    </label>
+    <div class="rt-set-h">화자 이름</div>
+    <div id="rtWhoList"></div>
+    <button class="rt-cbtn go" id="rtWhoClose" type="button"
+            style="width:100%;margin-top:14px;height:44px;">닫기</button>
+  </div>
+</div>
+
 <div class="talk-overlay" id="talkOverlay">
   <div class="talk-hdr">
     <button class="talk-ib" id="talkCloseBtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="talk-title">대화</div>
     <div class="talk-hdr-r">
+      <button class="talk-ib" id="talkWhoBtn" title="화자 이름"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></button>
       <button class="talk-ib" id="talkSrcBtn" title="이 기기 소리"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8.5 20h7M12 16.5V20"/></svg></button>
-      <button class="talk-ib" id="talkHistoryBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg></button>
     </div>
   </div>
   <div class="rt-flow" id="rtFlow"></div>
@@ -3242,7 +3314,7 @@ function updateCharChip(forceRenderChips = false) {
 // ── 백업 / 복원 ──
 // 설정이 전부 localStorage에만 있어서, 기기를 바꾸거나 브라우저가 저장소를 비우면 통째로 사라진다.
 const BACKUP_KEYS = [
-  'gemini_api_key', 'soniox_key', 'gemini_model', 'gemini_tts_model', 'gemini_tts_voice',
+  'gemini_api_key', 'soniox_key', 'rt_refine', 'gemini_model', 'gemini_tts_model', 'gemini_tts_voice',
   'gemini_image_model', 'gemini_tts_style', 'image_out_size', 'custom_icon', 'custom_tones',
   'char_name', 'char_x', 'char_prompt_default', 'auto_detect', 'result_size', 'accent_color', 'trans_history'
 ];
@@ -5776,8 +5848,9 @@ let _dictConn = null, _dictStream = null, _dictBase = '';
 
 function dictateBusy() { return !!(_dictation || _dictConn || _dictStream); }
 
+// Soniox 키가 없으면 마이크를 아예 숨긴다. 지우기 버튼이 그 자리로 당겨진다.
 function updateDictateBtn() {
-  $('dictateBtn').style.display = (SpeechRec || getSonioxKey()) ? 'flex' : 'none';
+  $('dictateBtn').style.display = getSonioxKey() ? 'flex' : 'none';
 }
 
 function dictSetText(fin, pend) {
@@ -5869,17 +5942,73 @@ let _SonioxClient = null;
 const rt = {
   open: false, mic: false, conn: null, stream: null, own: false,
   ac: null, analyser: null, raf: 0, quietAt: 0, level: 0,
-  turns: [], cur: null, pSrc: '', pDst: '', src: 'mic'
+  turns: [], cur: null, pSrc: '', pDst: '', src: 'mic',
+  names: {}                     // 화자 번호 → 직접 붙인 이름
 };
 
 function getSonioxKey() { return (localStorage.getItem('soniox_key') || '').trim(); }
+
+// 어느 화면에서든 잠깐 띄우는 알림
+let _toastT = 0;
+function toast(msg) {
+  const el = $('appToast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.classList.remove('on'), 2600);
+}
 const rtOtherLang = () => state.tgtLang || 'ja';
 const rtOtherName = () => LANG_CONFIG[rtOtherLang()]?.label || '日本語';
 
-// 화자 번호를 A·B·C 로. 이름은 묻지 않는다.
+// 화자 번호를 A·B·C 로. 이름을 붙여 두면 그걸 쓴다.
 function rtLetter(n) {
   const i = parseInt(n, 10);
   return isFinite(i) && i > 0 ? String.fromCharCode(64 + ((i - 1) % 26) + 1) : '';
+}
+
+// 화자마다 다른 점 색. 초록(나)과 안 겹치고, 밝기도 라이트·다크 양쪽에서 보이게 골랐다.
+const RT_HUES = ['#4A7FC1', '#8E63C8', '#C25E93', '#B8862F', '#6B7B9E', '#3A8FA8'];
+function rtHue(n) {
+  const i = parseInt(n, 10);
+  return RT_HUES[(isFinite(i) && i > 0 ? i - 1 : 0) % RT_HUES.length];
+}
+
+// 붙인 이름은 이 대화에서만 쓴다. 화자 번호는 다시 연결하면 바뀌기 때문이다.
+function rtWhoName(who) {
+  const n = String(who || '').replace(/^p/, '');
+  return (rt.names[n] || '').trim() || rtLetter(n);
+}
+
+function rtSeenSpeakers() {
+  const seen = [];
+  for (const t of rt.turns) {
+    if (t.who === 'me' || !t.who.startsWith('p')) continue;
+    const n = t.who.slice(1);
+    if (seen.indexOf(n) < 0) seen.push(n);
+  }
+  return seen.sort((a, b) => a - b);
+}
+
+function rtWhoOpen() {
+  $('rtRefineSw').classList.toggle('on', rtRefineOn());
+  const box = $('rtWhoList');
+  const seen = rtSeenSpeakers();
+  if (!seen.length) {
+    box.innerHTML = '<div class="rt-who-none">아직 상대가 말하기 전이에요.'
+      + '<br>목소리가 들어오면 여기에 A·B·C 로 나타나요.</div>';
+  } else {
+    box.innerHTML = seen.map(n =>
+      '<div class="rt-who-row"><span class="rt-who-tag" style="color:#fff;background:'
+      + rtHue(n) + '">' + rtLetter(n) + '</span>'
+      + '<input type="text" data-spk="' + n + '" maxlength="12" placeholder="이름"></div>'
+    ).join('');
+    box.querySelectorAll('input').forEach(inp => {
+      inp.value = rt.names[inp.dataset.spk] || '';
+      inp.oninput = () => { rt.names[inp.dataset.spk] = inp.value; rtRender(); };
+    });
+  }
+  $('rtWhoOverlay').classList.add('open');
 }
 
 // 용어집을 인식 힌트로 같이 보낸다.
@@ -5908,7 +6037,59 @@ function rtWhoOf(t) {
   return t.speaker ? 'p' + t.speaker : 'them';
 }
 
-function rtEndTurn() { if (rt.cur) { rt.cur.done = true; rt.cur = null; } }
+function rtRefineOn() { return localStorage.getItem('rt_refine') !== '0'; }
+
+// 문장이 끝난 뒤 늦게 오는 번역 토큰이 새 말풍선을 만들지 않게 잡아 둔다
+let _rtJustEnded = null;
+
+function rtEndTurn() {
+  if (!rt.cur) return;
+  const t = rt.cur;
+  t.done = true;
+  rt.cur = null;
+  _rtJustEnded = t;
+  // 늦은 번역 토큰이 먼저 붙게 조금 기다렸다 다시 옮긴다
+  setTimeout(() => rtRefine(t), 450);
+}
+
+// 용어집을 이 방향에 맞춰 넣는다. 메인의 glossaryInstr 은 state.srcLang 을 보는데
+// 대화 모드에서는 그 값이 방향을 뜻하지 않아서 따로 만든다.
+function rtGlossary(text, toKo) {
+  let pairs = [];
+  try { pairs = getGlossaryPairs(); } catch(e) { return ''; }
+  const t = String(text).toLowerCase();
+  const hits = pairs.filter(p => t.indexOf((toKo ? p.to : p.from).toLowerCase()) >= 0);
+  if (!hits.length) return '';
+  return '\n\n[용어집] 아래 단어는 반드시 지정한 번역을 쓰세요.\n'
+    + hits.map(p => toKo ? ('- ' + p.to + ' → ' + p.from)
+                         : ('- ' + p.from + ' → ' + p.to)).join('\n');
+}
+
+// Soniox 번역은 즉시 뜨는 초안이다. 문장이 끝나면 Gemini 로 다시 옮겨 갈아끼운다.
+// 기다리는 구간이 없다 — 이미 읽고 있던 글이 더 나은 것으로 바뀔 뿐이다.
+async function rtRefine(turn) {
+  if (!turn || turn.refined || !rtRefineOn() || !getApiKey()) return;
+  const body = (turn.src || '').trim();
+  if (body.length < 2) return;
+  turn.refined = true;
+
+  const toKo = turn.who !== 'me';
+  const srcName = toKo ? rtOtherName() : '한국어';
+  const tgtName = toKo ? '한국어' : rtOtherName();
+  const prompt = '당신은 ' + srcName + '를 ' + tgtName + '로 옮기는 전문 통역사입니다.\n'
+    + '말하는 사람의 말투와 감정을 그대로 살리되, ' + tgtName + '로 자연스럽게 옮기세요.\n'
+    + '직역하지 마세요. 실제로 쓰는 말로 바꾸세요.\n'
+    + '번역문 한 줄만 출력하세요. 설명, 주석, 읽는 법 표기는 절대 붙이지 마세요.'
+    + rtGlossary(body, toKo)
+    + '\n\n[원문]\n' + body;
+  try {
+    const out = await askGemini(prompt, 400);
+    const clean = stripReading((out || '').trim(), toKo ? 'ko' : rtOtherLang());
+    if (clean && rt.turns.indexOf(turn) >= 0) { turn.dst = clean; rtRender(); }
+  } catch(e) {
+    // 실패하면 Soniox 번역을 그대로 쓴다
+  }
+}
 
 function rtEnsure(who) {
   if (rt.cur && rt.cur.who === who) return;
@@ -5924,9 +6105,11 @@ function rtOnResult(res) {
     if (t.text === '<end>') { rtEndTurn(); continue; }
     const isTr = t.translation_status === 'translation';
     if (t.is_final) {
-      if (!isTr) rtEnsure(rtWhoOf(t));
-      else if (!rt.cur) rtEnsure('them');
-      if (isTr) rt.cur.dst += t.text; else rt.cur.src += t.text;
+      if (!isTr) { rtEnsure(rtWhoOf(t)); rt.cur.src += t.text; continue; }
+      // 번역 토큰이 <end> 뒤에 오면 새 칸을 만들지 말고 방금 끝난 칸에 붙인다
+      const box = rt.cur || (_rtJustEnded && !_rtJustEnded.refined ? _rtJustEnded : null);
+      if (box) box.dst += t.text;
+      else { rtEnsure('them'); rt.cur.dst += t.text; }
     } else {
       if (isTr) pDst += t.text; else pSrc += t.text;
     }
@@ -5953,8 +6136,11 @@ function rtRender() {
     const src = esc(t.src) + (lastOne && rt.pSrc ? '<span class="rt-nf">' + esc(rt.pSrc) + '</span>' : '');
     const dst = esc(t.dst) + (lastOne && rt.pDst ? '<span class="rt-nf">' + esc(rt.pDst) + '</span>' : '');
     const repeat = prev === t.who; prev = t.who;
-    const tag = (!me && !repeat && many && t.who.startsWith('p'))
-      ? '<div class="rt-name">' + esc(rtLetter(t.who.slice(1))) + '</div>' : '';
+    // 이름을 붙여 뒀으면 한 명뿐이어도 보여 준다
+    const named = !me && t.who.startsWith('p') && (rt.names[t.who.slice(1)] || '').trim();
+    const tag = (!me && !repeat && (many || named) && t.who.startsWith('p'))
+      ? '<div class="rt-name"><i style="background:' + rtHue(t.who.slice(1)) + '"></i>'
+        + esc(rtWhoName(t.who)) + '</div>' : '';
     html += '<div class="rt-turn ' + (me ? 'me' : 'them') + '">' + tag
       + '<div class="rt-card">'
       + '<div class="rt-dst">' + (dst || '…') + '</div>'
@@ -6085,16 +6271,7 @@ function rtFail(msg) {
 // ── 켜고 끄기 ──
 async function rtStartMic() {
   if (rt.mic) return;
-  if (!getSonioxKey()) {
-    closeTalk();
-    $('settingsBtn').click();
-    setTimeout(() => {
-      document.querySelectorAll('.set-group').forEach(g => g.classList.remove('open'));
-      if ($('set-connect')) $('set-connect').classList.add('open');
-      if ($('sonioxKeyInput')) $('sonioxKeyInput').focus();
-    }, 380);
-    return;
-  }
+  if (!getSonioxKey()) { rtToast('Soniox API 키가 필요해요'); return; }
   try {
     rt.stream = await rtOpenStream();
   } catch (e) {
@@ -6231,6 +6408,7 @@ function rtFitViewport() {
 }
 
 function openTalk() {
+  if (!getSonioxKey()) { toast('Soniox API 키가 필요해요'); return; }
   rt.open = true;
   rt.turns = []; rt.cur = null; rt.pSrc = rt.pDst = '';
   rt.src = 'mic';
@@ -6272,6 +6450,18 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', rtFitViewport);
   window.visualViewport.addEventListener('scroll', rtFitViewport);
 }
+$('talkWhoBtn').onclick = rtWhoOpen;
+$('rtRefineSw').onclick = function() {
+  const on = !this.classList.contains('on');
+  this.classList.toggle('on', on);
+  localStorage.setItem('rt_refine', on ? '1' : '0');
+  haptic();
+};
+$('rtWhoClose').onclick = () => closeOverlay($('rtWhoOverlay'), 220);
+$('rtWhoOverlay').onclick = e => {
+  if (e.target === $('rtWhoOverlay')) closeOverlay($('rtWhoOverlay'), 220);
+};
+
 $('talkSrcBtn').onclick = function() {
   const wasOn = rt.mic;
   if (wasOn) rtStopMic();
@@ -6462,7 +6652,6 @@ document.addEventListener('keydown', e => {
   if (page) closeOverlay(page, PAGE_ANIM);
   else if ($('talkOverlay').classList.contains('open')) closeTalk();
 });
-$('talkHistoryBtn').onclick = () => { renderHistory(); $('historyOverlay').classList.add('open'); };
 
 // init
 loadStorage();
