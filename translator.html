@@ -1577,8 +1577,11 @@ button, input, textarea, a{ font-family:inherit; }
   flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   padding:6px 14px 8px;
-  display:flex; flex-direction:column; justify-content:flex-end; gap:8px;
+  display:flex; flex-direction:column; gap:8px;
 }
+/* justify-content:flex-end 를 쓰면 넘친 부분이 위로 잘려 나가 스크롤로 못 닿는다.
+   첫 칸을 아래로 미는 방식이라야 적을 땐 바닥에 붙고 많을 땐 정상으로 스크롤된다. */
+.rt-flow > :first-child{ margin-top:auto; }
 .rt-empty{ margin:auto; color:var(--text3); font-size:14px; }
 .rt-turn{ max-width:86%; display:flex; flex-direction:column; gap:3px; }
 .rt-turn.me{ align-self:flex-end; align-items:flex-end; }
@@ -5800,7 +5803,10 @@ async function dictStartSoniox() {
       const mod = await import('https://unpkg.com/@soniox/speech-to-text-web?module');
       _SonioxClient = mod.SonioxClient;
     }
-    _dictStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // 대화 모드와 같은 이유로 잡음 억제·자동 음량을 끈다
+    _dictStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false }
+    });
   } catch (e) { btn.classList.remove('pasted'); return; }
 
   _dictBase = $('inputText').value;
@@ -5855,7 +5861,7 @@ $('dictateBtn').onclick = function() {
 // ══════════ 대화 모드 — 실시간 전사·번역 ══════════
 // Soniox 한 스트림에서 원문과 번역이 같이 온다.
 // 마이크는 켜 두고, 조용하면 연결만 끊는다 — 요금은 연결 시간으로 매겨지기 때문이다.
-const RT_QUIET_MS = 10000;      // 이만큼 조용하면 연결을 닫는다
+const RT_QUIET_MS = 30000;      // 이만큼 조용하면 연결을 닫는다. 자주 끊으면 문맥과 화자 번호가 초기화된다
 const RT_WAKE = 0.045;          // 이 세기를 넘으면 말이 시작된 걸로 본다
 const RT_MODEL = 'stt-rt-v5';
 let _SonioxClient = null;
@@ -5974,8 +5980,10 @@ async function rtOpenStream() {
     }
     return s;
   }
+  // 잡음 억제와 자동 음량은 통화용이라 음성 인식을 갉아먹는다.
+  // 자음 끝이나 약한 소리를 잡음으로 보고 깎아 버린다. 인식 모델이 알아서 하게 둔다.
   return navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false }
   });
 }
 
