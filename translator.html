@@ -1515,6 +1515,56 @@ button, input, textarea, a{ font-family:inherit; }
 .char-count.near{ color:var(--red); }
 
 
+/* 34 · 대화 모드 — 실시간 흐름 */
+.talk-ib.on{ background:var(--accent-bg); color:var(--accent-dark); }
+
+.rt-flow{
+  flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding:6px 14px 8px;
+  display:flex; flex-direction:column; justify-content:flex-end; gap:8px;
+}
+.rt-empty{ margin:auto; color:var(--text3); font-size:14px; }
+.rt-turn{ max-width:86%; display:flex; flex-direction:column; gap:3px; }
+.rt-turn.me{ align-self:flex-end; align-items:flex-end; }
+.rt-turn.them{ align-self:flex-start; }
+.rt-name{ font-size:10.5px; font-weight:600; color:var(--text3); padding:0 4px; }
+.rt-card{
+  border-radius:var(--radius); padding:9px 12px 10px;
+  display:flex; flex-direction:column; gap:3px;
+}
+.rt-turn.them .rt-card{ background:var(--bg); border-bottom-left-radius:5px; }
+.rt-turn.me   .rt-card{ background:var(--accent-bg); border-bottom-right-radius:5px; }
+.rt-dst{ font-size:16px; font-weight:600; line-height:1.45; }
+.rt-turn.them .rt-dst{ color:var(--text); }
+.rt-turn.me   .rt-dst{ color:var(--accent-dark); }
+.rt-src{ font-size:11.5px; line-height:1.5; color:var(--text3); }
+.rt-nf{ opacity:.35; }
+
+.rt-foot{ flex:none; padding:8px 14px 0; display:flex; flex-direction:column; gap:8px; }
+.rt-say{
+  font-size:12.5px; line-height:1.5; color:var(--text2); text-align:center;
+  max-height:0; opacity:0; overflow:hidden; transition:max-height .2s ease, opacity .2s ease;
+}
+.rt-say.on{ max-height:44px; opacity:1; }
+.rt-lvl{ display:flex; align-items:flex-end; justify-content:center; gap:3px; height:16px; }
+.rt-lvl i{
+  width:3px; height:3px; border-radius:2px; background:var(--text3);
+  transition:height .08s linear, background .2s ease;
+}
+.rt-lvl.live i{ background:var(--accent); }
+.rt-go{
+  height:50px; border:none; border-radius:var(--radius); cursor:pointer;
+  font-family:inherit; font-size:16px; font-weight:600;
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  background:var(--accent); color:var(--on-accent);
+  transition:transform .12s cubic-bezier(.3,.7,.4,1);
+}
+.rt-go:active{ transform:scale(.98); }
+.rt-go.on{ background:var(--fill); color:var(--red); }
+.rt-go svg{ display:block; }
+#rtGoIc{ font-size:0; }
+
 /* 33 · 토글 버튼 안에서 도는 로딩 고리 */
 .vo-spin{
   display:block; width:13px; height:13px; border-radius:50%;
@@ -2151,38 +2201,17 @@ button, input, textarea, a{ font-family:inherit; }
     <button class="talk-ib" id="talkCloseBtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="talk-title">대화</div>
     <div class="talk-hdr-r">
-      <button class="talk-ib" id="talkHistoryBtn"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg></button>
+      <button class="talk-ib" id="talkSrcBtn" title="이 기기 소리"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8.5 20h7M12 16.5V20"/></svg></button>
+      <button class="talk-ib" id="talkHistoryBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg></button>
     </div>
   </div>
-  <div class="talk-langbar">
-    <div class="talk-track">
-      <button class="talk-lang on">한국어</button>
-      <button class="talk-lang" id="talkTrackTgt">日本語</button>
-    </div>
-  </div>
-  <div class="talk-main">
-      <div class="talk-half them">
-        <div class="talk-card">
-          <div class="talk-clabel"><span id="talkThemLang">日本語</span><span class="st" id="talkThemState"></span></div>
-          <div class="talk-text ph" id="talkThemText"></div>
-          <textarea class="talk-ta" id="talkThemInput" rows="2"></textarea>
-          <div class="talk-foot">
-            <button class="talk-tool" id="talkThemKb"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10.5" rx="2.2"/><path d="M7 10.5h.01M10 10.5h.01M13 10.5h.01M16 10.5h.01M8.5 14h7"/></svg></button>
-            <button class="talk-go" id="talkThemGo"><span id="talkThemGoIc"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg></span><span id="talkThemGoLabel">話す</span></button>
-          </div>
-        </div>
-      </div>
-      <div class="talk-half me">
-        <div class="talk-card">
-          <div class="talk-clabel"><span id="talkMeLang">한국어</span><span class="st" id="talkMeState"></span></div>
-          <div class="talk-text ph" id="talkMeText"></div>
-          <textarea class="talk-ta" id="talkMeInput" rows="2"></textarea>
-          <div class="talk-foot">
-            <button class="talk-tool" id="talkMeKb"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10.5" rx="2.2"/><path d="M7 10.5h.01M10 10.5h.01M13 10.5h.01M16 10.5h.01M8.5 14h7"/></svg></button>
-            <button class="talk-go" id="talkMeGo"><span id="talkMeGoIc"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg></span><span id="talkMeGoLabel">말하기</span></button>
-          </div>
-        </div>
-      </div>
+  <div class="rt-flow" id="rtFlow"></div>
+  <div class="rt-foot">
+    <div class="rt-say" id="rtSay"></div>
+    <div class="rt-lvl" id="rtLvl"></div>
+    <button class="rt-go" id="rtGo" type="button">
+      <span id="rtGoIc"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg></span><span id="rtGoLabel">듣기 시작</span>
+    </button>
   </div>
 </div>
 
@@ -2194,6 +2223,11 @@ button, input, textarea, a{ font-family:inherit; }
     <div class="set-group" id="set-connect">
       <button class="set-head" type="button"><span>연결</span><span class="set-chev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
       <div class="set-body">
+      <div class="field">
+        <div class="field-label">Soniox API 키</div>
+        <input type="password" id="sonioxKeyInput" placeholder="대화 모드에 쓰인다">
+        <div class="field-note">console.soniox.com 에서 발급 · 이 기기에만 저장</div>
+      </div>
       <div class="field">
         <div class="field-label">Gemini API 키</div>
         <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
@@ -2931,6 +2965,7 @@ $('autoDetectToggle').onclick = function() {
 $('overlay').onclick = e => { if (e.target === $('overlay')) closeOverlay($('overlay'), 250); };
 $('saveBtn').onclick = () => {
   localStorage.setItem('gemini_api_key', $('apiKeyInput').value.trim());
+  if ($('sonioxKeyInput')) localStorage.setItem('soniox_key', $('sonioxKeyInput').value.trim());
   // 캐릭터 프롬프트는 말투 관리에서 저장
   const mv = $('modelInput').value.trim();
   if (mv) localStorage.setItem('gemini_model', mv);
@@ -3124,7 +3159,7 @@ function updateCharChip(forceRenderChips = false) {
 // ── 백업 / 복원 ──
 // 설정이 전부 localStorage에만 있어서, 기기를 바꾸거나 브라우저가 저장소를 비우면 통째로 사라진다.
 const BACKUP_KEYS = [
-  'gemini_api_key', 'gemini_model', 'gemini_tts_model', 'gemini_tts_voice',
+  'gemini_api_key', 'soniox_key', 'gemini_model', 'gemini_tts_model', 'gemini_tts_voice',
   'gemini_image_model', 'gemini_tts_style', 'image_out_size', 'custom_icon', 'custom_tones',
   'char_name', 'char_x', 'char_prompt_default', 'auto_detect', 'result_size', 'accent_color', 'trans_history'
 ];
@@ -3244,6 +3279,7 @@ function bannedInstr() {
 
 function loadStorage() {
   $('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
+  if ($('sonioxKeyInput')) $('sonioxKeyInput').value = localStorage.getItem('soniox_key') || '';
   loadGlossaryField();
   const savedIcon = localStorage.getItem('custom_icon');
   if (savedIcon) {
@@ -5597,263 +5633,292 @@ $('dictateBtn').onclick = function() {
 };
 
 // ══════════════ 대화 모드 ══════════════
-const talk = {
-  open: false,
-  listening: null,     // 'Me' | 'Them' | null
-  rec: null,
-  typing: { Me: false, Them: false },
-  busy: false,
-  audio: null,
-  msg: { Me: null, Them: null }   // { main, sub }
+// ══════════ 대화 모드 — 실시간 전사·번역 ══════════
+// Soniox 한 스트림에서 원문과 번역이 같이 온다.
+// 마이크는 켜 두고, 조용하면 연결만 끊는다 — 요금은 연결 시간으로 매겨지기 때문이다.
+const RT_QUIET_MS = 10000;      // 이만큼 조용하면 연결을 닫는다
+const RT_WAKE = 0.045;          // 이 세기를 넘으면 말이 시작된 걸로 본다
+const RT_MODEL = 'stt-rt-v5';
+let _SonioxClient = null;
+
+const rt = {
+  open: false, mic: false, conn: null, stream: null, own: false,
+  ac: null, analyser: null, raf: 0, quietAt: 0, level: 0,
+  turns: [], cur: null, pSrc: '', pDst: '', src: 'mic'
 };
 
-const TALK_SIDES = ['Me', 'Them'];
-const talkOther = side => (side === 'Me' ? 'Them' : 'Me');
-const talkLangOf = side => (side === 'Me' ? 'ko' : state.tgtLang);
-const talkNameOf = side => (side === 'Me' ? '한국어' : (LANG_CONFIG[state.tgtLang]?.label || '日本語'));
-const TALK_PH = {
-  'Me': '마이크를 누르거나 키보드로 입력하세요',
-  'ja': 'マイクを押すか、キーボードで入力してください',
-  'en': 'Tap the mic or type to start',
-  'zh-cn': '点击麦克风或用键盘输入',
-  'zh-tw': '點擊麥克風或用鍵盤輸入'
-};
-const TALK_GO = { 'ko': '말하기', 'ja': '話す', 'en': 'Speak', 'zh-cn': '说话', 'zh-tw': '說話' };
-const TALK_SEND = { 'ko': '보내기', 'ja': '送信', 'en': 'Send', 'zh-cn': '发送', 'zh-tw': '發送' };
-const TALK_STOP = { 'ko': '멈추기', 'ja': '止める', 'en': 'Stop', 'zh-cn': '停止', 'zh-tw': '停止' };
+function getSonioxKey() { return (localStorage.getItem('soniox_key') || '').trim(); }
+const rtOtherLang = () => state.tgtLang || 'ja';
+const rtOtherName = () => LANG_CONFIG[rtOtherLang()]?.label || '日本語';
 
-// 금액·시간처럼 잘못 알아들으면 손해가 큰 값은 따로 뽑아 크게 보여준다
-function talkNumbers(text) {
-  const hits = (text || '').match(/\d[\d,.]*\s*(?:円|엔|元|원|ドル|달러|%|時間|시간|時|分|시|분|人|명|個|개|泊|박|階|층)?/g) || [];
-  const out = [];
-  hits.forEach(h => {
-    const t = h.trim();
-    if (t && /\d/.test(t) && out.indexOf(t) < 0) out.push(t);
-  });
-  return out.slice(0, 2);
+// 화자 번호를 A·B·C 로. 이름은 묻지 않는다.
+function rtLetter(n) {
+  const i = parseInt(n, 10);
+  return isFinite(i) && i > 0 ? String.fromCharCode(64 + ((i - 1) % 26) + 1) : '';
 }
 
-function renderTalkCard(side) {
-  const textEl = $('talk' + side + 'Text');
-  const taEl = $('talk' + side + 'Input');
-  const goLabel = $('talk' + side + 'GoLabel');
-  const goBtn = $('talk' + side + 'Go');
-  const kbBtn = $('talk' + side + 'Kb');
-  const lang = talkLangOf(side);
-  const typing = talk.typing[side];
+function rtWhoOf(t) {
+  if (t.language === 'ko') return 'me';
+  return t.speaker ? 'p' + t.speaker : 'them';
+}
 
-  $('talk' + side + 'Lang').textContent = talkNameOf(side);
-  kbBtn.classList.toggle('on', typing);
-  textEl.style.display = typing ? 'none' : 'block';
-  taEl.style.display = typing ? 'block' : 'none';
-  taEl.placeholder = TALK_PH[side === 'Me' ? 'Me' : lang] || TALK_PH['ja'];
+function rtEndTurn() { if (rt.cur) { rt.cur.done = true; rt.cur = null; } }
 
-  if (typing) {
-    goBtn.classList.remove('live');
-    goLabel.textContent = TALK_SEND[lang] || TALK_SEND['ja'];
-    $('talk' + side + 'GoIc').innerHTML = TALK_ICON.send;
+function rtEnsure(who) {
+  if (rt.cur && rt.cur.who === who) return;
+  rtEndTurn();
+  rt.cur = { who, src: '', dst: '', done: false, at: Date.now() };
+  rt.turns.push(rt.cur);
+  if (rt.turns.length > 60) rt.turns.shift();
+}
+
+function rtOnResult(res) {
+  let pSrc = '', pDst = '';
+  for (const t of res.tokens || []) {
+    if (t.text === '<end>') { rtEndTurn(); continue; }
+    const isTr = t.translation_status === 'translation';
+    if (t.is_final) {
+      if (!isTr) rtEnsure(rtWhoOf(t));
+      else if (!rt.cur) rtEnsure('them');
+      if (isTr) rt.cur.dst += t.text; else rt.cur.src += t.text;
+    } else {
+      if (isTr) pDst += t.text; else pSrc += t.text;
+    }
+  }
+  rt.pSrc = pSrc; rt.pDst = pDst;
+  rtRender();
+}
+
+function rtRender() {
+  const box = $('rtFlow');
+  if (!rt.turns.length && !rt.pSrc) {
+    box.innerHTML = '<div class="rt-empty">' + (rt.mic ? '말하면 여기에 쌓여요' : '') + '</div>';
     return;
   }
+  // 상대가 둘 이상 나왔을 때만 이름표를 단다
+  const others = new Set(rt.turns.map(t => t.who).filter(w => w !== 'me'));
+  const many = others.size > 1;
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  const listening = talk.listening === side;
-  goBtn.classList.toggle('live', listening);
-  goLabel.textContent = listening ? (TALK_STOP[lang] || TALK_STOP['ja']) : (TALK_GO[lang] || TALK_GO['ja']);
-  $('talk' + side + 'GoIc').innerHTML = TALK_ICON.mic;
+  let prev = null, html = '';
+  rt.turns.slice(-30).forEach((t, i, arr) => {
+    const me = t.who === 'me';
+    const lastOne = i === arr.length - 1;
+    const src = esc(t.src) + (lastOne && rt.pSrc ? '<span class="rt-nf">' + esc(rt.pSrc) + '</span>' : '');
+    const dst = esc(t.dst) + (lastOne && rt.pDst ? '<span class="rt-nf">' + esc(rt.pDst) + '</span>' : '');
+    const repeat = prev === t.who; prev = t.who;
+    const tag = (!me && !repeat && many && t.who.startsWith('p'))
+      ? '<div class="rt-name">' + esc(rtLetter(t.who.slice(1))) + '</div>' : '';
+    html += '<div class="rt-turn ' + (me ? 'me' : 'them') + '">' + tag
+      + '<div class="rt-card">'
+      + '<div class="rt-dst">' + (dst || '…') + '</div>'
+      + (src ? '<div class="rt-src">' + src + '</div>' : '')
+      + '</div></div>';
+  });
+  box.innerHTML = html;
+  box.scrollTop = box.scrollHeight;
+}
 
-  if (listening) return;   // 인식 중 화면은 onProgress가 직접 그린다
-
-  const m = talk.msg[side];
-  if (!m) {
-    textEl.className = 'talk-text ph';
-    textEl.textContent = TALK_PH[side === 'Me' ? 'Me' : lang] || TALK_PH['ja'];
-    return;
-  }
-  textEl.className = 'talk-text';
-  textEl.innerHTML = '';
-  const nums = talkNumbers(m.main);
-  if (nums.length) {
-    nums.forEach(n => {
-      const chip = document.createElement('span');
-      chip.className = 'talk-num';
-      chip.textContent = n;
-      chip.style.marginRight = '6px';
-      textEl.appendChild(chip);
+// ── 소리 ──
+async function rtOpenStream() {
+  if (rt.src === 'screen') {
+    // 이 기기에서 나는 소리. 크롬·엣지 데스크톱만 된다. 영상 트랙은 바로 버린다.
+    const s = await navigator.mediaDevices.getDisplayMedia({
+      video: true, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      systemAudio: 'include'
     });
-    textEl.appendChild(document.createElement('br'));
+    s.getVideoTracks().forEach(v => v.stop());
+    if (!s.getAudioTracks().length) {
+      s.getTracks().forEach(t => t.stop());
+      throw new Error('소리가 안 딸려 왔어. 공유 창에서 “탭 오디오 공유”를 켜야 해.');
+    }
+    return s;
   }
-  textEl.appendChild(document.createTextNode(m.main));
-  if (m.sub) {
-    const sub = document.createElement('div');
-    sub.className = 'talk-sub';
-    sub.textContent = m.sub;
-    textEl.appendChild(sub);
+  return navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+  });
+}
+
+function rtWatchLevel() {
+  const buf = new Uint8Array(rt.analyser.fftSize);
+  const step = () => {
+    if (!rt.analyser) return;
+    rt.analyser.getByteTimeDomainData(buf);
+    let peak = 0;
+    for (const v of buf) peak = Math.max(peak, Math.abs(v - 128));
+    rt.level = peak / 128;
+    const now = Date.now();
+    if (rt.level > RT_WAKE) {
+      rt.quietAt = now;
+      if (!rt.conn) rtConnect();                        // 말이 시작되면 다시 붙는다
+    } else if (rt.conn && now - rt.quietAt > RT_QUIET_MS) {
+      rtDisconnect();                                   // 조용하면 연결만 닫는다
+    }
+    rtPaintLevel();
+    rt.raf = requestAnimationFrame(step);
+  };
+  step();
+}
+
+function rtPaintLevel() {
+  const box = $('rtLvl');
+  const live = !!rt.conn;
+  box.classList.toggle('live', live);
+  const bars = box.children.length ? box.children : null;
+  if (!bars) {
+    box.innerHTML = Array.from({ length: 9 }, () => '<i></i>').join('');
   }
+  const t = Date.now() / 90;
+  [...box.children].forEach((el, i) => {
+    const h = rt.mic ? 3 + rt.level * 26 * (0.55 + 0.45 * Math.abs(Math.sin(t + i * 0.8))) : 3;
+    el.style.height = Math.min(16, h).toFixed(1) + 'px';
+  });
 }
 
-const TALK_ICON = {
-  mic: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg>',
-  send: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5.5M6.4 11.1 12 5.5l5.6 5.6"/></svg>'
-};
-
-function renderTalk() {
-  $('talkTrackTgt').textContent = LANG_CONFIG[state.tgtLang]?.label || '日本語';
-  TALK_SIDES.forEach(renderTalkCard);
-}
-
-function setTalkState(side, label) {
-  $('talk' + side + 'State').textContent = label || '';
-}
-
-// 용어집·금지 표현은 방향에 따라 달라져서 잠깐 방향을 맞춰 두고 읽는다
-function talkExtraInstr(text, fromKo) {
-  const saved = state.srcLang;
-  state.srcLang = fromKo ? 'ko' : state.tgtLang;
-  const out = glossaryInstr(text) + bannedInstr();
-  state.srcLang = saved;
-  return out;
-}
-
-async function talkTranslate(side, text) {
-  if (!text || talk.busy) return;
-  if (!getApiKey()) { closeTalk(); $('overlay').classList.add('open'); return; }
-  const to = talkOther(side);
-  const fromKo = side === 'Me';
-  const srcName = talkNameOf(side);
-  const tgtName = talkNameOf(to);
-
-  talk.busy = true;
-  $('talk' + side + 'Go').disabled = true;
-  $('talk' + to + 'Go').disabled = true;
-  setTalkState(to, tgtName === '한국어' ? '통역 중' : '翻訳中');
-
-  const prompt = `당신은 통역사입니다. 아래 ${srcName} 문장을 ${tgtName}로 통역하세요.
-
-[지침]
-1. 말한 사람의 어조를 살리되, 처음 만난 사람에게 쓰는 자연스러운 말투로 하세요.
-2. 내용을 더하거나 빼지 말고 그대로 옮기세요. 숫자와 고유명사는 절대 바꾸지 마세요.
-3. 통역 결과만 출력하세요. 설명은 붙이지 마세요.${talkExtraInstr(text, fromKo)}
-
-[원문]
-${text}`;
-
-  const textEl = $('talk' + to + 'Text');
-  textEl.className = 'talk-text';
-  textEl.textContent = '';
+// ── 연결 ──
+async function rtConnect() {
+  if (rt.conn || !rt.stream) return;
+  const key = getSonioxKey();
+  if (!key) return;
   try {
-    const out = (await streamGemini({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.2, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } }
-    }, full => { textEl.textContent = full; }, 30000)).trim();
-    if (!out) throw new Error('통역 결과를 받지 못했어요.');
+    if (!_SonioxClient) {
+      const mod = await import('https://unpkg.com/@soniox/speech-to-text-web?module');
+      _SonioxClient = mod.SonioxClient;
+    }
+  } catch (e) { rtFail('음성 인식 라이브러리를 못 받았어.'); return; }
+  if (!rt.mic || !rt.stream) return;
 
-    talk.msg[to] = { main: out, sub: text };
-    renderTalkCard(to);
-    setTalkState(to, '');
-    haptic();
-    saveHistory(text, out, fromKo ? 'ko' : state.tgtLang, state.tgtLang);
-
-    // 받은 쪽 언어로 읽어준다
-    try {
-      if (talk.audio) { talk.audio.pause(); talk.audio = null; }
-      const url = await synthesizeSpeech(out, getTtsVoice());
-      talk.audio = new Audio(url);
-      talk.audio.play().catch(() => {});
-      talk.audio.onended = () => { talk.audio = null; };
-    } catch(e) {}
-  } catch(e) {
-    textEl.className = 'talk-text ph';
-    textEl.textContent = e.message || '통역하지 못했어요.';
-    setTalkState(to, '');
-  } finally {
-    talk.busy = false;
-    $('talkMeGo').disabled = false;
-    $('talkThemGo').disabled = false;
-  }
-}
-
-function stopTalkListening() {
-  if (talk.rec) { talk.rec.stop(); }
-}
-
-function beginTalkListening(side) {
-  unlockAudio();
-  const textEl = $('talk' + side + 'Text');
-  talk.listening = side;
-  renderTalkCard(side);
-  setTalkState(side, '듣는 중');
-  textEl.className = 'talk-text talk-interim';
-  textEl.innerHTML = '';
-
-  talk.rec = startRecognition(talkLangOf(side), {
-    onProgress: (fin, interim) => {
-      textEl.innerHTML = '';
-      if (fin) { const b = document.createElement('b'); b.textContent = fin; textEl.appendChild(b); }
-      if (interim) textEl.appendChild(document.createTextNode(interim));
-    },
-    onDone: said => {
-      talk.rec = null;
-      talk.listening = null;
-      setTalkState(side, '');
-      renderTalkCard(side);
-      if (said) talkTranslate(side, said);
-    },
-    onError: () => {
-      talk.rec = null;
-      talk.listening = null;
-      setTalkState(side, '');
-      renderTalkCard(side);
+  const a = 'ko', b = rtOtherLang();
+  const c = new _SonioxClient({ apiKey: key });
+  rt.conn = c;
+  rt.quietAt = Date.now();
+  c.start({
+    model: RT_MODEL,
+    stream: rt.stream,
+    languageHints: [a, b],
+    translation: { type: 'two_way', language_a: a, language_b: b },
+    enableSpeakerDiarization: true,
+    enableLanguageIdentification: true,
+    enableEndpointDetection: true,
+    onPartialResult: rtOnResult,
+    onFinished() { if (rt.conn === c) rt.conn = null; rtPaintLevel(); },
+    onError(status, msg, code) {
+      if (rt.conn === c) rt.conn = null;
+      rtFail(code === 401 ? 'Soniox 키가 잘못됐어.'
+           : code === 402 ? 'Soniox 잔액이 없어.'
+           : (msg || status));
     }
   });
-
-  if (!talk.rec) {
-    talk.listening = null;
-    setTalkState(side, '');
-    talk.typing[side] = true;      // 음성이 안 되면 바로 타자로 넘긴다
-    renderTalkCard(side);
-    $('talk' + side + 'Input').focus();
-  }
 }
 
-TALK_SIDES.forEach(side => {
-  $('talk' + side + 'Kb').onclick = () => {
-    if (talk.listening === side) stopTalkListening();
-    talk.typing[side] = !talk.typing[side];
-    renderTalkCard(side);
-    if (talk.typing[side]) $('talk' + side + 'Input').focus();
-  };
-  $('talk' + side + 'Go').onclick = () => {
-    if (talk.typing[side]) {
-      const v = $('talk' + side + 'Input').value.trim();
-      if (!v) { $('talk' + side + 'Input').focus(); return; }
-      $('talk' + side + 'Input').value = '';
-      unlockAudio();
-      talkTranslate(side, v);
-      return;
-    }
-    if (talk.listening === side) { stopTalkListening(); return; }
-    if (talk.listening) stopTalkListening();
-    beginTalkListening(side);
-  };
-  $('talk' + side + 'Input').addEventListener('keydown', e => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') $('talk' + side + 'Go').click();
-  });
-});
+function rtDisconnect() {
+  if (!rt.conn) return;
+  const c = rt.conn; rt.conn = null;
+  try { c.stop(); } catch (e) {}
+  rtPaintLevel();
+}
+
+// 잠깐 띄우는 알림. 앱에 공용 토스트가 없어서 이 화면 안에서만 쓴다.
+let _rtSayT = 0;
+function rtToast(msg) {
+  const el = $('rtSay');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(_rtSayT);
+  _rtSayT = setTimeout(() => el.classList.remove('on'), 3200);
+}
+
+function rtFail(msg) {
+  rtStopMic();
+  rtToast(msg);
+}
+
+// ── 켜고 끄기 ──
+async function rtStartMic() {
+  if (rt.mic) return;
+  if (!getSonioxKey()) {
+    closeTalk();
+    $('settingsBtn').click();
+    setTimeout(() => {
+      document.querySelectorAll('.set-group').forEach(g => g.classList.remove('open'));
+      if ($('set-connect')) $('set-connect').classList.add('open');
+      if ($('sonioxKeyInput')) $('sonioxKeyInput').focus();
+    }, 380);
+    return;
+  }
+  try {
+    rt.stream = await rtOpenStream();
+  } catch (e) {
+    rtToast(e.message && e.message.indexOf('소리가') === 0 ? e.message : '마이크를 못 열었어.');
+    return;
+  }
+  rt.mic = true;
+  rt.quietAt = Date.now();
+  try {
+    rt.ac = new (window.AudioContext || window.webkitAudioContext)();
+    if (rt.ac.state === 'suspended') await rt.ac.resume();
+    rt.analyser = rt.ac.createAnalyser();
+    rt.analyser.fftSize = 512;
+    rt.ac.createMediaStreamSource(rt.stream).connect(rt.analyser);
+    rtWatchLevel();
+  } catch (e) {}
+  rtPaintButton();
+  rtRender();
+  rtConnect();
+}
+
+function rtStopMic() {
+  rtDisconnect();
+  rt.mic = false;
+  if (rt.raf) { cancelAnimationFrame(rt.raf); rt.raf = 0; }
+  rt.analyser = null;
+  if (rt.ac) { try { rt.ac.close(); } catch (e) {} rt.ac = null; }
+  if (rt.stream) { rt.stream.getTracks().forEach(t => t.stop()); rt.stream = null; }
+  rtEndTurn();
+  rt.pSrc = rt.pDst = '';
+  rtPaintButton();
+  rtPaintLevel();
+  rtRender();
+}
+
+function rtPaintButton() {
+  $('rtGo').classList.toggle('on', rt.mic);
+  $('rtGoLabel').textContent = rt.mic ? '멈추기' : '듣기 시작';
+  $('rtGoIc').innerHTML = rt.mic
+    ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg>';
+}
 
 function openTalk() {
-  talk.open = true;
-  talk.msg = { Me: null, Them: null };
-  talk.typing = { Me: !SpeechRec, Them: !SpeechRec };
-  renderTalk();
+  rt.open = true;
+  rt.turns = []; rt.cur = null; rt.pSrc = rt.pDst = '';
+  rt.src = 'mic';
+  $('talkSrcBtn').classList.remove('on');
+  // 이 기기 소리 가져오기는 데스크톱 크롬·엣지에서만 된다
+  $('talkSrcBtn').style.display =
+    (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) ? 'flex' : 'none';
+  rtPaintButton();
+  rtPaintLevel();
+  rtRender();
   $('talkOverlay').classList.add('open');
 }
 
 function closeTalk() {
-  talk.open = false;
-  if (talk.rec) { talk.rec.abort(); talk.rec = null; }
-  talk.listening = null;
-  if (talk.audio) { talk.audio.pause(); talk.audio = null; }
+  rt.open = false;
+  rtStopMic();
   $('talkOverlay').classList.remove('open');
 }
+
+$('rtGo').onclick = () => { if (rt.mic) rtStopMic(); else rtStartMic(); };
+$('talkSrcBtn').onclick = function() {
+  const wasOn = rt.mic;
+  if (wasOn) rtStopMic();
+  rt.src = rt.src === 'mic' ? 'screen' : 'mic';
+  this.classList.toggle('on', rt.src === 'screen');
+  rtToast(rt.src === 'screen' ? '이 기기 소리로 듣기' : '마이크로 듣기');
+  if (wasOn) rtStartMic();
+};
+
 
 $('talkEnterBtn').onclick = openTalk;
 $('talkCloseBtn').onclick = closeTalk;
@@ -6070,7 +6135,7 @@ document.addEventListener('gesturestart', function(e) {
 }, { passive: false });
 
 // iOS 당겨서 새로고침 방지
-const SCROLLERS = '.sheet, .history-panel, .history-list, .feedback-history, .dict-popup, .lang-dropdown, .page-body, .drawer';
+const SCROLLERS = '.sheet, .history-panel, .history-list, .feedback-history, .dict-popup, .lang-dropdown, .page-body, .drawer, .rt-flow';
 document.body.addEventListener('touchstart', function(e) {
   window._touchStartY = e.touches[0].clientY;
   // 시트·히스토리 등 자체 스크롤 영역에서 시작한 터치는 건드리지 않는다
