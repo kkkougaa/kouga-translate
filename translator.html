@@ -4526,12 +4526,14 @@ function renderFbChips() {
 }
 
 async function sendFeedback(preset) {
-  const msg = preset || $('feedbackInput').value.trim();
+  // 버튼 핸들러가 이벤트를 넘기면 "[object PointerEvent]" 가 그대로 요청에 실린다
+  const p = typeof preset === 'string' ? preset.trim() : '';
+  const msg = p || $('feedbackInput').value.trim();
   if (!msg || state.busy) return;
   if (!getApiKey()) { $('overlay').classList.add('open'); return; }
 
   addFbMsg('user', msg);
-  if (!preset) {
+  if (!p) {
     $('feedbackInput').value = '';
     $('feedbackInput').style.height = 'auto';
   }
@@ -4746,7 +4748,7 @@ function resetRuby() {
   $('resultText').classList.remove('has-ruby');
 }
 
-$('fbSendBtn').onclick = sendFeedback;
+$('fbSendBtn').onclick = () => sendFeedback();
 $('feedbackInput').addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') sendFeedback();
 });
@@ -5941,7 +5943,7 @@ let _SonioxClient = null;
 
 const rt = {
   open: false, mic: false, conn: null, stream: null, own: false,
-  ac: null, analyser: null, raf: 0, quietAt: 0, level: 0,
+  ac: null, analyser: null, raf: 0, quietAt: 0, level: 0, connecting: false,
   turns: [], cur: null, pSrc: '', pDst: '', src: 'mic',
   names: {}                     // 화자 번호 → 직접 붙인 이름
 };
@@ -6211,16 +6213,25 @@ function rtPaintLevel() {
 
 // ── 연결 ──
 async function rtConnect() {
-  if (rt.conn || !rt.stream) return;
+  // 라이브러리를 받는 동안 rt.conn 은 아직 비어 있다. 그 사이에 소리가 계속 들어오면
+  // 프레임마다 여기로 다시 들어와 연결이 수십 개 생기고, 같은 말이 그만큼 전사된다.
+  // 기다리기 전에 먼저 잠가 둔다.
+  if (rt.conn || rt.connecting || !rt.stream) return;
   const key = getSonioxKey();
   if (!key) return;
+  rt.connecting = true;
   try {
     if (!_SonioxClient) {
       const mod = await import('https://unpkg.com/@soniox/speech-to-text-web?module');
       _SonioxClient = mod.SonioxClient;
     }
-  } catch (e) { rtFail('음성 인식 라이브러리를 못 받았어.'); return; }
-  if (!rt.mic || !rt.stream) return;
+  } catch (e) {
+    rt.connecting = false;
+    rtFail('음성 인식 라이브러리를 못 받았어.');
+    return;
+  }
+  rt.connecting = false;
+  if (rt.conn || !rt.mic || !rt.stream) return;
 
   const a = 'ko', b = rtOtherLang();
   const c = new _SonioxClient({ apiKey: key });
@@ -6296,6 +6307,7 @@ async function rtStartMic() {
 function rtStopMic() {
   rtDisconnect();
   rt.mic = false;
+  rt.connecting = false;
   if (rt.raf) { cancelAnimationFrame(rt.raf); rt.raf = 0; }
   rt.analyser = null;
   if (rt.ac) { try { rt.ac.close(); } catch (e) {} rt.ac = null; }
