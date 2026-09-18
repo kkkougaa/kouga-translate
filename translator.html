@@ -3541,6 +3541,23 @@ function looksRomaji(t, minWords) {
   return (t.match(/[A-Za-z][ \n][A-Za-z]/g) || []).length >= minWords;
 }
 
+// 기호는 전각이 맞지만 숫자는 반각이 자연스럽다.
+// 숫자 사이에 낀 자리표·소수점도 같이 반각으로 맞춘다 (1，000 → 1,000).
+function toHalfDigits(text, tgtLang) {
+  if (READING_LANGS.indexOf(tgtLang) < 0) return text;
+  let out = String(text == null ? '' : text)
+    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFF10 + 48));
+  for (let i = 0; i < 4; i++) {
+    out = out.replace(/(\d)[，](\d)/g, '$1,$2').replace(/(\d)[．](\d)/g, '$1.$2');
+  }
+  return out;
+}
+
+// 번역 결과에 공통으로 거는 뒷정리
+function tidyOut(text, tgtLang) {
+  return toHalfDigits(stripReading(text, tgtLang), tgtLang);
+}
+
 function stripReading(text, tgtLang) {
   if (READING_LANGS.indexOf(tgtLang) < 0) return text;
   let out = String(text == null ? '' : text);
@@ -3634,6 +3651,7 @@ function punctInstr() {
   return (state.srcLang === 'ko' && state.tgtLang === 'ja')
     ? `\n\n[문장부호] 일본어 번역에서는 모든 문장부호를 전각으로 쓰세요.`
       + ` （。、？！「」『』（）〜…・ 등. 반각 . , ? ! ( ) ~ 는 쓰지 마세요.）`
+      + ` 단 숫자는 반각으로 쓰세요. 2026年, 7時, 100円 처럼.`
     : '';
 }
 
@@ -3766,7 +3784,7 @@ async function translate() {
     {
       const outL = state.srcLang === 'ko' ? state.tgtLang : 'ko';
       const cs = result.split(COMMENT_SEP);
-      const body = stripReading(cs[0], outL);
+      const body = tidyOut(cs[0], outL);
       if (body !== cs[0]) { cs[0] = body; result = cs.join(COMMENT_SEP); draw(result); }
     }
 
@@ -4560,7 +4578,7 @@ async function sendFeedback(preset) {
       $('resultText').textContent = splitComment(full).body.trimStart();
     }, reqTimeout())).trim();
     if (!reply) throw new Error('응답을 받지 못했습니다.');
-    reply = stripReading(reply, state.srcLang === 'ko' ? state.tgtLang : 'ko');
+    reply = tidyOut(reply, state.srcLang === 'ko' ? state.tgtLang : 'ko');
 
     state.conversation.push({ role: 'model', parts: [{ text: reply }] });
     state.result = reply;
@@ -6086,7 +6104,7 @@ async function rtRefine(turn) {
     + '\n\n[원문]\n' + body;
   try {
     const out = await askGemini(prompt, 400);
-    const clean = stripReading((out || '').trim(), toKo ? 'ko' : rtOtherLang());
+    const clean = tidyOut((out || '').trim(), toKo ? 'ko' : rtOtherLang());
     if (clean && rt.turns.indexOf(turn) >= 0) { turn.dst = clean; rtRender(); }
   } catch(e) {
     // 실패하면 Soniox 번역을 그대로 쓴다
