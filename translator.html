@@ -3510,12 +3510,18 @@ function scriptOf(ch) {
 }
 
 // 사용자가 "이렇게 써 달라"고 지정한 글자는 섞여 있어도 손대지 않는다
-function allowedExtraChars(srcLang, srcBody, reqs) {
+// 용어집·금지어·요청문·말투 설정처럼 "이렇게 써 달라"고 넘긴 글이 모이는 자리
+function userWordPool(reqs) {
   let pool = '';
-  try { pool += (localStorage.getItem(glossaryKey()) || '') + (localStorage.getItem(bannedKey()) || ''); } catch(e) {}
-  pool += (reqs || []).join(' ');
-  if (state.extraOn && $('extraPrompt')) pool += ' ' + $('extraPrompt').value;
-  if (state.tone === 'character' && $('charPrompt')) pool += ' ' + $('charPrompt').value;
+  try { pool += (localStorage.getItem(glossaryKey()) || '') + '\n' + (localStorage.getItem(bannedKey()) || ''); } catch(e) {}
+  pool += '\n' + (reqs || []).join('\n');
+  if (state.extraOn && $('extraPrompt')) pool += '\n' + $('extraPrompt').value;
+  if (state.tone === 'character' && $('charPrompt')) pool += '\n' + $('charPrompt').value;
+  return pool;
+}
+
+function allowedExtraChars(srcLang, srcBody, reqs) {
+  let pool = userWordPool(reqs);
   // 원문에 있던 글자도 봐주되, 원문 언어의 주 문자는 제외한다
   const main = MAIN_SCRIPTS[srcLang] || [];
   for (const ch of String(srcBody || '')) {
@@ -3595,9 +3601,34 @@ function strayChars(text, tgtLang, allowSet) {
   return out;
 }
 
-function retryFixPrompt(basePrompt, strays, tgtName) {
-  return basePrompt + `\n\n[다시 요청]\n앞선 번역에 ${tgtName}가 아닌 글자(${strays.slice(0, 6).join('')})가 섞여 나왔습니다. `
-    + `인명과 고유명사까지 모두 ${tgtName} 표기로 옮겨서, 번역문 전체를 ${tgtName}로만 작성하세요.`;
+// 일본어·한국어 문장에 영어가 조금 섞이는 건 자연스럽다(LINE, OK, PC, R18…).
+// 문제는 원문에 없던 영어 단어가 문장 한복판에 불쑥 끼어드는 경우다. 글자 종류
+// 검사로는 못 잡는다. 이 언어들은 라틴 문자를 정상으로 치기 때문이다.
+// 대문자가 섞인 말(Twitter, iPhone, LINE)은 고유명사로 보고 건드리지 않는다.
+function strayWords(text, tgtLang, srcBody, reqs) {
+  if (tgtLang === 'en') return [];
+  const body = String(text || '').replace(/https?:\/\/\S+|\S+@\S+\.\S+/g, ' ');
+  const pool = (String(srcBody || '') + '\n' + userWordPool(reqs)).toLowerCase();
+  const out = [];
+  for (const w of body.match(/[A-Za-z][A-Za-z'’-]*/g) || []) {
+    if (w.length < 4 || !/^[a-z'’-]+$/.test(w)) continue;
+    if (pool.indexOf(w) >= 0) continue;
+    if (out.indexOf(w) < 0) out.push(w);
+  }
+  return out;
+}
+
+function retryFixPrompt(basePrompt, strays, words, tgtName) {
+  let out = basePrompt + `\n\n[다시 요청]`;
+  if (strays.length) {
+    out += `\n앞선 번역에 ${tgtName}가 아닌 글자(${strays.slice(0, 6).join('')})가 섞여 나왔습니다. `
+      + `인명과 고유명사까지 모두 ${tgtName} 표기로 옮겨서, 번역문 전체를 ${tgtName}로만 작성하세요.`;
+  }
+  if (words.length) {
+    out += `\n앞선 번역에 원문에 없던 영어 단어(${words.slice(0, 6).join(', ')})가 끼어 있었습니다. `
+      + `원문에 없는 말은 한 마디도 넣지 말고 다시 번역하세요.`;
+  }
+  return out;
 }
 
 // ── 번역 ──
@@ -3669,7 +3700,7 @@ function buildPrompt(text) {
 [번역 지침]
 1. 원문에 담긴 말투, 어조, 감정을 그대로 살려서 번역하세요. (반말이면 반말, 존댓말이면 존댓말, 거친 말투면 거칠게)
 2. 원문의 내용을 변경하지 말고 충실하게 번역하세요.
-3. 번역 결과 텍스트만 출력하세요. 설명, 주석, 그리고 읽는 법(로마자·발음·독음) 표기는 절대 붙이지 마세요.${glossaryInstr(text)}${bannedInstr()}${inlineInstr}
+3. 번역 결과 텍스트만 출력하세요. 설명, 주석, 그리고 읽는 법(로마자·발음·독음) 표기는 절대 붙이지 마세요. 원문에 없는 말을 지어내서 넣지 마세요.${glossaryInstr(text)}${bannedInstr()}${inlineInstr}
 
 [원문]
 ${text}`;
@@ -3712,7 +3743,7 @@ ${text}`;
 [번역 지침]
 1. ${toneInstr}
 2. ${strictInstr}
-3. 번역 결과 텍스트만 출력하세요. 설명, 주석, 그리고 읽는 법(로마자·발음·독음) 표기는 절대 붙이지 마세요.${extraInstr}${glossaryInstr(text)}${bannedInstr()}${punctInstr()}${inlineInstr}
+3. 번역 결과 텍스트만 출력하세요. 설명, 주석, 그리고 읽는 법(로마자·발음·독음) 표기는 절대 붙이지 마세요. 원문에 없는 말을 지어내서 넣지 마세요.${extraInstr}${glossaryInstr(text)}${bannedInstr()}${punctInstr()}${inlineInstr}
 
 [원문]
 ${text}`;
@@ -3793,15 +3824,22 @@ async function translate() {
       const outLang = state.srcLang === 'ko' ? state.tgtLang : 'ko';
       const outName = state.srcLang === 'ko' ? (LANG_CONFIG[state.tgtLang]?.label || '일본어') : '한국어';
       const allowSet = allowedExtraChars(state.srcLang, parsed.body, parsed.reqs);
-      const strays = strayChars(splitComment(result).body, outLang, allowSet);
-      if (strays.length) {
+      const body0 = splitComment(result).body;
+      const strays = strayChars(body0, outLang, allowSet);
+      const words = strayWords(body0, outLang, parsed.body, parsed.reqs);
+      const badness = t => {
+        const b = splitComment(t).body;
+        return strayChars(b, outLang, allowSet).length
+             + strayWords(b, outLang, parsed.body, parsed.reqs).length;
+      };
+      if (strays.length || words.length) {
         try {
           const retried = (await streamGemini({
-            contents: [{ parts: [{ text: retryFixPrompt(promptText, strays, outName) }] }],
+            contents: [{ parts: [{ text: retryFixPrompt(promptText, strays, words, outName) }] }],
             generationConfig: genCfg
           }, draw, reqTimeout())).trim();
           // 실제로 줄었을 때만 바꾼다. 아니면 처음 것을 그대로 쓴다
-          if (retried && strayChars(splitComment(retried).body, outLang, allowSet).length < strays.length) {
+          if (retried && badness(retried) < strays.length + words.length) {
             result = retried;
           } else {
             draw(result);
