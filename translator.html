@@ -1530,6 +1530,123 @@ button, input, textarea, a{ font-family:inherit; }
   .header{ background:var(--bg2); }
 }
 
+/* 40 · 공부 — 문제 내고, 채점 받고, 표현을 모은다 */
+#studyPage, #wordsPage{ background:var(--bg2); }
+#studyPage .page-head, #wordsPage .page-head{ background:var(--bg2); border-bottom:none; }
+.sq-prog{ margin-left:auto; font-size:14px; font-weight:600; color:var(--text3); }
+.sq-body{ padding:4px 14px calc(var(--safe-bottom) + 18px);
+          display:flex; flex-direction:column; gap:10px; }
+.sq-card{ background:var(--bg); border-radius:var(--radius); padding:15px 16px; }
+
+.sq-q{ padding:16px 16px 20px; display:flex; flex-direction:column; gap:9px; }
+.sq-src{ font-size:12.5px; font-weight:700; color:var(--accent-dark); }
+.sq-ko{ font-size:23px; font-weight:600; line-height:1.5; letter-spacing:-.5px; word-break:break-word; }
+.sq-in{ padding:14px 16px; }
+#sqInput{ width:100%; box-sizing:border-box; border:none; outline:none; resize:none;
+          background:none; padding:0; font-family:inherit; font-size:18px;
+          line-height:1.65; color:var(--text); min-height:78px; }
+#sqInput::placeholder{ color:var(--text3); }
+
+.sq-row{ display:flex; gap:8px; }
+.sq-mini{ height:40px; padding:0 16px; border:none; border-radius:var(--radius-md);
+          background:var(--fill); color:var(--text2); font-family:inherit;
+          font-size:14.5px; font-weight:600; cursor:pointer; }
+.sq-mini:disabled{ opacity:.45; }
+.sq-hint{ background:var(--accent-bg); color:var(--accent-dark); border-radius:var(--radius-md);
+          padding:11px 14px; font-size:15px; line-height:1.55; word-break:break-word; }
+.sq-go{ height:52px; border:none; border-radius:var(--radius); background:var(--accent);
+        color:var(--on-accent); font-family:inherit; font-size:17px; font-weight:600; cursor:pointer; }
+.sq-go:disabled{ opacity:.55; }
+.sq-mini3{ height:48px; border:none; border-radius:var(--radius); background:var(--fill);
+           color:var(--text2); font-family:inherit; font-size:16px; font-weight:600; cursor:pointer; }
+
+.sq-vrow{ display:flex; align-items:center; gap:9px; }
+.sq-v{ flex:none; font-size:13px; font-weight:700; padding:5px 11px; border-radius:999px; }
+.sq-v.ok{ background:var(--accent-bg); color:var(--accent-dark); }
+.sq-v.soso{ background:rgba(168,116,0,.13); color:#8A5A00; }
+.sq-v.redo{ background:var(--red-bg); color:var(--red); }
+@media (prefers-color-scheme: dark){
+  .sq-v.soso{ background:rgba(255,190,80,.16); color:#F0B953; }
+}
+.sq-qsm{ flex:1; min-width:0; font-size:14.5px; color:var(--text2);
+         overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sq-mine{ font-size:19px; line-height:1.55; margin-top:11px; word-break:break-word; }
+.sq-mine.none{ font-size:16px; color:var(--text3); }
+
+.sq-lab2{ font-size:12.5px; font-weight:700; color:var(--text3); margin-bottom:5px; }
+.sq-alt{ display:flex; align-items:center; gap:9px; padding:6px 0; }
+.sq-ja{ flex:none; font-size:18px; font-weight:600; color:var(--accent-dark); }
+.sq-yomi{ flex:1; min-width:0; font-size:12.5px; color:var(--text3);
+          overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sq-tag{ flex:none; font-size:11.5px; font-weight:700; padding:3px 9px;
+         border-radius:999px; background:var(--fill); color:var(--text2); }
+
+.sq-why{ display:flex; flex-direction:column; gap:12px; }
+.sq-whytx{ font-size:15.5px; line-height:1.7; white-space:pre-line; word-break:break-word; }
+.sq-tip{ background:var(--bg2); border-radius:var(--radius-md); padding:12px 13px;
+         display:flex; flex-direction:column; gap:5px; }
+.sq-tipw{ font-size:16.5px; font-weight:700; color:var(--accent-dark); }
+.sq-tipt{ font-size:14px; line-height:1.65; color:var(--text2); }
+.sq-row2{ display:flex; gap:8px; }
+.sq-row2 .sq-go{ flex:1; min-width:0; }
+.sq-mini2{ flex:none; height:52px; padding:0 15px; border:none; border-radius:var(--radius);
+           background:var(--fill); color:var(--text2); font-family:inherit;
+           font-size:15.5px; font-weight:600; cursor:pointer;
+           display:flex; align-items:center; gap:6px; }
+.sq-mini2 svg{ display:block; }
+.sq-mini2:disabled{ opacity:.45; }
+
+.sq-load{ display:flex; gap:5px; padding:28px 16px; }
+.sq-empty{ display:flex; flex-direction:column; gap:16px; align-items:center;
+           padding:70px 6px 20px; color:var(--text3); font-size:15px;
+           line-height:1.6; text-align:center; }
+.sq-empty .sq-go{ width:100%; }
+.sq-done{ background:var(--bg); border-radius:var(--radius); padding:48px 16px;
+          display:flex; flex-direction:column; align-items:center; gap:15px; }
+.sq-score{ font-size:58px; font-weight:700; letter-spacing:-2px; color:var(--accent-dark); }
+.sq-pills{ display:flex; gap:7px; }
+
+.sq-seg{ background:var(--fill); border-radius:var(--radius-md); padding:3px; display:flex; gap:3px; }
+.sq-seg-b{ flex:1; height:38px; border:none; border-radius:9px; background:none;
+           color:var(--text2); font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; }
+.sq-seg-b.on{ background:var(--bg); color:var(--text); font-weight:700; }
+
+.sq-list{ padding:0; overflow:hidden; }
+.sq-wrow{ width:100%; box-sizing:border-box; display:flex; align-items:center; gap:8px;
+          padding:11px 10px 11px 16px; border:none; background:none; text-align:left; }
+.sq-wrow + .sq-wrow{ border-top:.5px solid var(--border); }
+.sq-wmain{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;
+           border:none; background:none; padding:0; text-align:left;
+           font-family:inherit; cursor:pointer; }
+.sq-wtop{ display:flex; align-items:baseline; gap:8px; }
+.sq-wko{ font-size:14px; color:var(--text2);
+         overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sq-wsrc{ font-size:16px; color:var(--text);
+          overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sq-wmine{ font-size:13.5px; color:var(--text3);
+           overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sq-wx{ flex:none; width:32px; height:32px; border:none; border-radius:16px; background:none;
+        color:var(--text3); cursor:pointer; font-size:0;
+        display:flex; align-items:center; justify-content:center; }
+.sq-wx:active{ background:var(--fill); }
+.sq-none{ padding:44px 16px; text-align:center; color:var(--text3); font-size:15px; line-height:1.6; }
+
+.sq-lab{ font-size:12.5px; font-weight:700; color:var(--text3); padding:15px 4px 7px; }
+.sq-rows{ background:var(--bg2); border-radius:var(--radius); overflow:hidden; }
+.sq-orow{ width:100%; box-sizing:border-box; display:flex; align-items:center; gap:10px;
+          padding:14px 16px; border:none; background:none; cursor:pointer; text-align:left;
+          font-family:inherit; font-size:16.5px; color:var(--text); }
+.sq-orow + .sq-orow{ border-top:.5px solid var(--border); }
+.sq-ot{ flex:1; min-width:0; }
+.sq-on{ font-size:14.5px; color:var(--text3); }
+.sq-ock{ flex:none; width:18px; height:18px; color:var(--accent); font-size:0; opacity:0; }
+.sq-ock svg{ display:block; }
+.sq-orow.on .sq-ock{ opacity:1; }
+.sq-chips{ display:flex; flex-wrap:wrap; gap:7px; }
+.sq-chip{ padding:8px 14px; border:none; border-radius:999px; background:var(--fill);
+          color:var(--text2); font-family:inherit; font-size:14.5px; font-weight:600; cursor:pointer; }
+.sq-chip.on{ background:var(--accent); color:var(--on-accent); }
+
 /* 39 · 잠깐 뜨는 알림 */
 .toast{
   position:fixed; left:50%; bottom:calc(var(--safe-bottom) + 28px);
@@ -2255,6 +2372,14 @@ button, input, textarea, a{ font-family:inherit; }
     <button type="button" data-open="history">번역 기록</button>
     <button type="button" data-open="talk">대화 모드</button>
   </div>
+  <button class="drawer-item" type="button" data-open="study">
+    <span class="drawer-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 12.2A8.4 8.4 0 1 1 16.9 5"/><path d="m8.8 11.6 2.7 2.7L21 5.2"/></svg></span>
+    <span class="drawer-tx">공부</span>
+  </button>
+  <button class="drawer-item" type="button" data-open="words">
+    <span class="drawer-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h9.5L20 8v12.5H6z"/><path d="M15.2 3.6V8H19.8"/><path d="M9.2 12.6h7M9.2 16h4.6"/></svg></span>
+    <span class="drawer-tx">표현 노트</span>
+  </button>
   <button class="drawer-item" type="button" data-open="glossary">
     <span class="drawer-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.2A1.7 1.7 0 0 1 5.7 3.5H19v14.8H5.7A1.7 1.7 0 0 0 4 20V5.2Z"/><path d="M4 18.3A1.7 1.7 0 0 1 5.7 20.5H19"/><path d="M8.2 8h6.6M8.2 11.4h4.4"/></svg></span>
     <span class="drawer-tx">용어집</span>
@@ -2293,6 +2418,31 @@ button, input, textarea, a{ font-family:inherit; }
       <button id="glCancel" type="button" style="flex:1;padding:12px;border-radius:12px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:15px;font-family:inherit;cursor:pointer;">취소</button>
       <button id="glSave" type="button" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:var(--on-accent);font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;">저장</button>
     </div>
+  </div>
+</div>
+
+<!-- 공부 -->
+<div class="page" id="studyPage">
+  <div class="page-body" id="studyBody"></div>
+</div>
+
+<!-- 표현 노트 -->
+<div class="page" id="wordsPage">
+  <div class="page-body" id="wordsBody"></div>
+</div>
+
+<!-- 공부 조절 -->
+<div class="overlay" id="studyOptOverlay">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sheet-title" style="padding-top:6px;">조절</div>
+    <div class="sq-lab">출제 범위</div>
+    <div class="sq-rows" id="sqRange"></div>
+    <div class="sq-lab">주제</div>
+    <div class="sq-chips" id="sqTopics"></div>
+    <div class="sq-lab">한 번에</div>
+    <div class="sq-seg" id="sqCount"></div>
+    <button class="sq-go" id="sqOptDone" type="button" style="width:100%;margin-top:18px;">완료</button>
   </div>
 </div>
 
@@ -5866,6 +6016,574 @@ $('copyBtn').onclick = function() {
 };
 
 
+// ══════════════ 공부 ══════════════
+// 문제는 번역 기록에서 먼저 뽑는다. 한 번 실제로 써 본 문장이라야 다시 쓸 일이 있다.
+// 기록이 모자라면 주제에 맞춰 새로 만들어 채운다.
+
+const SQ_TOPICS = ['감정', '리액션', '거절·양해', '덕질', '약속', '요즘 말'];
+const SQ_COUNTS = [5, 10, 20];
+const SQ_VERDICT = { ok: '그대로 써도 됨', soso: '통하긴 함', redo: '다시' };
+
+const sq = {
+  list: [], i: 0, view: 'load', busy: false,
+  ans: '', shown: '', res: null, err: '',
+  ok: 0, soso: 0, redo: 0, learned: []
+};
+let _sqOnce = '';            // 이번 한 번만 쓸 출제 범위
+let _sqOptDirty = false;
+
+function sqEsc(t) {
+  return String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function sqRead(key, def) {
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || 'null');
+    return v == null ? def : v;
+  } catch(e) { return def; }
+}
+function sqWrite(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch(e) {} }
+
+function sqOpts() {
+  const o = sqRead('study_opts', {}) || {};
+  return {
+    range: ['history', 'topic', 'wrong'].indexOf(o.range) >= 0 ? o.range : 'history',
+    topics: Array.isArray(o.topics) && o.topics.length ? o.topics : ['감정', '리액션', '요즘 말'],
+    count: SQ_COUNTS.indexOf(o.count) >= 0 ? o.count : 10
+  };
+}
+
+function sqWords() { return sqRead('study_words', []) || []; }
+function sqWrongs() { return sqRead('study_wrong', []) || []; }
+
+function sqAddWord(w) {
+  if (!w || !w.ja) return null;
+  const row = { ja: w.ja, yomi: w.yomi || '', ko: w.ko || '', tag: w.tag || '', at: Date.now() };
+  const list = sqWords().filter(x => x.ja !== row.ja);
+  list.unshift(row);
+  if (list.length > 300) list.splice(300);
+  sqWrite('study_words', list);
+  return row;
+}
+function sqDropWord(ja) { sqWrite('study_words', sqWords().filter(x => x.ja !== ja)); }
+
+function sqAddWrong(ko, mine, v) {
+  const list = sqWrongs().filter(x => x.ko !== ko);
+  list.unshift({ ko: ko, mine: mine, v: v, at: Date.now() });
+  if (list.length > 200) list.splice(200);
+  sqWrite('study_wrong', list);
+}
+function sqDropWrong(ko) { sqWrite('study_wrong', sqWrongs().filter(x => x.ko !== ko)); }
+
+function sqDate(ts) {
+  const d = new Date(ts || Date.now());
+  return (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
+}
+function sqShuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function sqTgtName() {
+  const cfg = LANG_CONFIG[state.tgtLang] || LANG_CONFIG['ja'];
+  return cfg.label || '일본어';
+}
+
+// 방금 낸 문장은 잠깐 피한다. 기록이 서른 줄뿐이라 안 그러면 같은 게 계속 나온다.
+function sqSeen() { return sqRead('study_seen', []) || []; }
+function sqMarkSeen(list) { sqWrite('study_seen', list.concat(sqSeen()).slice(0, 60)); }
+
+function sqFromHistory(skip) {
+  const hist = sqRead('trans_history', []) || [];
+  const out = [];
+  for (const h of hist) {
+    if (h.srcName !== '한국어') continue;
+    const t = String(h.src || '').trim();
+    if (t.length < 4 || t.length > 60 || t.indexOf('\n') >= 0) continue;
+    if (skip.indexOf(t) >= 0) continue;
+    if (out.some(q => q.ko === t)) continue;
+    out.push({ ko: t, src: '내 기록 · ' + sqDate(h.ts) });
+  }
+  return sqShuffle(out);
+}
+
+function sqLines(out) {
+  return String(out || '').split('\n')
+    .map(x => x.replace(/^[\s\-•·\d.)]+/, '').trim())
+    .filter(Boolean);
+}
+
+async function sqMake(o, n, skip) {
+  const avoid = skip.slice(0, 20);
+  const prompt = '친구끼리 주고받는 한국어 문장을 ' + n + '개 만들어 주세요.\n\n'
+    + '[조건]\n'
+    + '- 주제: ' + o.topics.join(', ') + '\n'
+    + '- 카톡이나 트위터에서 실제로 쓰는 말투. 반말, ㅋㅋ, 줄임말 자연스럽게.\n'
+    + '- 교과서 예문은 쓰지 마세요. "오늘 날씨가 참 좋네요" 같은 문장 금지.\n'
+    + '- 한 문장은 6자에서 35자 사이.\n'
+    + (avoid.length ? '- 다음 문장과 겹치지 마세요: ' + avoid.join(' / ') + '\n' : '')
+    + '- 각 줄은 "주제|문장" 형태로. 예) 감정|아 진짜 현타온다\n'
+    + '- 설명이나 번호 없이 한 줄에 하나씩만 쓰세요.';
+  return sqLines(await askGemini(prompt, 800)).map(line => {
+    const i = line.indexOf('|');
+    const topic = i > 0 ? line.slice(0, i).trim() : '';
+    const ko = (i > 0 ? line.slice(i + 1) : line).trim();
+    return { ko: ko, src: (topic || '주제') + ' · 새 문제' };
+  }).filter(q => q.ko.length >= 4 && q.ko.length <= 60).slice(0, n);
+}
+
+// 모아 둔 표현을 쓰게 될 만한 상황을 거꾸로 만들어 낸다
+async function sqMakeFromWords(n) {
+  const pick = sqShuffle(sqWords().slice(0, 60)).slice(0, n);
+  if (!pick.length) return [];
+  const prompt = '아래 표현을 각각 한 번씩 쓰게 될 만한, 친구끼리 주고받는 한국어 문장을 하나씩 만들어 주세요.\n\n'
+    + '[표현]\n' + pick.map(w => w.ja + (w.ko ? ' (' + w.ko + ')' : '')).join('\n') + '\n\n'
+    + '[조건]\n'
+    + '- 한국어 문장에 그 표현을 직접 적지 말고, 뜻이 담기게만 쓰세요.\n'
+    + '- 카톡이나 트위터에서 쓰는 말투. 반말, ㅋㅋ 자연스럽게.\n'
+    + '- 설명이나 번호 없이 한 줄에 한 문장씩만 쓰세요.';
+  return sqLines(await askGemini(prompt, 800))
+    .filter(x => x.length >= 4 && x.length <= 60).slice(0, n)
+    .map(x => ({ ko: x, src: '배운 말' }));
+}
+
+async function sqBuild(o) {
+  if (o.range === 'wrong') {
+    return sqShuffle(sqWrongs().slice()).slice(0, o.count).map(w => ({ ko: w.ko, src: '틀린 문제' }));
+  }
+  if (o.range === 'words') return await sqMakeFromWords(o.count);
+
+  const seen = sqSeen();
+  let qs = o.range === 'history' ? sqFromHistory(seen).slice(0, o.count) : [];
+  if (qs.length < o.count) {
+    try {
+      qs = qs.concat(await sqMake(o, o.count - qs.length, qs.map(q => q.ko).concat(seen)));
+    } catch(e) {
+      if (!qs.length) throw e;      // 기록에서 건진 게 있으면 그것만이라도 낸다
+    }
+  }
+  // 기록을 다 돌았으면 피하던 것까지 다시 쓴다
+  if (!qs.length && o.range === 'history') qs = sqFromHistory([]).slice(0, o.count);
+  // 기록에서 뽑은 것과 새로 만든 것이 같은 문장일 때가 있다
+  const uniq = [];
+  for (const q of qs) if (q.ko && !uniq.some(x => x.ko === q.ko)) uniq.push(q);
+  return uniq.slice(0, o.count);
+}
+
+function sqJson(text) {
+  const t = String(text || '');
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a < 0 || b <= a) return null;
+  try { return JSON.parse(t.slice(a, b + 1)); } catch(e) { return null; }
+}
+
+async function sqGrade(ko, ans) {
+  const tgt = sqTgtName();
+  const prompt = '당신은 ' + tgt + '를 쓰는 친구입니다. 아래 한국어를 ' + tgt + '로 옮긴 답을 봐 주세요.\n\n'
+    + '[판정]\n'
+    + 'ok — 현지인이 실제로 이렇게 씁니다. 그대로 보내도 됩니다.\n'
+    + 'soso — 뜻은 전달되지만 번역 티가 나거나 말투가 어긋납니다.\n'
+    + 'redo — 뜻이 어긋났습니다.\n\n'
+    + '[규칙]\n'
+    + '- 정답은 하나가 아닙니다. 자연스러우면 ok 를 주세요. 교과서 기준으로 깐깐하게 굴지 마세요.\n'
+    + '- 받는 사람은 친구입니다. 반말과 구어가 기본이고, 정중체로 썼으면 soso 입니다.\n'
+    + '- alts 는 이 상황에서 실제로 쓰는 말 두세 개. 교과서 표현보다 요즘 쓰는 말을 앞에 두세요.\n'
+    + '- tag 는 그 말을 어디까지 편하게 써도 되는지 한 단어로: 어디서나 / 친구끼리 / 요즘 말 / 칸사이 / 덕질\n'
+    + '- yomi 는 한글로 읽는 소리.\n'
+    + '- why 는 한국어 두세 문장. 왜 그 판정인지, 어디가 어긋났는지 짚어 주세요.\n'
+    + '- word 는 alts 중 새로 알아 갈 만한 표현 하나, wordKo 는 그 뜻을 한국어로 짧게,\n'
+    + '  wordWhy 는 그 말의 뉘앙스를 한국어 한두 문장으로.\n'
+    + '- 설명이나 머리말 없이 JSON 만 출력하세요.\n\n'
+    + '[형식]\n'
+    + '{"verdict":"ok","alts":[{"ja":"","yomi":"","tag":""}],"why":"","word":"","wordKo":"","wordWhy":"","wordTag":""}'
+    + glossaryInstr(ko)
+    + '\n\n[한국어]\n' + ko + '\n\n[답]\n' + ans;
+
+  const j = sqJson(await askGemini(prompt, 1200));
+  if (!j) throw new Error('채점 결과를 읽지 못했어요.');
+  const lang = state.tgtLang;
+  const alts = (Array.isArray(j.alts) ? j.alts : [])
+    .filter(a => a && a.ja)
+    .slice(0, 4)
+    .map(a => ({
+      ja: tidyOut(String(a.ja).trim(), lang),
+      yomi: String(a.yomi || '').trim(),
+      tag: String(a.tag || '').trim()
+    }));
+  const word = tidyOut(String(j.word || '').trim(), lang);
+  const hit = alts.find(a => a.ja === word);
+  return {
+    v: ['ok', 'soso', 'redo'].indexOf(j.verdict) >= 0 ? j.verdict : 'soso',
+    alts: alts,
+    why: String(j.why || '').trim(),
+    word: word,
+    wordKo: String(j.wordKo || '').trim(),
+    wordWhy: String(j.wordWhy || '').trim(),
+    wordYomi: hit ? hit.yomi : '',
+    wordTag: String(j.wordTag || '').trim() || (hit ? hit.tag : '')
+  };
+}
+
+// ── 화면 ──
+function sqProg() {
+  const el = $('sqProg');
+  if (!el) return;
+  if (!sq.list.length || sq.view === 'load' || sq.view === 'empty') { el.textContent = ''; return; }
+  el.textContent = (sq.view === 'done' ? sq.list.length : sq.i + 1) + ' / ' + sq.list.length;
+}
+
+function studyRender() {
+  const box = $('studyBody');
+  sqProg();
+  if (sq.view === 'load') {
+    box.innerHTML = '<div class="sq-load"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+    return;
+  }
+  if (sq.view === 'empty') {
+    box.innerHTML = '<div class="sq-empty"><div id="sqErrTx"></div>'
+      + '<button class="sq-go" id="sqRetry" type="button">다시</button></div>';
+    $('sqErrTx').textContent = sq.err || '낼 문제가 없어요';
+    $('sqRetry').onclick = () => sqStart();
+    return;
+  }
+  if (sq.view === 'done') return sqRenderDone(box);
+  const q = sq.list[sq.i];
+  if (!q) return;
+  if (sq.view === 'quiz') sqRenderQuiz(box, q);
+  else sqRenderGrade(box, q);
+}
+
+function sqRenderQuiz(box, q) {
+  box.innerHTML = '<div class="sq-body">'
+    + '<div class="sq-card sq-q"><div class="sq-src"></div><div class="sq-ko"></div></div>'
+    + '<div class="sq-card sq-in"><textarea id="sqInput" rows="3" placeholder="'
+    +   sqEsc(sqTgtName() + '로 써보기') + '"></textarea></div>'
+    + '<div class="sq-row">'
+    +   '<button class="sq-mini" id="sqHint" type="button">힌트</button>'
+    +   '<button class="sq-mini" id="sqGiveUp" type="button">모르겠어</button>'
+    + '</div>'
+    + '<div class="sq-hint" id="sqHintBox" hidden></div>'
+    + '<button class="sq-go" id="sqSubmit" type="button">제출</button>'
+    + '</div>';
+  box.querySelector('.sq-src').textContent = q.src || '';
+  box.querySelector('.sq-ko').textContent = q.ko;
+  const ta = $('sqInput');
+  ta.value = sq.ans || '';
+  ta.oninput = () => { sq.ans = ta.value; };
+  $('sqSubmit').onclick = () => sqSubmit(false);
+  $('sqGiveUp').onclick = () => sqSubmit(true);
+  $('sqHint').onclick = sqHint;
+}
+
+async function sqHint() {
+  const q = sq.list[sq.i], btn = $('sqHint'), box = $('sqHintBox');
+  if (!q || !btn || btn.disabled) return;
+  btn.disabled = true;
+  box.hidden = false;
+  box.textContent = '…';
+  try {
+    const out = await askGemini('"' + q.ko + '" 를 ' + sqTgtName() + '로 옮길 때 열쇠가 되는 표현 하나만 알려 주세요.'
+      + ' 문장 전체를 옮기지 말고, 그 표현과 한글 독음만 한 줄로 쓰세요.', 150);
+    box.textContent = tidyOut(String(out).split('\n')[0].trim(), state.tgtLang);
+  } catch(e) {
+    box.textContent = e.message;
+    btn.disabled = false;
+  }
+}
+
+async function sqSubmit(giveUp) {
+  if (sq.busy) return;
+  const q = sq.list[sq.i];
+  const ans = String(sq.ans || '').trim();
+  if (!q) return;
+  if (!giveUp && !ans) return;
+  if (!getApiKey()) { toast('Gemini API 키가 필요해요'); return; }
+  sq.busy = true;
+  const btn = $('sqSubmit');
+  if (btn) { btn.disabled = true; btn.textContent = '보는 중'; }
+  try {
+    const r = await sqGrade(q.ko, giveUp ? '(답을 못 썼습니다. 판정은 redo 로 하고 alts 와 해설만 채워 주세요.)' : ans);
+    sq.res = r;
+    sq.shown = giveUp ? '' : ans;
+    if (r.v === 'ok') sq.ok++; else if (r.v === 'soso') sq.soso++; else sq.redo++;
+    if (r.v === 'ok') sqDropWrong(q.ko); else sqAddWrong(q.ko, sq.shown, r.v);
+    if (r.word) {
+      const w = sqAddWord({ ja: r.word, yomi: r.wordYomi, ko: r.wordKo, tag: r.wordTag });
+      if (w && !sq.learned.some(x => x.ja === w.ja)) sq.learned.push(w);
+    }
+    sq.view = 'grade';
+    studyRender();
+    $('studyBody').scrollTop = 0;
+    haptic();
+  } catch(e) {
+    toast(e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '제출'; }
+  } finally {
+    sq.busy = false;
+  }
+}
+
+function sqRenderGrade(box, q) {
+  const r = sq.res || {};
+  const last = sq.i >= sq.list.length - 1;
+  box.innerHTML = '<div class="sq-body">'
+    + '<div class="sq-card">'
+    +   '<div class="sq-vrow"><span class="sq-v ' + sqEsc(r.v || 'soso') + '"></span>'
+    +   '<span class="sq-qsm"></span></div>'
+    +   '<div class="sq-mine' + (sq.shown ? '' : ' none') + '"></div>'
+    + '</div>'
+    + (r.alts && r.alts.length
+        ? '<div class="sq-card"><div class="sq-lab2">이렇게 씀</div><div class="sq-alts"></div></div>' : '')
+    + '<div class="sq-card sq-why"><div class="sq-whytx"></div>'
+    +   (r.word ? '<div class="sq-tip"><div class="sq-tipw"></div><div class="sq-tipt"></div></div>' : '')
+    + '</div>'
+    + '<div class="sq-row2">'
+    +   (r.word ? '<button class="sq-mini2" id="sqToGloss" type="button">'
+        + '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+        + ' stroke-width="2.2" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></svg>용어집</button>' : '')
+    +   '<button class="sq-go" id="sqNext" type="button">' + (last ? '끝내기' : '다음 문제') + '</button>'
+    + '</div>'
+    + '</div>';
+
+  box.querySelector('.sq-v').textContent = SQ_VERDICT[r.v] || SQ_VERDICT.soso;
+  box.querySelector('.sq-qsm').textContent = q.ko;
+  box.querySelector('.sq-mine').textContent = sq.shown || '답을 안 쓰고 넘겼어요';
+  box.querySelector('.sq-whytx').textContent = r.why || '';
+
+  const altBox = box.querySelector('.sq-alts');
+  if (altBox) (r.alts || []).forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'sq-alt';
+    row.innerHTML = '<span class="sq-ja"></span><span class="sq-yomi"></span><span class="sq-tag"></span>';
+    row.querySelector('.sq-ja').textContent = a.ja;
+    row.querySelector('.sq-yomi').textContent = a.yomi || '';
+    const tg = row.querySelector('.sq-tag');
+    if (a.tag) tg.textContent = a.tag; else tg.remove();
+    altBox.appendChild(row);
+  });
+
+  if (r.word) {
+    box.querySelector('.sq-tipw').textContent = r.word;
+    box.querySelector('.sq-tipt').textContent = r.wordWhy || r.wordKo || '';
+  }
+
+  $('sqNext').onclick = sqNext;
+  if ($('sqToGloss')) $('sqToGloss').onclick = function() {
+    const pairs = getGlossaryPairs();
+    if (pairs.some(p => p.to === r.word)) { toast('이미 용어집에 있어요'); return; }
+    pairs.push({ from: r.wordKo || q.ko, to: r.word });
+    saveGlossary(pairs);
+    this.disabled = true;
+    toast('용어집에 넣었어요');
+    haptic();
+  };
+}
+
+function sqNext() {
+  if (sq.i >= sq.list.length - 1) sq.view = 'done';
+  else { sq.i++; sq.ans = ''; sq.shown = ''; sq.res = null; sq.view = 'quiz'; }
+  studyRender();
+  $('studyBody').scrollTop = 0;
+}
+
+function sqRenderDone(box) {
+  box.innerHTML = '<div class="sq-body">'
+    + '<div class="sq-done"><div class="sq-score">' + sq.ok + ' / ' + sq.list.length + '</div>'
+    +   '<div class="sq-pills">'
+    +     '<span class="sq-v ok">그대로 ' + sq.ok + '</span>'
+    +     '<span class="sq-v soso">통함 ' + sq.soso + '</span>'
+    +     '<span class="sq-v redo">다시 ' + sq.redo + '</span>'
+    +   '</div></div>'
+    + (sq.learned.length
+        ? '<button class="sq-go" id="sqToWords" type="button">오늘 배운 말 ' + sq.learned.length + '개</button>' : '')
+    + '<button class="sq-mini3" id="sqAgain" type="button">다시 하기</button>'
+    + '</div>';
+  if ($('sqToWords')) $('sqToWords').onclick = openWords;
+  $('sqAgain').onclick = () => sqStart();
+}
+
+async function sqStart() {
+  const o = sqOpts();
+  if (_sqOnce) { o.range = _sqOnce; _sqOnce = ''; }
+  sq.list = []; sq.i = 0; sq.ans = ''; sq.shown = ''; sq.res = null; sq.err = '';
+  sq.ok = 0; sq.soso = 0; sq.redo = 0; sq.learned = [];
+  sq.view = 'load';
+  studyRender();
+  try {
+    const list = await sqBuild(o);
+    if (!list.length) {
+      sq.err = o.range === 'wrong' ? '틀린 문제가 없어요'
+             : o.range === 'words' ? '아직 모인 표현이 없어요'
+             : '문제를 만들지 못했어요';
+      sq.view = 'empty';
+    } else {
+      sq.list = list;
+      sqMarkSeen(list.map(q => q.ko));
+      sq.view = 'quiz';
+    }
+  } catch(e) {
+    sq.err = e.message;
+    sq.view = 'empty';
+  }
+  studyRender();
+}
+
+function openStudy() {
+  if (!getApiKey()) { toast('Gemini API 키가 필요해요'); return; }
+  $('studyPage').classList.add('open');
+  sqStart();
+}
+
+function sqStartWith(range) {
+  _sqOnce = range;
+  if ($('wordsPage').classList.contains('open')) closeOverlay($('wordsPage'), PAGE_ANIM);
+  $('studyPage').classList.add('open');
+  sqStart();
+}
+
+// ── 조절 ──
+function sqOptOpen() {
+  _sqOptDirty = false;
+  sqRenderOpts();
+  $('studyOptOverlay').classList.add('open');
+}
+
+function sqRenderOpts() {
+  const o = sqOpts();
+  const save = () => { sqWrite('study_opts', o); _sqOptDirty = true; sqRenderOpts(); haptic(); };
+  const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+    + ' stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></svg>';
+
+  const rows = [
+    { k: 'history', t: '내 번역 기록', n: sqFromHistory([]).length },
+    { k: 'topic',   t: '주제로 새 문제', n: null },
+    { k: 'wrong',   t: '틀린 문제', n: sqWrongs().length }
+  ];
+  const box = $('sqRange');
+  box.innerHTML = '';
+  rows.forEach(r => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sq-orow' + (o.range === r.k ? ' on' : '');
+    b.innerHTML = '<span class="sq-ot"></span>'
+      + (r.n == null ? '' : '<span class="sq-on"></span>')
+      + '<span class="sq-ock">' + CHECK + '</span>';
+    b.querySelector('.sq-ot').textContent = r.t;
+    if (r.n != null) b.querySelector('.sq-on').textContent = r.n;
+    b.onclick = () => { o.range = r.k; save(); };
+    box.appendChild(b);
+  });
+
+  const chips = $('sqTopics');
+  chips.innerHTML = '';
+  SQ_TOPICS.forEach(t => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sq-chip' + (o.topics.indexOf(t) >= 0 ? ' on' : '');
+    b.textContent = t;
+    b.onclick = () => {
+      const i = o.topics.indexOf(t);
+      if (i >= 0) { if (o.topics.length > 1) o.topics.splice(i, 1); }
+      else o.topics.push(t);
+      save();
+    };
+    chips.appendChild(b);
+  });
+
+  const seg = $('sqCount');
+  seg.innerHTML = '';
+  SQ_COUNTS.forEach(n => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sq-seg-b' + (o.count === n ? ' on' : '');
+    b.textContent = n;
+    b.onclick = () => { o.count = n; save(); };
+    seg.appendChild(b);
+  });
+}
+
+$('sqOptDone').onclick = () => {
+  const again = _sqOptDirty;
+  closeOverlay($('studyOptOverlay'), 220);
+  if (again) setTimeout(() => sqStart(), 240);
+};
+$('studyOptOverlay').onclick = e => {
+  if (e.target === $('studyOptOverlay')) closeOverlay($('studyOptOverlay'), 220);
+};
+
+// ══════════════ 표현 노트 ══════════════
+const wp = { tab: 'words' };
+
+function openWords() { wpRender(); $('wordsPage').classList.add('open'); }
+
+function wpRender() {
+  const box = $('wordsBody');
+  const words = sqWords(), wrongs = sqWrongs();
+  const on = wp.tab === 'words';
+  box.innerHTML = '<div class="sq-body">'
+    + '<div class="sq-seg">'
+    +   '<button class="sq-seg-b' + (on ? ' on' : '') + '" id="wpT1" type="button">배운 말 ' + words.length + '</button>'
+    +   '<button class="sq-seg-b' + (on ? '' : ' on') + '" id="wpT2" type="button">틀린 문제 ' + wrongs.length + '</button>'
+    + '</div>'
+    + '<div class="sq-card sq-list" id="wpList"></div>'
+    + '<button class="sq-go" id="wpGo" type="button">'
+    +   (on ? '이 표현으로 문제 풀기' : '틀린 문제 다시 풀기') + '</button>'
+    + '</div>';
+
+  const list = $('wpList');
+  const rows = on ? words : wrongs;
+  if (!rows.length) {
+    list.innerHTML = '<div class="sq-none">'
+      + (on ? '공부를 하면 배운 말이 여기 쌓여요' : '틀린 문제가 없어요') + '</div>';
+  } else if (on) {
+    rows.forEach(w => list.appendChild(wpWordRow(w)));
+  } else {
+    rows.forEach(r => list.appendChild(wpWrongRow(r)));
+  }
+
+  $('wpT1').onclick = () => { wp.tab = 'words'; wpRender(); haptic(); };
+  $('wpT2').onclick = () => { wp.tab = 'wrong'; wpRender(); haptic(); };
+  $('wpGo').disabled = !rows.length;
+  $('wpGo').onclick = () => sqStartWith(on ? 'words' : 'wrong');
+}
+
+const WP_X = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+  + ' stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/></svg>';
+
+function wpWordRow(w) {
+  const row = document.createElement('div');
+  row.className = 'sq-wrow';
+  row.innerHTML = '<button class="sq-wmain" type="button">'
+    + '<span class="sq-wtop"><span class="sq-ja"></span><span class="sq-yomi"></span>'
+    + '<span class="sq-tag"></span></span><span class="sq-wko"></span></button>'
+    + '<button class="sq-wx" type="button" aria-label="지우기">' + WP_X + '</button>';
+  row.querySelector('.sq-ja').textContent = w.ja;
+  row.querySelector('.sq-yomi').textContent = w.yomi || '';
+  const tg = row.querySelector('.sq-tag');
+  if (w.tag) tg.textContent = w.tag; else tg.remove();
+  row.querySelector('.sq-wko').textContent = w.ko || '';
+  row.querySelector('.sq-wmain').onclick = () => {
+    navigator.clipboard.writeText(w.ja).then(() => toast('복사했어요')).catch(() => {});
+    haptic();
+  };
+  row.querySelector('.sq-wx').onclick = () => { sqDropWord(w.ja); wpRender(); haptic(); };
+  return row;
+}
+
+function wpWrongRow(r) {
+  const row = document.createElement('div');
+  row.className = 'sq-wrow';
+  row.innerHTML = '<span class="sq-wmain"><span class="sq-wsrc"></span><span class="sq-wmine"></span></span>'
+    + '<span class="sq-v ' + sqEsc(r.v === 'redo' ? 'redo' : 'soso') + '">'
+    + (r.v === 'redo' ? '다시' : '통함') + '</span>';
+  row.querySelector('.sq-wsrc').textContent = r.ko;
+  row.querySelector('.sq-wmine').textContent = r.mine || '답을 안 씀';
+  return row;
+}
+
 // ══════════════ 음성 인식 ══════════════
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 const SR_LANG = { 'ko': 'ko-KR', 'ja': 'ja-JP', 'en': 'en-US', 'zh-cn': 'zh-CN', 'zh-tw': 'zh-TW' };
@@ -6600,6 +7318,27 @@ function makePage(el, title, extraClass) {
 makePage($('overlay'), '설정');
 makePage($('historyOverlay'), '번역 기록');
 makePage($('glossaryPage'), '용어집');
+makePage($('studyPage'), '공부');
+makePage($('wordsPage'), '표현 노트');
+
+// 공부 머리글에 진행 표시와 조절 버튼을 붙인다
+(function studyHead() {
+  const head = $('studyPage').querySelector('.page-head');
+  const prog = document.createElement('span');
+  prog.className = 'sq-prog';
+  prog.id = 'sqProg';
+  const opt = document.createElement('button');
+  opt.className = 'page-back';
+  opt.type = 'button';
+  opt.title = '조절';
+  opt.innerHTML = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+    + ' stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M3.5 8h9M18.5 8h2M3.5 16h3M12.5 16h8"/>'
+    + '<circle cx="15.5" cy="8" r="2.4"/><circle cx="9.5" cy="16" r="2.4"/></svg>';
+  opt.onclick = sqOptOpen;
+  head.appendChild(prog);
+  head.appendChild(opt);
+})();
 
 // 기록 화면은 제목이 둘로 겹친다. 안쪽 머리글을 페이지 머리글로 합친다.
 (function mergeHistoryHead() {
@@ -6650,6 +7389,8 @@ document.querySelectorAll('[data-open]').forEach(b => {
       else if (to === 'settings') $('settingsBtn').click();
       else if (to === 'history') $('historyBtn').click();
       else if (to === 'talk') $('talkEnterBtn').click();
+      else if (to === 'study') openStudy();
+      else if (to === 'words') openWords();
     }, 110);
   };
 });
@@ -6730,11 +7471,11 @@ $('glossaryEditOverlay').onclick = e => { if (e.target === $('glossaryEditOverla
 // 키보드로도 한 겹씩 닫는다
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  const top = ['glossaryEditOverlay', 'toneManagerOverlay', 'chipManagerOverlay']
+  const top = ['glossaryEditOverlay', 'toneManagerOverlay', 'chipManagerOverlay', 'studyOptOverlay']
     .map(id => $(id)).find(el => el && el.classList.contains('open'));
   if (top) return closeOverlay(top, 220);
   if ($('drawer').classList.contains('on')) return closeDrawer();
-  const page = ['glossaryPage', 'overlay', 'historyOverlay']
+  const page = ['wordsPage', 'studyPage', 'glossaryPage', 'overlay', 'historyOverlay']
     .map(id => $(id)).find(el => el && el.classList.contains('open'));
   if (page) closeOverlay(page, PAGE_ANIM);
   else if ($('talkOverlay').classList.contains('open')) closeTalk();
