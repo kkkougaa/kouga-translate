@@ -2391,7 +2391,7 @@ button, input, textarea, a{ font-family:inherit; }
     <span class="drawer-tx">설정</span>
   </button>
   <div class="drawer-foot">
-    <div class="drawer-ver">v2.1.0</div>
+    <div class="drawer-ver">v2.1.3</div>
     <div class="drawer-copy">© 空間</div>
   </div>
 </nav>
@@ -3673,10 +3673,12 @@ function userWordPool(reqs) {
 }
 
 function allowedExtraChars(srcLang, srcBody, reqs) {
-  let pool = userWordPool(reqs);
-  // 원문에 있던 글자도 봐주되, 원문 언어의 주 문자는 제외한다
+  // 용어집의 원문 쪽, 말투 설명, 추가 요청은 전부 한국어 산문이다. 거기 쓰인 한글까지
+  // 봐주면 번역문에 한국어가 섞여도 그물에 안 걸린다(ポ도くん 처럼 반만 옮겨진 말도).
+  // 원문에 있던 글자든 요청문에 있던 글자든, 원문 언어의 주 문자는 빼고 담는다.
   const main = MAIN_SCRIPTS[srcLang] || [];
-  for (const ch of String(srcBody || '')) {
+  let pool = '';
+  for (const ch of userWordPool(reqs) + String(srcBody || '')) {
     const sc = scriptOf(ch);
     if (sc && main.indexOf(sc) < 0) pool += ch;
   }
@@ -3757,14 +3759,53 @@ function strayChars(text, tgtLang, allowSet) {
 // 문제는 원문에 없던 영어 단어가 문장 한복판에 불쑥 끼어드는 경우다. 글자 종류
 // 검사로는 못 잡는다. 이 언어들은 라틴 문자를 정상으로 치기 때문이다.
 // 대문자가 섞인 말(Twitter, iPhone, LINE)은 고유명사로 보고 건드리지 않는다.
+// 모델이 흘리는 영어는 대개 이 목록 안에 있다. 접속사·부사·조동사 같은 것들이다.
+// 일본어나 한국어 글에 이런 말이 라틴 문자로 섞일 일은 없으니, 대소문자를 가리지 않고 잡는다.
+const STRAY_EN = new Set(('an the and or but nor so if then than that this these those there here '
+  + 'where when what which who whom whose why how is are was were be been being am '
+  + 'have has had having do does did doing will would shall should can could may might must '
+  + 'not yes of in on at to for with from by about into over under after before until '
+  + 'because since while during through without within between among against around '
+  + 'already almost always never sometimes often usually still yet again just only even '
+  + 'very quite much more most less really truly simply surely indeed instead besides therefore '
+  + 'however anyway somehow although though maybe perhaps actually officially honestly basically '
+  + 'seriously probably definitely totally literally obviously apparently certainly '
+  + 'something anything everything nothing someone anyone everyone '
+  + 'get got going come came know think want need like make made take '
+  + 'say said see look feel').split(' '));
+
+// 소문자 짧은 말이라도 일본어·한국어 글에 그냥 나오는 것들. 단위가 대부분이다.
+const SHORT_OK = new Set(('cm mm km kg mg ml cc kcal kw hz db fps dpi px pt em rem kb mb gb tb '
+  + 'ver vol etc vs tel fax ok ng pc tv cd dvd bd bl gl sns url id qr mv pv ad bc orz lol rt dm')
+  .split(' '));
+
 function strayWords(text, tgtLang, srcBody, reqs) {
   if (tgtLang === 'en') return [];
-  const body = String(text || '').replace(/https?:\/\/\S+|\S+@\S+\.\S+/g, ' ');
-  const pool = (String(srcBody || '') + '\n' + userWordPool(reqs)).toLowerCase();
+  const body = String(text || '')
+    .replace(/https?:\/\/\S+|\S+@\S+\.\S+/g, ' ')
+    // 「」『』 안은 작품 제목일 때가 많다. 제목은 원래 영어로 둔다.
+    .replace(/[「『《〈][^」』》〉]*[」』》〉]/g, ' ');
+  // 원문이나 용어집에 있던 말은 봐준다. 낱말 단위로 봐야 the 가 mother 에 묻어 통과하지 않는다.
+  const pool = ' ' + (String(srcBody || '') + ' ' + userWordPool(reqs))
+    .toLowerCase().replace(/[^a-z'’-]+/g, ' ') + ' ';
   const out = [];
-  for (const w of body.match(/[A-Za-z][A-Za-z'’-]*/g) || []) {
-    if (w.length < 4 || !/^[a-z'’-]+$/.test(w)) continue;
-    if (pool.indexOf(w) >= 0) continue;
+  const re = /[A-Za-z][A-Za-z'’-]*/g;
+  let m;
+  while ((m = re.exec(body)) !== null) {
+    const w = m[0], low = w.toLowerCase();
+    const before = body.slice(0, m.index).replace(/[ \t]+$/, '').slice(-1);
+    const after = body.slice(m.index + w.length).replace(/^[ \t]+/, '').slice(0, 1);
+    // 숫자에 붙어 있으면 단위다. 3cm, 500ml, 9 am 처럼.
+    if (/[0-9０-９]/.test(before) || /[0-9０-９]/.test(after)) continue;
+    // 확장자(.jpg) · 멘션(@) · 해시태그(#)
+    if (before === '.' || before === '@' || before === '#') continue;
+    if (pool.indexOf(' ' + low + ' ') >= 0) continue;
+    // 흔한 영어 낱말이면 대소문자·길이를 가리지 않는다
+    if (STRAY_EN.has(low)) { if (out.indexOf(w) < 0) out.push(w); continue; }
+    // 대문자가 섞이면 고유명사로 본다. Twitter·iPhone·LINE 을 건드리지 않으려는 쪽이다.
+    if (!/^[a-z'’-]+$/.test(w)) continue;
+    // 전부 소문자면 길이와 상관없이 잡는다. me, os 같은 두 글자 조각도 흘러나온다.
+    if (SHORT_OK.has(low) || /^w+$/.test(low)) continue;
     if (out.indexOf(w) < 0) out.push(w);
   }
   return out;
@@ -3852,7 +3893,7 @@ function buildPrompt(text) {
 [번역 지침]
 1. 원문에 담긴 말투, 어조, 감정을 그대로 살려서 번역하세요. (반말이면 반말, 존댓말이면 존댓말, 거친 말투면 거칠게)
 2. 원문의 내용을 변경하지 말고 충실하게 번역하세요.
-3. 번역 결과 텍스트만 출력하세요. 설명, 주석, 그리고 읽는 법(로마자·발음·독음) 표기는 절대 붙이지 마세요. 원문에 없는 말을 지어내서 넣지 마세요.${glossaryInstr(text)}${bannedInstr()}${inlineInstr}
+3. 번역 결과 텍스트만 출력하세요. 설명, 주석, 그리고 읽는 법(로마자·발음·독음) 표기는 절대 붙이지 마세요. 원문에 없는 말을 지어내서 넣지 마세요. 특히 원문에 없던 영어 낱말을 끼워 넣지 마세요. (LINE, OK 처럼 그 언어에서 원래 그대로 쓰는 말은 괜찮습니다.) 용어집에 있는 말도 글자 하나까지 전부 옮기세요. 한 낱말을 반만 옮겨 두 언어가 섞인 말을 만들지 마세요.${glossaryInstr(text)}${bannedInstr()}${inlineInstr}
 
 [원문]
 ${text}`;
@@ -3895,7 +3936,7 @@ ${text}`;
 [번역 지침]
 1. ${toneInstr}
 2. ${strictInstr}
-3. 번역 결과 텍스트만 출력하세요. 설명, 주석, 그리고 읽는 법(로마자·발음·독음) 표기는 절대 붙이지 마세요. 원문에 없는 말을 지어내서 넣지 마세요.${extraInstr}${glossaryInstr(text)}${bannedInstr()}${punctInstr()}${inlineInstr}
+3. 번역 결과 텍스트만 출력하세요. 설명, 주석, 그리고 읽는 법(로마자·발음·독음) 표기는 절대 붙이지 마세요. 원문에 없는 말을 지어내서 넣지 마세요. 특히 원문에 없던 영어 낱말을 끼워 넣지 마세요. (LINE, OK 처럼 그 언어에서 원래 그대로 쓰는 말은 괜찮습니다.) 용어집에 있는 말도 글자 하나까지 전부 옮기세요. 한 낱말을 반만 옮겨 두 언어가 섞인 말을 만들지 마세요.${extraInstr}${glossaryInstr(text)}${bannedInstr()}${punctInstr()}${inlineInstr}
 
 [원문]
 ${text}`;
@@ -4769,6 +4810,34 @@ async function sendFeedback(preset) {
     }, reqTimeout())).trim();
     if (!reply) throw new Error('응답을 받지 못했습니다.');
     reply = cleanForCopy(tidyOut(reply, state.srcLang === 'ko' ? state.tgtLang : 'ko'));
+
+    // 수정본에도 딴 언어가 끼어든다. 번역 경로와 같은 그물을 걸고 한 번만 다시 부른다.
+    {
+      const fbLang = state.srcLang === 'ko' ? state.tgtLang : 'ko';
+      const fbName = state.srcLang === 'ko'
+        ? ((LANG_CONFIG[state.tgtLang] || LANG_CONFIG['ja']).label || '일본어') : '한국어';
+      const fbAllow = allowedExtraChars(state.srcLang, state.originalText, []);
+      const fbBad = t => strayChars(t, fbLang, fbAllow)
+        .concat(strayWords(t, fbLang, state.originalText, []));
+      const bad = fbBad(reply);
+      if (bad.length) {
+        try {
+          const again = (await streamGemini({
+            contents: state.conversation.concat([
+              { role: 'model', parts: [{ text: reply }] },
+              { role: 'user', parts: [{ text: '방금 결과에 ' + fbName + '가 아닌 것('
+                  + bad.slice(0, 6).join(', ') + ')이 섞여 있었습니다.'
+                  + ' 인명과 고유명사까지 모두 ' + fbName + ' 표기로 옮겨서,'
+                  + ' 번역문만 다시 써 주세요.' }] }
+            ]),
+            generationConfig: { temperature: 0.3, maxOutputTokens: 2048,
+              ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) }
+          }, () => {}, reqTimeout())).trim();
+          const fixed = cleanForCopy(tidyOut(again, fbLang));
+          if (fixed && fbBad(fixed).length < bad.length) reply = fixed;
+        } catch(e) {}      // 다시 부르다 실패하면 처음 것을 그대로 쓴다
+      }
+    }
 
     state.conversation.push({ role: 'model', parts: [{ text: reply }] });
     state.result = reply;
