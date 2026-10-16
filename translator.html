@@ -1074,8 +1074,6 @@ button, input, textarea, a{ font-family:inherit; }
   font-size:12.5px; line-height:1.55; letter-spacing:-.2px;
 }
 .bt-warn.visible{ display:block; }
-#glossaryInput{ min-height:100px !important; font-size:15px !important; line-height:1.7 !important; }
-#glossaryLangLabel{ font-size:12px; }
 
 /* ── 설정 시트: 카테고리 섹션 ── */
 .set-group{ border-bottom:.5px solid var(--border); }
@@ -2415,7 +2413,7 @@ button, input, textarea, a{ font-family:inherit; }
     <span class="drawer-tx">설정</span>
   </button>
   <div class="drawer-foot">
-    <div class="drawer-ver">v2.1.8</div>
+    <div class="drawer-ver">v2.1.9</div>
     <div class="drawer-copy">© 空間</div>
   </div>
 </nav>
@@ -3326,11 +3324,6 @@ $('saveBtn').onclick = () => {
   if (iv) localStorage.setItem('gemini_image_model', iv);
   else localStorage.removeItem('gemini_image_model');
   // 아이콘은 iconUpload 이벤트에서 자동 저장됨
-  if ($('glossaryInput')) {
-    const gv = $('glossaryInput').value.trim();
-    if (gv) localStorage.setItem(glossaryKey(), gv);
-    else localStorage.removeItem(glossaryKey());
-  }
   if ($('bannedInput')) {
     const bv = $('bannedInput').value.trim();
     if (bv) localStorage.setItem(bannedKey(), bv);
@@ -3506,7 +3499,7 @@ function updateCharChip(forceRenderChips = false) {
 // ── 백업 / 복원 ──
 // 설정이 전부 localStorage에만 있어서, 기기를 바꾸거나 브라우저가 저장소를 비우면 통째로 사라진다.
 const BACKUP_KEYS = [
-  'gemini_api_key', 'soniox_key', 'rt_refine', 'gemini_model', 'gemini_tts_model', 'gemini_tts_voice',
+  'gemini_api_key', 'soniox_key', 'rt_refine', 'gemini_priority', 'gemini_model', 'gemini_tts_model', 'gemini_tts_voice',
   'gemini_image_model', 'gemini_tts_style', 'image_out_size', 'custom_icon', 'custom_tones',
   'char_name', 'char_x', 'char_prompt_default', 'auto_detect', 'result_size', 'accent_color', 'trans_history'
 ];
@@ -3515,7 +3508,9 @@ function collectBackup() {
   const data = {};
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (BACKUP_KEYS.includes(k) || k.startsWith('glossary_') || k.startsWith('banned_') || k.startsWith('fb_chips_')) {
+    // study_ 는 공부 기능(표현 노트·오답·설정). 이게 빠지면 새 기기에서 노트가 통째로 사라진다.
+    if (BACKUP_KEYS.includes(k) || k.startsWith('glossary_') || k.startsWith('banned_')
+        || k.startsWith('fb_chips_') || k.startsWith('study_')) {
       data[k] = localStorage.getItem(k);
     }
   }
@@ -3601,8 +3596,6 @@ function glossaryInstr(text) {
 function loadGlossaryField() {
   const cfg = LANG_CONFIG[state.tgtLang] || LANG_CONFIG['ja'];
   const pair = '한국어 ↔ ' + cfg.label;
-  if ($('glossaryLangLabel')) $('glossaryLangLabel').textContent = pair;
-  if ($('glossaryInput')) $('glossaryInput').value = localStorage.getItem(glossaryKey()) || '';
   if ($('bannedLangLabel')) $('bannedLangLabel').textContent = pair;
   if ($('bannedInput')) $('bannedInput').value = localStorage.getItem(bannedKey()) || '';
 }
@@ -4175,7 +4168,7 @@ function geminiErr(status, raw) {
     return '안전 설정에 걸려서 응답이 막혔어요.';
   if (/deadline|timeout|timed out/i.test(m))
     return '응답이 너무 늦어요. 다시 해주세요.';
-  if (status === 400) return '요청이 거부됐어요. 입력이 너무 길지 않은지 봐주세요. (400)';
+  if (status === 400) return '요청이 거부됐어요. 입력이 너무 길거나 모델이 받지 않는 형식일 수 있어요. (400)';
   if (status >= 500) return '구글 쪽 오류예요. 잠시 뒤에 다시 해주세요. (' + status + ')';
   return status ? ('번역에 실패했어요. (' + status + ')') : '번역에 실패했어요.';
 }
@@ -7716,6 +7709,9 @@ document.addEventListener('keydown', e => {
 // init
 loadStorage();
 updateDictateBtn();
+// iOS 는 한동안 안 쓴 사이트의 저장소를 비울 수 있다. 키·용어집·표현 노트가 전부 여기 있다.
+// 지키지 말아 달라는 요청인데, 효과가 있었다는 보고가 있고 실행마다 다시 불러야 한다.
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch(e) {}
 
 // 시트/히스토리 스크롤 iOS 전파 차단
 function preventScrollPropagation(el) {
@@ -7765,7 +7761,7 @@ updateCharCount();
 
 // 다른 앱에서 공유 시트·단축어로 넘겨준 글을 받아 바로 번역한다.
 // 해시(#)는 서버로 전송되지 않아서 글이 주소 기록에 남지 않는다.
-(function fromShare() {
+function fromShare() {
   let raw = '';
   try { raw = (location.hash || '').slice(1); } catch(e) { return; }
   if (!raw) return;
@@ -7773,12 +7769,20 @@ updateCharCount();
   let text = m ? m[1] : raw;
   try { text = decodeURIComponent(text.replace(/\+/g, ' ')); } catch(e) {}
   text = text.slice(0, 2000).trim();
-  // 읽었으면 주소에서 지운다. 새로고침할 때 또 번역하지 않게.
+  // 읽었으면 주소에서 지운다. 새로고침할 때 또 번역하지 않게. (replaceState 는 hashchange 를 안 낸다)
   try { history.replaceState(null, '', location.pathname + location.search); } catch(e) {}
   if (!text) return;
   setInputText(text);
-  if (getApiKey()) setTimeout(translate, 150);
-})();
+  if (!getApiKey()) return;
+  setTimeout(() => {
+    if (state.busy) cancelTranslate();     // 하던 번역은 접고 새로 들어온 글을 돌린다
+    setTimeout(translate, 80);
+  }, 150);
+}
+fromShare();
+// 앱이 이미 열려 있는데 단축어가 같은 주소에 해시만 바꿔 열면 페이지가 새로 로드되지 않는다.
+// 그때는 hashchange 로 들어온다.
+window.addEventListener('hashchange', fromShare);
 </script>
 
 </body>
