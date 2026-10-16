@@ -1544,6 +1544,15 @@ button, input, textarea, a{ font-family:inherit; }
   .header{ background:var(--bg2); }
 }
 
+/* 41 · 용어집 제안 칩 — 누르면 넣고, × 는 다시 묻지 않는다 */
+.mpill.gl-sug{ padding:0; gap:0; overflow:hidden;
+               background:var(--accent-bg); color:var(--accent-dark); }
+.gl-sug button{ height:24px; border:none; background:none; color:inherit;
+                font:inherit; cursor:pointer; display:flex; align-items:center; }
+.gl-sug-add{ padding:0 4px 0 9px; gap:4px; }
+.gl-sug-add svg{ display:block; flex:none; }
+.gl-sug-x{ padding:0 9px 0 4px; opacity:.55; font-size:13px; }
+
 /* 40 · 공부 — 문제 내고, 채점 받고, 표현을 모은다 */
 #studyPage, #wordsPage{ background:var(--bg2); }
 /* .overlay 는 100 이라 공부 페이지(500) 뒤에서 열린다. 위로 올린다. */
@@ -2413,7 +2422,7 @@ button, input, textarea, a{ font-family:inherit; }
     <span class="drawer-tx">설정</span>
   </button>
   <div class="drawer-foot">
-    <div class="drawer-ver">v2.1.9</div>
+    <div class="drawer-ver">v2.1.10</div>
     <div class="drawer-copy">© 空間</div>
   </div>
 </nav>
@@ -3582,6 +3591,130 @@ function getGlossaryPairs() {
     .slice(0, 200);
 }
 
+// ── 용어집 강제 적용 ──
+// 프롬프트로 "용어집대로 써라"고 해도 모델이 가끔 원문 표기를 그대로 두거나(케모켓)
+// 반만 옮긴다(ポ도くん). 결과가 나온 뒤에 직접 바꿔 끼운다. 다시 부를 필요가 없고 확정적이다.
+function glossaryDirPairs(srcText) {
+  const toKO = state.srcLang !== 'ko';
+  const t = String(srcText || '').toLowerCase();
+  return getGlossaryPairs()
+    .map(p => toKO ? { src: p.to, dst: p.from } : { src: p.from, dst: p.to })
+    .filter(p => p.src.length >= 2 && t.includes(p.src.toLowerCase()));
+}
+
+function escRe(x) { return String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function enforceGlossary(text, srcText, outLang) {
+  let out = String(text == null ? '' : text);
+  const pairs = glossaryDirPairs(srcText);
+  if (!pairs.length) return out;
+  const ok = OK_SCRIPTS[outLang] || OK_SCRIPTS['ja'];
+  const foreign = ch => { const sc = scriptOf(ch); return !!sc && ok.indexOf(sc) < 0; };
+  // 긴 것부터 바꾼다. 짧은 항목이 긴 항목의 일부를 먼저 갈아 치우지 않게.
+  pairs.sort((a, b) => b.src.length - a.src.length);
+  for (const p of pairs) {
+    // ① 원문 표기가 그대로 남은 자리
+    if (/^[A-Za-z0-9 .'’-]+$/.test(p.src)) {
+      // 라틴 낱말은 낱말 경계로만 바꾼다 (OK 가 OKAY 안에서 바뀌지 않게)
+      out = out.replace(new RegExp('(^|[^A-Za-z])' + escRe(p.src) + '(?![A-Za-z])', 'gi'),
+                        (m, pre) => pre + p.dst);
+    } else {
+      out = out.split(p.src).join(p.dst);
+    }
+    // ② 반만 옮겨진 자리 — 번역 쪽 표기와 길이가 같고, 절반 넘게 같으며,
+    //    다른 글자가 전부 대상 언어가 아닌 글자인 곳 (ポ도くん → ポドくん)
+    const L = p.dst.length;
+    if (L < 2) continue;
+    const need = Math.ceil(L / 2);
+    for (let i = 0; i + L <= out.length; i++) {
+      const w = out.substr(i, L);
+      if (w === p.dst) continue;
+      let same = 0, bad = false;
+      for (let k = 0; k < L; k++) {
+        if (w[k] === p.dst[k]) same++;
+        else if (!foreign(w[k])) { bad = true; break; }
+      }
+      if (!bad && same >= need) {
+        out = out.slice(0, i) + p.dst + out.slice(i + L);
+        i += L - 1;
+      }
+    }
+  }
+  return out;
+}
+
+// ── 용어집 자동 제안 ──
+// 번역 기록에서 "이 한국어 낱말이 나오면 이 가타카나가 같이 나온다" 를 찾는다.
+// 고유명사·외래어·덕질 용어는 대개 가타카나로 옮겨지니 거기서 짝을 뽑는다.
+// API 는 부르지 않는다. 기록만 본다.
+const KO_JOSA = ['이에요', '에서', '에게', '한테', '으로', '이랑', '하고', '까지', '부터', '처럼',
+  '보다', '이나', '이야', '예요', '께서', '이', '가', '은', '는', '을', '를', '에', '께', '로',
+  '와', '과', '랑', '도', '만', '의', '나', '야', '님'];
+const SUGGEST_STOP = new Set(['진짜', '정말', '너무', '완전', '대박', '그냥', '오늘', '내일', '어제',
+  '지금', '우리', '이거', '그거', '저거', '여기', '거기', '근데', '그래서', '그리고', '아니', '나도', '너도']);
+const KATA_RE = /[\u30A1-\u30FA][\u30A1-\u30FA\u30FC]+(?:くん|ちゃん|さん|さま|様|たん)?/g;
+
+// 낱말 하나에서 조사를 뗀 후보까지 같이 낸다. "코우가" 는 "가" 로 끝나도 원형이 남는다.
+function koTerms(text) {
+  const out = new Set();
+  for (const raw of String(text || '').split(/[^가-힣]+/)) {
+    if (raw.length < 2 || raw.length > 10) continue;
+    out.add(raw);
+    for (const j of KO_JOSA) {
+      if (raw.length - j.length >= 2 && raw.endsWith(j)) out.add(raw.slice(0, -j.length));
+    }
+  }
+  return out;
+}
+
+function glossarySkipKey() { return 'glossary_skip_' + state.tgtLang; }
+
+function suggestGlossary(srcText) {
+  if (state.srcLang !== 'ko' || state.tgtLang !== 'ja' || !srcText) return [];
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem('trans_history') || '[]'); } catch(e) {}
+  const label = (LANG_CONFIG[state.tgtLang] || {}).label;
+  // 같은 문장을 여러 번 번역한 건 한 번으로 친다
+  const seen = new Set(), rows = [];
+  for (const h of hist) {
+    if (h.srcName !== '한국어' || h.tgtName !== label || seen.has(h.src)) continue;
+    seen.add(h.src);
+    rows.push({ ko: koTerms(h.src), ja: new Set(String(h.tgt || '').match(KATA_RE) || []) });
+  }
+  if (rows.length < 2) return [];
+
+  const pairs = getGlossaryPairs();
+  const knownKo = x => pairs.some(p => p.from === x || (p.from.length >= 2 && (p.from.includes(x) || x.includes(p.from))));
+  const knownJa = k => pairs.some(p => p.to === k || (p.to.length >= 2 && (p.to.includes(k) || k.includes(p.to))));
+  let skip = [];
+  try { skip = JSON.parse(localStorage.getItem(glossarySkipKey()) || '[]'); } catch(e) {}
+  const kataTotal = new Map();
+  rows.forEach(r => r.ja.forEach(k => kataTotal.set(k, (kataTotal.get(k) || 0) + 1)));
+
+  const best = new Map();   // 가타카나 → 가장 잘 맞는 한국어 낱말
+  for (const x of koTerms(srcText)) {
+    if (SUGGEST_STOP.has(x) || knownKo(x)) continue;
+    const withX = rows.filter(r => r.ko.has(x));
+    if (withX.length < 2) continue;
+    const co = new Map();
+    withX.forEach(r => r.ja.forEach(k => co.set(k, (co.get(k) || 0) + 1)));
+    for (const [k, n] of co) {
+      if (n < 2 || knownJa(k) || skip.indexOf(x + '=' + k) >= 0) continue;
+      if (n / withX.length < 0.6) continue;     // 이 낱말이 나오면 대개 이 가타카나도 나온다
+      if (n / kataTotal.get(k) < 0.6) continue;  // 이 가타카나는 대개 이 낱말과 같이 나온다
+      const cur = best.get(k);
+      if (!cur || n > cur.n || (n === cur.n && x.length > cur.x.length)) best.set(k, { x, k, n });
+    }
+  }
+  // 한 낱말이 두 가타카나에 걸리면 더 자주 나온 쪽만
+  const byX = new Map();
+  for (const v of best.values()) {
+    const cur = byX.get(v.x);
+    if (!cur || v.n > cur.n) byX.set(v.x, v);
+  }
+  return [...byX.values()].sort((a, b) => b.n - a.n).slice(0, 2);
+}
+
 // 입력한 글에 실제로 등장하는 항목만 프롬프트에 붙인다 (토큰 절약)
 function glossaryInstr(text) {
   const t = (text || '').toLowerCase();
@@ -4042,12 +4175,17 @@ async function translate() {
     let result = (await streamGemini(reqBody, draw, reqTimeout())).trim();
     if (!result) throw new Error('번역 결과를 받지 못했습니다.');
 
-    // 읽는 법을 덧붙여 왔으면 떼어낸다. 코멘트는 건드리지 않는다.
-    {
+    // 본문만 다듬는다 — 읽는 법 꼬리 떼기, 전각 숫자·영문 반각, 용어집 강제. 코멘트는 그대로.
+    // 재요청으로 바꿔 끼운 결과도 같은 손질을 거쳐야 해서 함수로 둔다.
+    const polishOut = full => {
       const outL = state.srcLang === 'ko' ? state.tgtLang : 'ko';
-      const cs = result.split(COMMENT_SEP);
-      const body = tidyOut(cs[0], outL);
-      if (body !== cs[0]) { cs[0] = body; result = cs.join(COMMENT_SEP); draw(result); }
+      const cs = full.split(COMMENT_SEP);
+      cs[0] = enforceGlossary(tidyOut(cs[0], outL), parsed.body, outL);
+      return cs.join(COMMENT_SEP);
+    };
+    {
+      const polished = polishOut(result);
+      if (polished !== result) { result = polished; draw(result); }
     }
 
     // 대상 언어가 아닌 글자가 섞였으면 알리지 않고 한 번만 다시 부른다
@@ -4070,11 +4208,11 @@ async function translate() {
             generationConfig: genCfg
           }, draw, reqTimeout())).trim();
           // 실제로 줄었을 때만 바꾼다. 아니면 처음 것을 그대로 쓴다
-          if (retried && badness(retried) < strays.length + words.length) {
-            result = retried;
-          } else {
-            draw(result);
+          const fixed = retried ? polishOut(retried) : '';
+          if (fixed && badness(fixed) < strays.length + words.length) {
+            result = fixed;
           }
+          draw(result);
         } catch(e) {
           draw(result);   // 재요청 실패는 조용히 넘긴다
         }
@@ -4084,7 +4222,7 @@ async function translate() {
     state.result = result;
     _succeeded = true;
     haptic();
-    saveHistory(text, result, state.srcLang, state.tgtLang);
+    saveHistory(text, cleanForCopy(splitComment(result).body), state.srcLang, state.tgtLang);
     state.originalText = parsed.body;   // 역번역 비교는 요청문을 뺀 본문으로
     const feedbackSystemMsg = `당신은 번역 수정 도우미입니다. 아래는 원문과 번역 결과입니다.
 사용자의 수정 요청을 반드시 정확히 반영하세요.
@@ -4944,6 +5082,7 @@ async function sendFeedback(preset) {
     }, reqTimeout())).trim();
     if (!reply) throw new Error('응답을 받지 못했습니다.');
     reply = cleanForCopy(tidyOut(reply, state.srcLang === 'ko' ? state.tgtLang : 'ko'));
+    reply = enforceGlossary(reply, state.originalText, state.srcLang === 'ko' ? state.tgtLang : 'ko');
 
     // 수정본에도 딴 언어가 끼어든다. 번역 경로와 같은 그물을 걸고 한 번만 다시 부른다.
     {
@@ -4967,7 +5106,7 @@ async function sendFeedback(preset) {
             generationConfig: { temperature: 0.3, maxOutputTokens: 2048,
               ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) }
           }, () => {}, reqTimeout())).trim();
-          const fixed = cleanForCopy(tidyOut(again, fbLang));
+          const fixed = enforceGlossary(cleanForCopy(tidyOut(again, fbLang)), state.originalText, fbLang);
           if (fixed && fbBad(fixed).length < bad.length) reply = fixed;
         } catch(e) {}      // 다시 부르다 실패하면 처음 것을 그대로 쓴다
       }
@@ -5100,6 +5239,32 @@ function renderMetaPills(warnMsg) {
   // 이미지나 피드백 수정은 우선 처리로 못 보내 표준으로 간다. 어느 길로 갔는지는 보이게.
   if (_usedPriority) add('우선 처리', false);
   if (warnMsg) add('확인 권장', true);
+  // 용어집에 넣을 만한 짝이 기록에서 보이면 칩으로. 누르면 넣고, × 는 다시 묻지 않는다.
+  suggestGlossary(state.originalText).forEach(sg => {
+    const chip = document.createElement('span');
+    chip.className = 'mpill gl-sug';
+    chip.innerHTML = '<button type="button" class="gl-sug-add" title="용어집에 넣기">'
+      + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"'
+      + ' stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span></span></button>'
+      + '<button type="button" class="gl-sug-x" aria-label="다시 묻지 않기">×</button>';
+    chip.querySelector('.gl-sug-add span').textContent = sg.x + ' → ' + sg.k;
+    chip.querySelector('.gl-sug-add').onclick = () => {
+      const list = getGlossaryPairs();
+      if (!list.some(p => p.from === sg.x)) list.push({ from: sg.x, to: sg.k });
+      saveGlossary(list);
+      toast('용어집에 넣었어요');
+      haptic();
+      renderMetaPills(warnMsg);
+    };
+    chip.querySelector('.gl-sug-x').onclick = () => {
+      let skip = [];
+      try { skip = JSON.parse(localStorage.getItem(glossarySkipKey()) || '[]'); } catch(e) {}
+      skip.push(sg.x + '=' + sg.k);
+      localStorage.setItem(glossarySkipKey(), JSON.stringify(skip.slice(-200)));
+      renderMetaPills(warnMsg);
+    };
+    box.appendChild(chip);
+  });
   box.classList.toggle('visible', box.children.length > 0);
 }
 
@@ -5409,7 +5574,8 @@ function saveHistory(src, tgt, srcLang, tgtLang) {
       tgt: tgt.slice(0, 200),
       srcName, tgtName, ts: Date.now()
     });
-    if (list.length > 30) list.splice(30);
+    // 공부 출제 참고·용어집 제안도 여기서 뽑는다. 30개는 금방 돈다.
+    if (list.length > 200) list.splice(200);
     localStorage.setItem('trans_history', JSON.stringify(list));
   } catch(e) {
     console.error('saveHistory error:', e);
@@ -6070,12 +6236,22 @@ function pcmToWav(pcmData, sampleRate) {
 }
 
 // ── 독음 ──
+// 같은 결과에 독음을 껐다 켜면 다시 부르지 않는다. 결과 문자열이 바뀌면 자연히 새로 부른다.
+const _pronCache = new Map();
+
 $('pronBtn').onclick = async function() {
   if (!state.result) return;
   // 토글
   if ($('pronunciationWrap').style.display === 'block') {
     $('pronunciationWrap').style.display = 'none';
     this.classList.remove('active');
+    return;
+  }
+  const pronKey = state.srcLang + '>' + state.tgtLang + '|' + state.result;
+  if (_pronCache.has(pronKey)) {
+    $('pronunciationText').textContent = _pronCache.get(pronKey);
+    $('pronunciationWrap').style.display = 'block';
+    this.classList.add('active');
     return;
   }
   if (!getApiKey()) { $('overlay').classList.add('open'); return; }
@@ -6088,19 +6264,17 @@ $('pronBtn').onclick = async function() {
     const tgtName = state.srcLang === 'ko' ? cfg.label : '한국어';
     const prompt = `다음 ${tgtName} 텍스트의 한국어 독음(발음)을 표기해줘.
 각 문장/어절의 원문 옆에 괄호로 한국어 발음을 적어줘.
-예시: 今日はいい天気ですね (오늘와 이이 텐키데스네)
+예시: 今日はいい天気ですね (쿄-와 이이 텐키데스네)
 원문만 독음 형식으로 출력하고 설명은 하지 마.
 
 [원문]
 ${state.result}`;
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) }
-    );
-    const data = await res.json();
-    const result = data.candidates?.[0]?.content?.parts?.filter(p=>p.text).map(p=>p.text).join('').trim();
+    // askGemini 를 거치면 붐빌 때 다시 걸고, 생각을 꺼서 빨리 온다. 독음은 기계적인 일이다.
+    // (예전엔 fetch 를 직접 불러 res.ok 확인도 없었고 생각이 기본값으로 켜져 있었다)
+    const result = (await askGemini(prompt, 2048)).trim();
     if (!result) throw new Error('결과 없음');
+    _pronCache.set(pronKey, result);
+    if (_pronCache.size > 40) _pronCache.delete(_pronCache.keys().next().value);
     $('pronunciationText').textContent = result;
     $('pronunciationWrap').style.display = 'block';
     this.classList.add('active');
