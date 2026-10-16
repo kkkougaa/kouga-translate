@@ -738,8 +738,24 @@
   }
 }
 
+/* Pretendard — 한글은 기본판, 가나·한자는 JP판이 맡는다.
+   JP판에는 한글 글리프가 한 자도 없어서(0/11172) JP를 앞에 둬도 한글은
+   자동으로 기본판으로 떨어진다. 덕분에 언어별로 폰트가 깔끔하게 갈린다.
+   반대로 두면 가나는 기본판, 한자는 JP판이 가져가 한 문장 안에서 섞인다. */
+@font-face{
+  font-family:'Pretendard JP';
+  src:url('https://cdnjs.cloudflare.com/ajax/libs/pretendard-jp/1.3.9/variable/woff2/PretendardJPVariable.woff2') format('woff2');
+  font-weight:45 920; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:'Pretendard';
+  src:url('https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/variable/woff2/PretendardVariable.woff2') format('woff2');
+  font-weight:45 920; font-style:normal; font-display:swap;
+}
+
 html, body{
-  font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard',
+  font-family:'Pretendard JP','Pretendard',
+              -apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',
               'Hiragino Sans','Segoe UI',system-ui,sans-serif;
   background:var(--bg2);
   letter-spacing:-.2px;
@@ -2228,6 +2244,14 @@ button, input, textarea, a{ font-family:inherit; }
           <button class="toggle" id="thinkingToggle"></button>
         </div>
 
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-name">우선 처리</div>
+            <div class="toggle-desc" id="priorityDesc">off — 표준 요금</div>
+          </div>
+          <button class="toggle" id="priorityToggle"></button>
+        </div>
+
       </div>
     </div>
 
@@ -2391,7 +2415,7 @@ button, input, textarea, a{ font-family:inherit; }
     <span class="drawer-tx">설정</span>
   </button>
   <div class="drawer-foot">
-    <div class="drawer-ver">v2.1.3</div>
+    <div class="drawer-ver">v2.1.8</div>
     <div class="drawer-copy">© 空間</div>
   </div>
 </nav>
@@ -3191,6 +3215,22 @@ $('thinkingToggle').onclick = function() {
   $('thinkingDesc').textContent = state.thinking ? 'on — 느리지만 정확하게' : 'off — 빠른 번역';
 };
 
+function priorityOn() { return localStorage.getItem('gemini_priority') === '1'; }
+
+function paintPriority() {
+  const on = priorityOn();
+  $('priorityToggle').classList.toggle('on', on);
+  $('priorityDesc').textContent = on ? 'on — 표준의 1.75~2배' : 'off — 표준 요금';
+}
+
+$('priorityToggle').onclick = function() {
+  const on = !priorityOn();
+  localStorage.setItem('gemini_priority', on ? '1' : '0');
+  _priorityOff = false;            // 껐다 켜면 다시 시도해 본다
+  paintPriority();
+  haptic();
+};
+
 
 $('strictToggle').onclick = function() {
   state.strict = !state.strict;
@@ -3595,6 +3635,7 @@ function loadStorage() {
     $('iconPreview').src = $('headerCharImg') ? $('headerCharImg').src : '';
   }
   $('modelInput').value = localStorage.getItem('gemini_model') || DEFAULT_MODEL;
+  paintPriority();
   $('ttsModelInput').value = localStorage.getItem('gemini_tts_model') || '';
   $('imgModelInput').value = localStorage.getItem('gemini_image_model') || '';
   if ($('ttsVoiceInput')) $('ttsVoiceInput').value = getTtsVoice();
@@ -3701,12 +3742,14 @@ function looksRomaji(t, minWords) {
   return (t.match(/[A-Za-z][ \n][A-Za-z]/g) || []).length >= minWords;
 }
 
-// 기호는 전각이 맞지만 숫자는 반각이 자연스럽다.
+// 전각으로 둘 것은 일본어와 기호뿐이다. 숫자와 영문자는 반각이 자연스럽다.
+// 세 범위(０-９ Ａ-Ｚ ａ-ｚ)가 모두 반각에서 0xFEE0 만큼 떨어져 있어 한 번에 민다.
+// 사이에 낀 ［＼］＾＿｀ 는 기호라 범위를 따로 끊어 건드리지 않는다.
 // 숫자 사이에 낀 자리표·소수점도 같이 반각으로 맞춘다 (1，000 → 1,000).
-function toHalfDigits(text, tgtLang) {
+function toHalfWidth(text, tgtLang) {
   if (READING_LANGS.indexOf(tgtLang) < 0) return text;
   let out = String(text == null ? '' : text)
-    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFF10 + 48));
+    .replace(/[０-９Ａ-Ｚａ-ｚ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
   for (let i = 0; i < 4; i++) {
     out = out.replace(/(\d)[，](\d)/g, '$1,$2').replace(/(\d)[．](\d)/g, '$1.$2');
   }
@@ -3715,7 +3758,7 @@ function toHalfDigits(text, tgtLang) {
 
 // 번역 결과에 공통으로 거는 뒷정리
 function tidyOut(text, tgtLang) {
-  return toHalfDigits(stripReading(text, tgtLang), tgtLang);
+  return toHalfWidth(stripReading(text, tgtLang), tgtLang);
 }
 
 function stripReading(text, tgtLang) {
@@ -3875,7 +3918,8 @@ function punctInstr() {
   return (state.srcLang === 'ko' && state.tgtLang === 'ja')
     ? `\n\n[문장부호] 일본어 번역에서는 모든 문장부호를 전각으로 쓰세요.`
       + ` （。、？！「」『』（）〜…・ 등. 반각 . , ? ! ( ) ~ 는 쓰지 마세요.）`
-      + ` 단 숫자는 반각으로 쓰세요. 2026年, 7時, 100円 처럼.`
+      + ` 단 숫자와 영문자는 반각으로 쓰세요. 2026年, 7時, 100円, LINE, OK 처럼.`
+      + ` ２０２６ 이나 ＬＩＮＥ 같은 전각 숫자·전각 알파벳은 쓰지 마세요.`
     : '';
 }
 
@@ -3968,6 +4012,7 @@ async function translate() {
 
   state.busy = true;
   _cancelled = false;
+  _usedPriority = false;
   const myReq = ++_reqSeq;
   $('translateBtn').disabled = false;
   $('translateBtn').onclick = cancelTranslate;
@@ -4135,7 +4180,97 @@ function geminiErr(status, raw) {
   return status ? ('번역에 실패했어요. (' + status + ')') : '번역에 실패했어요.';
 }
 
+// 붐비는 시간엔 구글이 429(한도)나 503(서버 붐빔)을 그냥 던진다. 구글 문서도
+// 클라이언트가 지수 백오프로 다시 걸라고 적어 놨다. 한 번 튕겼다고 바로 에러를
+// 띄우면 사용자가 손으로 다시 눌러야 한다. 조용히 두 번까지 더 걸어 본다.
+//
+// 다시 걸지 않는 쪽: 키·입력이 잘못된 경우(몇 번을 걸어도 같다)와 취소·시간초과
+// (AbortError). 시간초과까지 다시 걸면 기다리는 시간이 곱절로 늘어난다.
+const RETRY_STATUS = [408, 429, 500, 502, 503, 504];
+
+function geminiRetryWait(i) {
+  return (i === 0 ? 900 : 2400) + Math.floor(Math.random() * 500);
+}
+
+async function withGeminiRetry(fn) {
+  for (let i = 0; ; i++) {
+    try { return await fn(); }
+    catch (e) {
+      if (i >= 2 || !e || !e._retryable) throw e;
+      await new Promise(r => setTimeout(r, geminiRetryWait(i)));
+      if (_cancelled) throw e;
+    }
+  }
+}
+
+// 우선 처리(service_tier: priority)는 Interactions API 에서만 받는다. 지금 쓰는
+// generateContent 와는 주소도 본문도 응답도 다르고, 스트리밍 형식이 문서에 없어서
+// 글이 한 번에 떨어진다. 그래서 글 한 덩어리를 보내는 번역 경로에만 건다.
+// 이미지가 붙었거나 피드백처럼 대화가 여러 턱인 요청은 그냥 표준으로 간다.
+let _priorityOff = false;          // 거부당하면 이 실행 동안은 다시 안 건다
+// 구글이 한도를 넘기면 조용히 표준으로 강등하는데, 그걸 알려 주는 x-gemini-service-tier
+// 헤더가 CORS 로 막혀 있어(Access-Control-Expose-Headers 에 없음) 브라우저에선 못 읽는다.
+// 응답 본문에도 없다. 그래서 "우선 처리로 보냈다"까지만 말하고, 실제 처리 결과는 말하지 않는다.
+let _usedPriority = false;
+
+function priorityText(body) {
+  const cs = body && body.contents;
+  if (!Array.isArray(cs) || cs.length !== 1) return '';
+  const parts = cs[0].parts || [];
+  if (parts.some(p => p.inline_data)) return '';
+  return parts.filter(p => p.text).map(p => p.text).join('').trim();
+}
+
+async function askPriority(text) {
+  // 표준 경로는 생각 토글이 꺼져 있으면 thinkingBudget:0 을 보낸다. 여기서도 맞춰 줘야 한다.
+  // 안 보내면 모델 기본값으로 돌아서 생각을 하고, 우선 처리인데도 몇 배 느려진다.
+  // thinking_level 에 off 는 없고 minimal 이 "거의 생각하지 않음"이다.
+  const gen = { max_output_tokens: 2048 };
+  if (!state.thinking) gen.thinking_level = 'minimal';
+  const res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': getApiKey() },
+    // store:false — 주고받은 글을 구글 쪽에 남기지 않는다. 기본값은 저장이다.
+    body: JSON.stringify({ model: getModel(), input: text,
+                           service_tier: 'priority', store: false,
+                           generation_config: gen })
+  });
+  let data = null;
+  try { data = await res.json(); } catch(e) {}
+  if (!res.ok) {
+    const err = new Error(geminiErr(res.status, data && data.error && data.error.message));
+    // 이 모델·계정에서 아예 못 쓰는 경우. 다시 걸어도 소용없으니 표준으로 돌린다.
+    err._priorityRejected = (res.status === 400 || res.status === 403 || res.status === 404);
+    err._retryable = !err._priorityRejected && RETRY_STATUS.indexOf(res.status) >= 0;
+    throw err;
+  }
+  const out = ((data && data.steps) || [])
+    .filter(st => st.type === 'model_output')
+    .map(st => (st.content || []).filter(c => c.type === 'text').map(c => c.text).join(''))
+    .join('').trim();
+  if (!out) throw new Error('결과를 가져오지 못했어요.');
+  return out;
+}
+
 async function streamGemini(body, onText, timeoutMs) {
+  const text = (!_priorityOff && priorityOn()) ? priorityText(body) : '';
+  if (text) {
+    try {
+      const out = await withGeminiRetry(() => askPriority(text));
+      _usedPriority = true;
+      onText(out, out);
+      return out;
+    } catch (e) {
+      if (!e || !e._priorityRejected) throw e;
+      _priorityOff = true;
+      _usedPriority = false;
+      toast('우선 처리를 못 써서 표준으로 돌렸어요');
+    }
+  }
+  return withGeminiRetry(() => streamGeminiOnce(body, onText, timeoutMs));
+}
+
+async function streamGeminiOnce(body, onText, timeoutMs) {
   const controller = new AbortController();
   _activeAbort = controller;            // 취소 버튼이 스트림 도중에도 끊을 수 있게
   let headersIn = false;
@@ -4148,6 +4283,10 @@ async function streamGemini(body, onText, timeoutMs) {
       { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body), signal: controller.signal }
     );
+  } catch (e) {
+    // 취소와 시간초과는 다시 걸지 않는다. 그 밖의 연결 끊김은 다시 걸어 본다.
+    if (e && e.name !== 'AbortError') e._retryable = true;
+    throw e;
   } finally {
     headersIn = true;
     clearTimeout(timer);
@@ -4155,7 +4294,9 @@ async function streamGemini(body, onText, timeoutMs) {
   if (!res.ok) {
     let raw = '';
     try { const j = await res.json(); raw = j.error?.message || ''; } catch(e) {}
-    throw new Error(geminiErr(res.status, raw));
+    const err = new Error(geminiErr(res.status, raw));
+    err._retryable = RETRY_STATUS.indexOf(res.status) >= 0;
+    throw err;
   }
 
   let full = '';
@@ -4963,6 +5104,8 @@ function renderMetaPills(warnMsg) {
     box.appendChild(el);
   };
   if (p) add(p, false);
+  // 이미지나 피드백 수정은 우선 처리로 못 보내 표준으로 간다. 어느 길로 갔는지는 보이게.
+  if (_usedPriority) add('우선 처리', false);
   if (warnMsg) add('확인 권장', true);
   box.classList.toggle('visible', box.children.length > 0);
 }
@@ -5355,15 +5498,29 @@ function showSelectionMenu(text, index, x, y) {
   positionPopup();
 }
 
-async function askGemini(prompt, maxTokens) {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: maxTokens || 1024, thinkingConfig: { thinkingBudget: 0 } } }) }
-  );
+function askGemini(prompt, maxTokens) {
+  return withGeminiRetry(() => askGeminiOnce(prompt, maxTokens));
+}
+
+async function askGeminiOnce(prompt, maxTokens) {
+  let res;
+  try {
+    res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.4, maxOutputTokens: maxTokens || 1024, thinkingConfig: { thinkingBudget: 0 } } }) }
+    );
+  } catch (e) {
+    if (e && e.name !== 'AbortError') e._retryable = true;
+    throw e;
+  }
   const data = await res.json();
-  if (!res.ok) throw new Error(geminiErr(res.status, data.error?.message));
+  if (!res.ok) {
+    const err = new Error(geminiErr(res.status, data.error?.message));
+    err._retryable = RETRY_STATUS.indexOf(res.status) >= 0;
+    throw err;
+  }
   const out = data.candidates?.[0]?.content?.parts?.filter(p => p.text).map(p => p.text).join('').trim();
   if (!out) throw new Error('결과를 가져오지 못했어요.');
   return out;
