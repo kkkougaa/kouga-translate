@@ -2599,8 +2599,8 @@ button, input, textarea, a{ font-family:inherit; }
       <div class="set-body">
       <div class="field">
         <div class="field-label">번역 모델</div>
-        <input type="text" id="modelInput" placeholder="gemini-3.6-flash">
-        <div class="field-note">기본값: gemini-3.6-flash · <a href="https://ai.google.dev/gemini-api/docs/models" target="_blank" style="color:var(--accent);">모델 목록 보기</a></div>
+        <input type="text" id="modelInput" placeholder="gemini-3.8-flash">
+        <div class="field-note">기본값: gemini-3.8-flash · <a href="https://ai.google.dev/gemini-api/docs/models" target="_blank" style="color:var(--accent);">모델 목록 보기</a></div>
       </div>
       <div class="toggle-row">
         <div class="toggle-info">
@@ -2787,11 +2787,11 @@ button, input, textarea, a{ font-family:inherit; }
 <script>
 // 기본 번역 모델을 올릴 때, 예전 기본값을 그대로 쓰던 사람은 자동으로 따라오게 한다.
 // 직접 다른 모델을 적어 넣은 사람은 그 값을 그대로 존중한다.
-const DEFAULT_MODEL = 'gemini-3.6-flash';
+const DEFAULT_MODEL = 'gemini-3.8-flash';
 const LEGACY_DEFAULT_MODELS = [
-  'gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'
+  'gemini-3.6-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'
 ];
-const MODEL_MIGRATION = 2;
+const MODEL_MIGRATION = 3;
 (function migrateModel() {
   try {
     if (+(localStorage.getItem('model_migration') || 0) >= MODEL_MIGRATION) return;
