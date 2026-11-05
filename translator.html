@@ -689,6 +689,28 @@
   .comment-box.visible { display: block; }
   .comment-label { font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 3px; }
   #commentText { white-space: pre-wrap; word-break: break-word; }
+
+/* ── 번역 엔진 드롭다운 (Gemini / PLaMo) ── */
+.engine-wrap{ position:relative; margin-left:4px; }
+.engine-btn{ display:flex; align-items:center; gap:6px; height:30px; padding:0 10px 0 9px; border:none; border-radius:999px;
+  background:var(--fill); color:var(--text); font-family:inherit; font-size:14px; font-weight:600; letter-spacing:-.2px; cursor:pointer; }
+.engine-btn:hover{ background:var(--fill2); }
+.engine-btn .eg-logo{ width:15px; height:15px; display:block; }
+.engine-btn .ep-logo{ height:10px; width:auto; display:block; }
+.engine-btn .e-chev{ color:var(--text3); display:flex; }
+.engine-menu{ position:absolute; top:36px; left:0; z-index:60; min-width:210px; padding:6px; border-radius:14px;
+  background:var(--bg); border:.5px solid var(--border2); box-shadow:0 10px 30px rgba(0,0,0,.16); display:none; }
+.engine-menu.open{ display:block; }
+.engine-menu button{ display:flex; align-items:center; gap:8px; width:100%; padding:10px; border:none; border-radius:10px;
+  background:none; font-family:inherit; font-size:15px; font-weight:500; color:var(--text); cursor:pointer; text-align:left; }
+.engine-menu button:hover{ background:var(--fill); }
+.engine-menu .eg-logo{ width:17px; height:17px; }
+.engine-menu .ep-logo{ height:11px; width:auto; }
+.engine-menu .sub{ font-size:12px; font-weight:400; color:var(--text3); }
+.engine-menu .chk{ margin-left:auto; color:var(--accent); visibility:hidden; font-weight:700; }
+.engine-menu button.on .chk{ visibility:visible; }
+.plamo-status{ font-size:15px; font-weight:500; padding:4px 0; }
+.btn-row button:disabled{ opacity:.45; cursor:default; }
 </style>
 <style>
 /* ===================================================================
@@ -1545,13 +1567,6 @@ button, input, textarea, a{ font-family:inherit; }
 }
 
 /* 41 · 용어집 제안 칩 — 누르면 넣고, × 는 다시 묻지 않는다 */
-.mpill.gl-sug{ padding:0; gap:0; overflow:hidden;
-               background:var(--accent-bg); color:var(--accent-dark); }
-.gl-sug button{ height:24px; border:none; background:none; color:inherit;
-                font:inherit; cursor:pointer; display:flex; align-items:center; }
-.gl-sug-add{ padding:0 4px 0 9px; gap:4px; }
-.gl-sug-add svg{ display:block; flex:none; }
-.gl-sug-x{ padding:0 9px 0 4px; opacity:.55; font-size:13px; }
 
 /* 40 · 공부 — 문제 내고, 채점 받고, 표현을 모은다 */
 #studyPage, #wordsPage{ background:var(--bg2); }
@@ -2142,6 +2157,13 @@ button, input, textarea, a{ font-family:inherit; }
         <div class="header-title">번역기</div>
         <div class="header-sub">한국어 ↔ 일본어</div>
       </div>
+      <div class="engine-wrap" id="engineWrap">
+        <button type="button" class="engine-btn" id="engineBtn" aria-label="번역 엔진" aria-haspopup="true"><span id="engineBadge" style="display:flex;align-items:center;gap:6px;"></span><span class="e-chev"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></button>
+        <div class="engine-menu" id="engineMenu" role="menu">
+          <button type="button" data-engine="gemini" role="menuitemradio"><img class="eg-logo" alt="" src="data:image/png;base64,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">Gemini<span class="chk">✓</span></button>
+          <button type="button" data-engine="plamo" role="menuitemradio"><img class="ep-logo" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAAA/CAYAAADe60XzAAAE90lEQVR42u3dT2gcVRwH8O/vvZnZpKSaaiNVpIUi1LQHEQIWLVKsRDxKMdWj3qqIoWoSQVDxYNBDowcVL715aFXEi7Q5pEIlUFSokqxFqYegKKm29E92d/a99/OQHG12ZpPNzm6+n2OYtzN5M995b2bfeyuY+EVROAKIAeAew7uDM/+3xcej5ZeTuHcqddXGnyaCEIITMUNHj++50IojfnNmJlq46L83UfxAcK5QtWnjElxaO3Li6KGTq233A/BSL/BhtTVnFOXDJ3Bl90EYV2t7nSRRD2r1pddfmNo7ueqGE/PPIur9DFmPWYEn776Me3ur8CrZz5Gozixuq/92vS+BZIikGCD4RQMi6lgMMBEDTEQMMBExwEQMMBExwETEABMRA0zEABNRQUT5I28BG+ffU/CAr3d3bSpKUVKCF9uyXQgA1QDvilGXycoxZTnuvK2FiCCypWxVrwHOpwxww/B6Pw/vvoNAclzYCsEgTHQAwXdlRc4vLupW2fa1S6sXfL2FY6FFFNAdIuYgtL3D2BXQGjAtwL9Zclzr7T9kgO3Z/k2DEPzVVCtnoNAGNwdVwR0CGWaAV2MTIFSnMXn/aO49jZWfQxR3bYBPjYx4AOMbsa/nPzn9qEj0rWr76nIlraEOHHsImMtS5qO79p6LVbdnub1ZY+G9//3FqcEjWT7709G5fV7MzwIjDfLecjaKEcUK5JjMEImKALa1AW6+DGBMDFqv+BSmLmW5F52xyQ65etEikJNPqx05JQ3vVM4gkSLMqxODGzU/66LqXz7PQ4OoVvzWIRizEzluzBHDQLSeza/F2b8H3j773sOnc5cdL3+BONoJlz3AfAtNtO6tsEuaLGlaXoCIioMBJmKAiYgBJiIGmGiz4NdIHag/drWbIYFm/OLTtn1oAzHARacqGC8/DhP3I7iW5uWrPyr7dvXVUtVs4zlMlBifmsCTxADTrbwFCyMfIOkZbPWkjUvVGJdu5LhJRCXA1fi4xAADAJobqa/YDFNFUvh0Y2ZdmRyTSQyaGGVL3Rfg4AHVQYxdfAbGZ7+AglUIHoF61jhR2wLsU8DaYZgo/7StzTAfmKjwXejg0a1TAok6DV9sEDHARMQAExEDTLRZcCBHO4lZXigwL1UgONYfMcBtY2PAp+fg3Tu5y3o8iCiaXF6VkqOcGWBqT+sL8ycm95zJXfa1uQpE0O5lZYnPwJucNjvAMWHdEQNM1PFd6Ly9MGMA0+qetyx3Mb3nDYZotQAP7/gn88bWWlyt4vzs5dvfb/mRWQvA/MRTRLRKgHdtqWTfOE5w09YXZsf2f86qIypAgH2O328RFTgVziwlKgg+YxIxwETEABMRA0zEABMRA0yrkWbXJkpZdwRwMkP7+DoAPYCJ8pdNlB6ABnAmEnVsgIOJEWyCoI1/cEBEECSgPrC7OC2XBkDMPbDJU02V9WyEC6vZNdAlf4+sYwN83zevlLZoQDXDWtMCIKja2xbOH/8RuLLyp+bqGEAArtWBV/cD19YcYlflBd9NggdEjmG8fBiS6zpTqA7lXaihYwN856/Tts8tIcflLxHwhKxxvxbAEnC9B3gDaw0wdWHrG4AoGYZp4vWSq+desrlzu9BRguAqCDmeA9ej02mXnzyrgQ+gdMv3GymwQUun8y00UQdjgIkYYCJigImIASZigImIASYiBpiIGGAiBpiICuI/s5KI+hiD8skAAAAASUVORK5CYII=">PLaMo <span class="sub" id="plamoMenuSub">브라우저 안</span><span class="chk">✓</span></button>
+        </div>
+      </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
       <button class="settings-btn" id="talkEnterBtn" title="대화 모드"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10H8.5L4 19z"/><path d="M8.5 10.5h7"/></svg></button>
@@ -2607,6 +2629,28 @@ button, input, textarea, a{ font-family:inherit; }
       </div>
       </div>
     </div>
+    <div class="set-group" id="set-plamo">
+      <button class="set-head" type="button"><span>브라우저 안 번역 (PLaMo)</span><span class="set-chev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
+      <div class="set-body">
+      <div class="field">
+        <div class="field-label">모델</div>
+        <div class="plamo-status" id="plamoStatus">모델 없음</div>
+        <div class="btn-row" style="margin-top:8px;">
+          <button type="button" id="plamoGet2b">2B 받기 · 1.81GB</button>
+          <button type="button" id="plamoGet08b">0.8B 받기 · 0.57GB</button>
+        </div>
+        <div class="btn-row" style="margin-top:8px;">
+          <button type="button" id="plamoPickBtn">PC 파일 가져오기</button>
+          <button type="button" id="plamoDelBtn">지우기</button>
+        </div>
+        <input type="file" id="plamoFile" accept=".gguf" style="display:none">
+        <div class="field-note">PLaMo 3 Translate 를 브라우저 안에서 돌려요. 한 번 받으면 브라우저에 저장돼서 다음부터 바로 써요.
+          추천은 <b>2B</b>, 가벼운 PC 는 0.8B. 크롬 · 엣지(WebGPU)에서 빨라요.
+          번역 · 역번역만 PLaMo 가 하고 코멘트 · 피드백 · 사진은 Gemini 가 해요.
+          <a href="https://huggingface.co/collections/pfnet/plamo-3-translate" target="_blank" style="color:var(--accent);">모델 소개</a> · PLaMo Community License (개인·비상업 무료)</div>
+      </div>
+      </div>
+    </div>
     <div class="set-group" id="set-voice">
       <button class="set-head" type="button"><span>음성</span><span class="set-chev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
       <div class="set-body">
@@ -2902,7 +2946,7 @@ function getImageOutSize() {
 }
 // Thinking 모드는 응답이 오래 걸려서 짧은 타임아웃에 걸린다
 function reqTimeout() {
-  return state.thinking ? 90000 : 25000;
+  return thinkingOn() ? 90000 : 25000;
 }
 
 const LANG_CONFIG = {
@@ -3222,7 +3266,9 @@ $('thinkingToggle').onclick = function() {
   $('thinkingDesc').textContent = state.thinking ? 'on — 느리지만 정확하게' : 'off — 빠른 번역';
 };
 
-function priorityOn() { return localStorage.getItem('gemini_priority') === '1'; }
+function priorityOn() { return localStorage.getItem('gemini_priority') === '1' && getEngine() !== 'plamo'; }
+// PLaMo 로 번역할 땐 Gemini 는 코멘트·피드백 같은 곁일만 한다 — Thinking 은 끈 채로
+function thinkingOn() { return state.thinking && getEngine() !== 'plamo'; }
 
 function paintPriority() {
   const on = priorityOn();
@@ -3647,74 +3693,6 @@ function enforceGlossary(text, srcText, outLang) {
 // 번역 기록에서 "이 한국어 낱말이 나오면 이 가타카나가 같이 나온다" 를 찾는다.
 // 고유명사·외래어·덕질 용어는 대개 가타카나로 옮겨지니 거기서 짝을 뽑는다.
 // API 는 부르지 않는다. 기록만 본다.
-const KO_JOSA = ['이에요', '에서', '에게', '한테', '으로', '이랑', '하고', '까지', '부터', '처럼',
-  '보다', '이나', '이야', '예요', '께서', '이', '가', '은', '는', '을', '를', '에', '께', '로',
-  '와', '과', '랑', '도', '만', '의', '나', '야', '님'];
-const SUGGEST_STOP = new Set(['진짜', '정말', '너무', '완전', '대박', '그냥', '오늘', '내일', '어제',
-  '지금', '우리', '이거', '그거', '저거', '여기', '거기', '근데', '그래서', '그리고', '아니', '나도', '너도']);
-const KATA_RE = /[\u30A1-\u30FA][\u30A1-\u30FA\u30FC]+(?:くん|ちゃん|さん|さま|様|たん)?/g;
-
-// 낱말 하나에서 조사를 뗀 후보까지 같이 낸다. "코우가" 는 "가" 로 끝나도 원형이 남는다.
-function koTerms(text) {
-  const out = new Set();
-  for (const raw of String(text || '').split(/[^가-힣]+/)) {
-    if (raw.length < 2 || raw.length > 10) continue;
-    out.add(raw);
-    for (const j of KO_JOSA) {
-      if (raw.length - j.length >= 2 && raw.endsWith(j)) out.add(raw.slice(0, -j.length));
-    }
-  }
-  return out;
-}
-
-function glossarySkipKey() { return 'glossary_skip_' + state.tgtLang; }
-
-function suggestGlossary(srcText) {
-  if (state.srcLang !== 'ko' || state.tgtLang !== 'ja' || !srcText) return [];
-  let hist = [];
-  try { hist = JSON.parse(localStorage.getItem('trans_history') || '[]'); } catch(e) {}
-  const label = (LANG_CONFIG[state.tgtLang] || {}).label;
-  // 같은 문장을 여러 번 번역한 건 한 번으로 친다
-  const seen = new Set(), rows = [];
-  for (const h of hist) {
-    if (h.srcName !== '한국어' || h.tgtName !== label || seen.has(h.src)) continue;
-    seen.add(h.src);
-    rows.push({ ko: koTerms(h.src), ja: new Set(String(h.tgt || '').match(KATA_RE) || []) });
-  }
-  if (rows.length < 2) return [];
-
-  const pairs = getGlossaryPairs();
-  const knownKo = x => pairs.some(p => p.from === x || (p.from.length >= 2 && (p.from.includes(x) || x.includes(p.from))));
-  const knownJa = k => pairs.some(p => p.to === k || (p.to.length >= 2 && (p.to.includes(k) || k.includes(p.to))));
-  let skip = [];
-  try { skip = JSON.parse(localStorage.getItem(glossarySkipKey()) || '[]'); } catch(e) {}
-  const kataTotal = new Map();
-  rows.forEach(r => r.ja.forEach(k => kataTotal.set(k, (kataTotal.get(k) || 0) + 1)));
-
-  const best = new Map();   // 가타카나 → 가장 잘 맞는 한국어 낱말
-  for (const x of koTerms(srcText)) {
-    if (SUGGEST_STOP.has(x) || knownKo(x)) continue;
-    const withX = rows.filter(r => r.ko.has(x));
-    if (withX.length < 2) continue;
-    const co = new Map();
-    withX.forEach(r => r.ja.forEach(k => co.set(k, (co.get(k) || 0) + 1)));
-    for (const [k, n] of co) {
-      if (n < 2 || knownJa(k) || skip.indexOf(x + '=' + k) >= 0) continue;
-      if (n / withX.length < 0.6) continue;     // 이 낱말이 나오면 대개 이 가타카나도 나온다
-      if (n / kataTotal.get(k) < 0.6) continue;  // 이 가타카나는 대개 이 낱말과 같이 나온다
-      const cur = best.get(k);
-      if (!cur || n > cur.n || (n === cur.n && x.length > cur.x.length)) best.set(k, { x, k, n });
-    }
-  }
-  // 한 낱말이 두 가타카나에 걸리면 더 자주 나온 쪽만
-  const byX = new Map();
-  for (const v of best.values()) {
-    const cur = byX.get(v.x);
-    if (!cur || v.n > cur.n) byX.set(v.x, v);
-  }
-  return [...byX.values()].sort((a, b) => b.n - a.n).slice(0, 2);
-}
-
 // 입력한 글에 실제로 등장하는 항목만 프롬프트에 붙인다 (토큰 절약)
 function glossaryInstr(text) {
   const t = (text || '').toLowerCase();
@@ -4123,12 +4101,439 @@ function cancelTranslate() {
   setTranslateIcon('idle');
 }
 
+// ── 기기 안 번역: PLaMo 3 Translate (Preferred Networks) ──
+// 브라우저 안에서 wllama(llama.cpp 의 웹판, vendor/wllama)로 GGUF 를 돌린다. 크롬·엣지는 WebGPU 로 그래픽 카드를 쓴다.
+// 모델은 Hugging Face 에서 받거나(브라우저 캐시에 남는다) PC 의 .gguf 를 가져온다(브라우저 저장소 OPFS 에 둔다).
+// 번역 · 역번역만 PLaMo 가 하고, 코멘트 · 피드백 · 사진은 Gemini 가 한다 (iOS 앱과 같다).
+//
+// 프롬프트는 모델 카드의 PFML3 형식 그대로:
+//   <|plamo:tag|>dataset<|plamo:msg|>translation
+//   [<|plamo:tag|>context<|plamo:msg|>참고 문맥]
+//   [<|plamo:tag|>glossary<|plamo:index|>원어<|plamo:item|>번역어 ...]
+//   <|plamo:tag|>input<|plamo:key|>lang<|plamo:val|>ko<|plamo:msg|>원문
+//   <|plamo:tag|>output<|plamo:key|>lang<|plamo:val|>ja[<|plamo:key|>form<|plamo:val|>polite]<|plamo:msg|>
+// wllama 는 저장소에 같이 둔다 (vendor/wllama). npm 의 3.8.1 은 PLaMo 3 토크나이저를 몰라서 못 쓴다.
+const PLAMO_CDN = new URL('vendor/wllama/', location.href).href;
+const PLAMO_MODELS = {
+  '2b':   { label: '2B',   url: 'https://huggingface.co/pfnet/plamo-3-translate-2b-GGUF/resolve/main/plamo-3-translate-2b-Q4_K_M.gguf' },
+  '0.8b': { label: '0.8B', url: 'https://huggingface.co/pfnet/plamo-3-translate-0.8b-GGUF/resolve/main/plamo-3-translate-0.8b-Q4_K_M.gguf' }
+};
+const PLAMO_STOPS = ['<|plamo:tag|>', '<|plamo:bos|>'];
+const PLAMO_OPFS = 'plamo-model.gguf';
+let _plamoW = null;          // 불러온 wllama
+let _plamoLoading = null;    // 불러오는 중인 Promise (동시에 두 번 안 부르게)
+let _plamoBusy = false;      // 받기 · 가져오기 · 지우기 중
+let _usedPlamo = false;      // 이번 결과를 PLaMo 가 만들었나
+
+function getEngine() { return localStorage.getItem('engine') === 'plamo' ? 'plamo' : 'gemini'; }
+/** 'hf:2b' · 'hf:0.8b' · 'file:<이름>' · '' */
+function plamoSource() { return localStorage.getItem('plamo_source') || ''; }
+
+function plamoCode(l) { return l === 'zh-cn' ? 'zh-hans' : l === 'zh-tw' ? 'zh-hant' : l; }
+function plamoSafe(t) { return String(t == null ? '' : t).split('<|').join('< |'); }
+
+function plamoBuild({ text, src, tgt, form, context, glossary }) {
+  let p = '<|plamo:tag|>dataset<|plamo:msg|>translation';
+  if (context && context.trim()) p += '<|plamo:tag|>context<|plamo:msg|>' + plamoSafe(context.trim());
+  if (glossary && glossary.length) {
+    p += '<|plamo:tag|>glossary';
+    glossary.forEach(g => { p += '<|plamo:index|>' + plamoSafe(g.src) + '<|plamo:item|>' + plamoSafe(g.dst); });
+  }
+  p += '<|plamo:tag|>input<|plamo:key|>lang<|plamo:val|>' + plamoCode(src) + '<|plamo:msg|>' + plamoSafe(text);
+  p += '<|plamo:tag|>output<|plamo:key|>lang<|plamo:val|>' + plamoCode(tgt);
+  if (form) p += '<|plamo:key|>form<|plamo:val|>' + form;
+  return p + '<|plamo:msg|>';
+}
+
+/** 일본어 결과에서만 — 정중하게 → です・ます, 20대 남성 → だ・である */
+function plamoForm(tone, outLang) {
+  if (outLang !== 'ja') return '';
+  return tone === 'formal' ? 'polite' : tone === 'young_male' ? 'plain' : '';
+}
+
+/** 그 밖의 말투 · 캐릭터 · 추가 요청 · ((요청)) 은 '참고 문맥'으로 넘긴다 (모델이 얼마나 따를지는 글마다 다르다) */
+function plamoContext(reqs) {
+  if (state.srcLang !== 'ko') return '';   // 외국어 → 한국어는 Gemini 판도 원문 말투를 그대로 살린다
+  const parts = [];
+  const target = (LANG_CONFIG[state.tgtLang] || {}).label || '';
+  const charDesc = () => ($('charPrompt').value || '').trim() || KOUGA_PROMPT;
+  const t = state.tone;
+  if (t === 'young_male') parts.push('20대 남성이 친한 친구에게 편하게 반말로 하는 대화입니다. 1인칭은 俺 또는 僕를 씁니다.');
+  else if (t === 'adult') parts.push(`성인들 사이의 성적인 대화입니다. ${target}에서 실제로 쓰는 은어와 속어를 자연스럽게 씁니다.`);
+  else if (t === 'character') parts.push('말하는 사람(캐릭터) 설명: ' + charDesc());
+  else if (t !== 'none' && t !== 'formal') {
+    const ct = getTones().find(x => x.id === t);
+    if (ct && ct.prompt === 'USE_CHAR_PROMPT') parts.push('말하는 사람(캐릭터) 설명: ' + charDesc());
+    else if (ct && ct.prompt) parts.push('말투: ' + ct.prompt);
+  }
+  if (state.extraOn && $('extraPrompt').value.trim()) parts.push('추가 요청: ' + $('extraPrompt').value.trim());
+  (reqs || []).forEach(r => { r = String(r).trim(); if (r) parts.push('요청: ' + r); });
+  return parts.join('\n');
+}
+
+/** 끝에 반쯤 나온 특수 토큰은 숨긴다 */
+function plamoVisible(t) {
+  let out = String(t || '');
+  for (const s of PLAMO_STOPS) { const i = out.indexOf(s); if (i >= 0) out = out.slice(0, i); }
+  const k = out.lastIndexOf('<|');
+  if (k >= 0 && PLAMO_STOPS.some(s => s.startsWith(out.slice(k)))) out = out.slice(0, k);
+  return out;
+}
+
+async function plamoOpfsFile() {
+  try {
+    const dir = await navigator.storage.getDirectory();
+    return await (await dir.getFileHandle(PLAMO_OPFS)).getFile();
+  } catch (e) { return null; }
+}
+
+async function plamoUnload() {
+  const w = _plamoW;
+  _plamoW = null;
+  if (w) { try { await w.exit(); } catch (e) {} }
+}
+
+/** 모델을 불러온다 (처음 한 번은 몇 초~몇십 초) */
+async function plamoEnsure(onProgress) {
+  if (_plamoW) return _plamoW;
+  if (_plamoLoading) return _plamoLoading;
+  _plamoLoading = (async () => {
+    const src = plamoSource();
+    if (!src) throw new Error('PLaMo 모델이 없어요. 설정 → 브라우저 안 번역에서 받아 주세요.');
+    const { Wllama } = await import(PLAMO_CDN + 'index.js');
+    const w = new Wllama({ default: PLAMO_CDN + 'wasm/wllama.wasm' }, { suppressNativeLog: true, allowOffline: true });
+    const params = { n_ctx: 4096, n_batch: 512 };
+    if (src.startsWith('hf:')) {
+      const m = PLAMO_MODELS[src.slice(3)];
+      if (!m) throw new Error('알 수 없는 모델이에요. 다시 받아 주세요.');
+      await w.loadModelFromUrl(m.url, { ...params, useCache: true, progressCallback: onProgress });
+    } else {
+      const f = await plamoOpfsFile();
+      if (!f) throw new Error('가져온 모델 파일을 찾지 못했어요. 다시 가져와 주세요.');
+      await w.loadModel([f], params);
+    }
+    _plamoW = w;
+    paintPlamoStatus();
+    return w;
+  })();
+  try { return await _plamoLoading; } finally { _plamoLoading = null; }
+}
+
+/** 번역 한 번. onText 에는 지금까지 나온 번역 전체를 넘긴다 (실제로 나오는 속도 그대로) */
+async function plamoTranslate(prompt, onText, signal) {
+  if (!_plamoW) toast('PLaMo 모델을 불러오는 중이에요');
+  const w = await plamoEnsure();
+  let acc = '';
+  await w.createCompletion({
+    prompt, max_tokens: 2048, temperature: 0, stop: PLAMO_STOPS, stream: true,
+    ...(signal ? { abortSignal: signal } : {}),
+    onData: c => {
+      acc += (c && c.choices && c.choices[0] && c.choices[0].text) || '';
+      onText(plamoVisible(acc));
+    }
+  });
+  return plamoVisible(acc);
+}
+
+function plamoFeedbackSystem(source, result) {
+  return `당신은 번역 수정 도우미입니다. 아래는 원문과 번역 결과입니다.
+사용자의 수정 요청을 반드시 정확히 반영하세요.
+요청하지 않은 부분은 절대 바꾸지 마세요.
+수정된 번역 결과 텍스트만 출력하세요. 설명, 주석, 읽는 법(로마자·발음·독음) 표기는 절대 붙이지 마세요.
+
+[원문]
+${source}
+
+[번역 결과]
+${result}`;
+}
+
+/** 번역이 끝난 뒤 Gemini 에게 코멘트만 받는다 (키가 있을 때). 그사이 바뀌었으면 버린다. */
+async function plamoComment(myReq, source, result) {
+  if (!getApiKey()) return;
+  const outName = state.srcLang === 'ko' ? (LANG_CONFIG[state.tgtLang]?.label || '일본어') : '한국어';
+  const srcName = state.srcLang === 'ko' ? '한국어' : (LANG_CONFIG[state.tgtLang]?.label || '일본어');
+  const prompt = `아래는 ${srcName}를 ${outName}로 옮긴 기계 번역입니다. 번역을 다시 하지 마세요.
+읽는 사람이 알아두면 좋은 점(뉘앙스 차이, 오역 가능성, 원문에 없는 말·빠진 말, 문화적 맥락)이 있을 때만
+한국어로 1~3줄 짧게 적어주세요. 특별히 없으면 "없음" 한 단어만 출력하세요.
+
+[원문]
+${source}
+
+[번역]
+${result}`;
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.2, maxOutputTokens: 400, thinkingConfig: { thinkingBudget: 0 } } }) });
+    const data = await res.json();
+    const c = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
+    if (!c || /^없음\.?$/.test(c)) return;
+    if (myReq !== _reqSeq || state.result !== result || $('fbHistory').children.length) return;
+    $('commentText').textContent = c;
+    $('commentBox').classList.add('visible');
+  } catch (e) {}
+}
+
+async function translatePlamo(text) {
+  state.busy = true;
+  _cancelled = false;
+  _usedPriority = false;
+  _usedPlamo = true;
+  const myReq = ++_reqSeq;
+  const ac = new AbortController();
+  _activeAbort = ac;
+  $('translateBtn').disabled = false;
+  $('translateBtn').onclick = cancelTranslate;
+  $('translateLabel').textContent = '취소';
+  setTranslateIcon('loading');
+  $('resultText').style.display = 'none';
+  $('errorBox').style.display = 'none';
+  $('loading').style.display = 'flex';
+  $('commentBox').classList.remove('visible');
+  $('commentText').textContent = '';
+  let ok = false;
+  try {
+    const parsed = parseInput(text);
+    const outL = state.srcLang === 'ko' ? state.tgtLang : 'ko';
+    const prompt = plamoBuild({
+      text: parsed.body, src: state.srcLang, tgt: outL,
+      form: plamoForm(state.tone, outL),
+      context: plamoContext(parsed.reqs),
+      glossary: glossaryDirPairs(parsed.body)
+    });
+    let streaming = false;
+    const draw = t => {
+      if (_cancelled || myReq !== _reqSeq) return;
+      if (!streaming) {
+        streaming = true;
+        $('loading').style.display = 'none';
+        $('resultText').className = 'result-area';
+        $('resultText').style.display = 'block';
+      }
+      $('resultText').textContent = t.trimStart();
+    };
+    const raw = (await plamoTranslate(prompt, draw, ac.signal)).trim();
+    if (_cancelled || myReq !== _reqSeq) return;
+    if (!raw) throw new Error('번역 결과를 받지 못했습니다.');
+    // Gemini 판과 같은 뒷정리 — 읽는 법 꼬리 떼기, 전각 숫자·영문 반각, 용어집 강제
+    const clean = cleanForCopy(enforceGlossary(tidyOut(raw, outL), parsed.body, outL));
+    ok = true;
+    haptic();
+    saveHistory(text, clean, state.srcLang, state.tgtLang);
+    state.originalText = parsed.body;
+    // 피드백은 Gemini 로 이어진다
+    state.conversation = [
+      { role: 'user', parts: [{ text: plamoFeedbackSystem(parsed.body, clean) }] },
+      { role: 'model', parts: [{ text: '네, 번역 결과를 기억했습니다. 수정 요청을 말씀해주세요.' }] }
+    ];
+    state.result = clean;
+    $('resultText').textContent = clean;
+    $('resultText').className = 'result-area';
+    $('resultText').style.display = 'block';
+    $('pronunciationWrap').style.display = 'none';
+    if ($('pronBtn')) { $('pronBtn').classList.remove('active'); }
+    $('fbHistory').innerHTML = '';
+    $('feedbackCard').classList.add('visible');
+    renderFbChips();
+    resetRuby();
+    renderMetaPills('');
+    prepareBackTranslation();
+    plamoComment(myReq, parsed.body, clean);
+  } catch (err) {
+    if (_cancelled || err.name === 'AbortError') {
+      $('loading').style.display = 'none';
+    } else {
+      $('errorBox').textContent = '오류: ' + (err.message || err);
+      $('errorBox').style.display = 'block';
+      $('loading').style.display = 'none';
+    }
+  } finally {
+    if (myReq === _reqSeq) {
+      state.busy = false;
+      if (_activeAbort === ac) _activeAbort = null;
+      $('translateBtn').disabled = false;
+      $('translateBtn').onclick = translate;
+      $('translateLabel').textContent = '번역';
+      $('loading').style.display = 'none';
+      setTranslateIcon(ok ? 'done' : 'idle');
+      updateGrammarBtn();
+    }
+  }
+}
+
+// ── 엔진 드롭다운 · 설정 ──
+
+function paintEngine() {
+  const e = getEngine();
+  const g = $('engineMenu').querySelector('[data-engine="gemini"] img').src;
+  const p = $('engineMenu').querySelector('[data-engine="plamo"] img').src;
+  $('engineBadge').innerHTML = e === 'plamo'
+    ? `<img class="ep-logo" alt="" src="${p}">PLaMo`
+    : `<img class="eg-logo" alt="" src="${g}">Gemini`;
+  $('engineMenu').querySelectorAll('[data-engine]').forEach(b => b.classList.toggle('on', b.dataset.engine === e));
+  $('plamoMenuSub').textContent = plamoSource() ? '브라우저 안' : '모델 없음';
+  // PLaMo 로 번역할 땐 Gemini 옵션(Thinking · 우선 처리)을 숨긴다
+  ['thinkingToggle', 'priorityToggle'].forEach(id => {
+    const row = $(id) && $(id).closest('.toggle-row');
+    if (row) row.style.display = e === 'plamo' ? 'none' : '';
+  });
+  if (typeof updateSummary === 'function') { try { updateSummary(); } catch (err) {} }
+}
+
+function setEngine(e) {
+  if (e === 'plamo' && !plamoSource()) {
+    toast('설정 → 브라우저 안 번역에서 PLaMo 모델을 먼저 받아 주세요');
+    return;
+  }
+  if (e === getEngine()) return;
+  localStorage.setItem('engine', e);
+  paintEngine();
+  haptic();
+  toast(e === 'plamo' ? '브라우저 안 PLaMo 로 바꿨어요' : 'Gemini 로 바꿨어요');
+  // 미리 불러 둔다 — 첫 번역을 덜 기다리게
+  if (e === 'plamo') plamoEnsure().catch(() => {});
+}
+
+$('engineBtn').onclick = ev => {
+  ev.stopPropagation();
+  $('engineMenu').classList.toggle('open');
+};
+$('engineMenu').querySelectorAll('[data-engine]').forEach(b => {
+  b.onclick = ev => {
+    ev.stopPropagation();
+    $('engineMenu').classList.remove('open');
+    setEngine(b.dataset.engine);
+  };
+});
+document.addEventListener('click', () => $('engineMenu').classList.remove('open'));
+
+function paintPlamoStatus(msg) {
+  const el = $('plamoStatus');
+  if (!el) return;
+  const src = plamoSource();
+  ['plamoGet2b', 'plamoGet08b', 'plamoPickBtn'].forEach(id => { $(id).disabled = _plamoBusy; });
+  $('plamoDelBtn').disabled = _plamoBusy || !src;
+  if (msg) { el.textContent = msg; return; }
+  if (!src) { el.textContent = '모델 없음'; return; }
+  const name = src.startsWith('hf:')
+    ? `PLaMo 3 Translate ${(PLAMO_MODELS[src.slice(3)] || {}).label || ''} · Q4_K_M`
+    : src.slice(5);
+  const gpu = navigator.gpu ? '' : ' · WebGPU 없음 (CPU 라 느려요)';
+  el.textContent = name + (_plamoW ? ' · 불러옴' : ' · 저장됨') + gpu;
+}
+
+/** 다른 자리에 남은 모델 파일을 치운다 (keep: 'hf:2b' 처럼 남길 것) */
+async function plamoCleanup(keep) {
+  try {
+    if (!keep.startsWith('file:')) {
+      const dir = await navigator.storage.getDirectory();
+      await dir.removeEntry(PLAMO_OPFS).catch(() => {});
+    }
+  } catch (e) {}
+  try {
+    const { CacheManager } = await import(PLAMO_CDN + 'index.js');
+    const cm = new CacheManager();
+    for (const [k, m] of Object.entries(PLAMO_MODELS)) {
+      if (keep !== 'hf:' + k) await cm.delete(m.url).catch(() => {});
+    }
+  } catch (e) {}
+}
+
+async function plamoDownload(key) {
+  if (_plamoBusy) return;
+  _plamoBusy = true;
+  const prev = plamoSource();
+  paintPlamoStatus('준비하는 중…');
+  try {
+    await plamoUnload();
+    localStorage.setItem('plamo_source', 'hf:' + key);
+    await plamoEnsure(({ loaded, total }) => {
+      if (total) paintPlamoStatus(`받는 중 ${Math.floor(loaded / total * 100)}% · ${(loaded / 1e9).toFixed(2)} / ${(total / 1e9).toFixed(2)}GB`);
+    });
+    try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+    await plamoCleanup('hf:' + key);
+    toast('PLaMo 모델을 받았어요');
+  } catch (e) {
+    if (prev) localStorage.setItem('plamo_source', prev); else localStorage.removeItem('plamo_source');
+    toast('받지 못했어요: ' + (e.message || e));
+  } finally {
+    _plamoBusy = false;
+    paintPlamoStatus();
+    paintEngine();
+  }
+}
+
+$('plamoGet2b').onclick = () => plamoDownload('2b');
+$('plamoGet08b').onclick = () => plamoDownload('0.8b');
+$('plamoPickBtn').onclick = () => $('plamoFile').click();
+$('plamoFile').onchange = async ev => {
+  const f = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  if (!f || _plamoBusy) return;
+  const head = new Uint8Array(await f.slice(0, 4).arrayBuffer());
+  if (String.fromCharCode(...head) !== 'GGUF') { toast('GGUF 파일이 아니에요'); return; }
+  if (f.size >= 2 * 1024 * 1024 * 1024) { toast('2GB 넘는 파일은 브라우저에서 한 번에 못 열어요'); return; }
+  _plamoBusy = true;
+  const prev = plamoSource();
+  paintPlamoStatus('브라우저에 저장하는 중…');
+  try {
+    await plamoUnload();
+    const dir = await navigator.storage.getDirectory();
+    const fh = await dir.getFileHandle(PLAMO_OPFS, { create: true });
+    const ws = await fh.createWritable();
+    await ws.write(f);
+    await ws.close();
+    localStorage.setItem('plamo_source', 'file:' + f.name);
+    try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+    paintPlamoStatus('불러오는 중…');
+    await plamoEnsure();
+    await plamoCleanup('file:' + f.name);
+    toast('PLaMo 모델을 가져왔어요');
+  } catch (e) {
+    if (prev) localStorage.setItem('plamo_source', prev); else localStorage.removeItem('plamo_source');
+    toast('가져오지 못했어요: ' + (e.message || e));
+  } finally {
+    _plamoBusy = false;
+    paintPlamoStatus();
+    paintEngine();
+  }
+};
+$('plamoDelBtn').onclick = async () => {
+  if (_plamoBusy || !plamoSource()) return;
+  if (!confirm('브라우저에 저장한 PLaMo 모델을 지울까요?')) return;
+  _plamoBusy = true;
+  paintPlamoStatus('지우는 중…');
+  try {
+    await plamoUnload();
+    await plamoCleanup('');
+    localStorage.removeItem('plamo_source');
+    if (getEngine() === 'plamo') localStorage.setItem('engine', 'gemini');
+    toast('지웠어요');
+  } finally {
+    _plamoBusy = false;
+    paintPlamoStatus();
+    paintEngine();
+  }
+};
+
+paintEngine();
+paintPlamoStatus();
+
 async function translate() {
   const text = $('inputText').value.trim();
   // 번역 중이면 취소
   if (state.busy) { cancelTranslate(); return; }
   if (!text && !state.imgData) return;
   $('inputText').blur();          // 결과가 키보드에 가리지 않게
+
+  // 엔진이 PLaMo 면 브라우저 안에서 번역한다 (사진이 붙으면 Gemini)
+  if (getEngine() === 'plamo' && !state.imgData) {
+    if (!plamoSource()) { toast('설정 → 브라우저 안 번역에서 PLaMo 모델을 먼저 받아 주세요'); return; }
+    return translatePlamo(text);
+  }
 
   if (!getApiKey()) {
     $('overlay').classList.add('open');
@@ -4139,6 +4544,7 @@ async function translate() {
   state.busy = true;
   _cancelled = false;
   _usedPriority = false;
+  _usedPlamo = false;
   const myReq = ++_reqSeq;
   $('translateBtn').disabled = false;
   $('translateBtn').onclick = cancelTranslate;
@@ -4153,7 +4559,7 @@ async function translate() {
     const promptText = state.imgData && !text
       ? `이 이미지에 있는 텍스트를 ${state.srcLang !== 'ko' ? '한국어' : (LANG_CONFIG[state.tgtLang]?.label || '일본어')}로 번역해줘. 번역 결과 텍스트만 출력해.`
       : buildPrompt(text);
-    const genCfg = { temperature: 0.3, maxOutputTokens: 2048, ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) };
+    const genCfg = { temperature: 0.3, maxOutputTokens: 2048, ...(thinkingOn() ? {} : { thinkingConfig: { thinkingBudget: 0 } }) };
     const reqBody = {
       contents: [{ parts: [
         ...(state.imgData ? [{ inline_data: { mime_type: state.imgMime, data: state.imgData } }] : []),
@@ -4357,7 +4763,7 @@ async function askPriority(text) {
   // 안 보내면 모델 기본값으로 돌아서 생각을 하고, 우선 처리인데도 몇 배 느려진다.
   // thinking_level 에 off 는 없고 minimal 이 "거의 생각하지 않음"이다.
   const gen = { max_output_tokens: 2048 };
-  if (!state.thinking) gen.thinking_level = 'minimal';
+  if (!thinkingOn()) gen.thinking_level = 'minimal';
   const res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': getApiKey() },
@@ -4749,10 +5155,10 @@ async function overlayTranslateImage() {
             maxOutputTokens: 4096,
             responseMimeType: 'application/json',
             responseSchema: OVL_SCHEMA,
-            ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } })
+            ...(thinkingOn() ? {} : { thinkingConfig: { thinkingBudget: 0 } })
           }
         }) },
-      1, state.thinking ? 120000 : 60000
+      1, thinkingOn() ? 120000 : 60000
     );
     const data = await res.json();
     if (!res.ok) throw new Error(geminiErr(res.status, data.error?.message));
@@ -5070,7 +5476,7 @@ async function sendFeedback(preset) {
     let fbStreaming = false;
     let reply = (await streamGemini({
       contents: state.conversation,
-      generationConfig: { temperature: 0.3, maxOutputTokens: 2048, ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) }
+      generationConfig: { temperature: 0.3, maxOutputTokens: 2048, ...(thinkingOn() ? {} : { thinkingConfig: { thinkingBudget: 0 } }) }
     }, full => {
       if (!fbStreaming) {
         fbStreaming = true;
@@ -5104,7 +5510,7 @@ async function sendFeedback(preset) {
                   + ' 번역문만 다시 써 주세요.' }] }
             ]),
             generationConfig: { temperature: 0.3, maxOutputTokens: 2048,
-              ...(state.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }) }
+              ...(thinkingOn() ? {} : { thinkingConfig: { thinkingBudget: 0 } }) }
           }, () => {}, reqTimeout())).trim();
           const fixed = enforceGlossary(cleanForCopy(tidyOut(again, fbLang)), state.originalText, fbLang);
           if (fixed && fbBad(fixed).length < bad.length) reply = fixed;
@@ -5235,36 +5641,11 @@ function renderMetaPills(warnMsg) {
     el.textContent = label;
     box.appendChild(el);
   };
+  if (_usedPlamo) add('PLaMo', false);
   if (p) add(p, false);
   // 이미지나 피드백 수정은 우선 처리로 못 보내 표준으로 간다. 어느 길로 갔는지는 보이게.
   if (_usedPriority) add('우선 처리', false);
   if (warnMsg) add('확인 권장', true);
-  // 용어집에 넣을 만한 짝이 기록에서 보이면 칩으로. 누르면 넣고, × 는 다시 묻지 않는다.
-  suggestGlossary(state.originalText).forEach(sg => {
-    const chip = document.createElement('span');
-    chip.className = 'mpill gl-sug';
-    chip.innerHTML = '<button type="button" class="gl-sug-add" title="용어집에 넣기">'
-      + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"'
-      + ' stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span></span></button>'
-      + '<button type="button" class="gl-sug-x" aria-label="다시 묻지 않기">×</button>';
-    chip.querySelector('.gl-sug-add span').textContent = sg.x + ' → ' + sg.k;
-    chip.querySelector('.gl-sug-add').onclick = () => {
-      const list = getGlossaryPairs();
-      if (!list.some(p => p.from === sg.x)) list.push({ from: sg.x, to: sg.k });
-      saveGlossary(list);
-      toast('용어집에 넣었어요');
-      haptic();
-      renderMetaPills(warnMsg);
-    };
-    chip.querySelector('.gl-sug-x').onclick = () => {
-      let skip = [];
-      try { skip = JSON.parse(localStorage.getItem(glossarySkipKey()) || '[]'); } catch(e) {}
-      skip.push(sg.x + '=' + sg.k);
-      localStorage.setItem(glossarySkipKey(), JSON.stringify(skip.slice(-200)));
-      renderMetaPills(warnMsg);
-    };
-    box.appendChild(chip);
-  });
   box.classList.toggle('visible', box.children.length > 0);
 }
 
@@ -5287,22 +5668,30 @@ $('btToggle').onclick = async function() {
     return;
   }
   if (!state.result) return;
-  if (!getApiKey()) { $('overlay').classList.add('open'); return; }
+  // 엔진이 PLaMo 면 역번역도 브라우저 안에서 (키가 없어도 된다)
+  const local = getEngine() === 'plamo' && !!plamoSource();
+  if (!local && !getApiKey()) { $('overlay').classList.add('open'); return; }
   this.disabled = true;
   $('btLoading').style.display = 'block';
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `다음 문장을 자연스러운 한국어로 번역하세요. 번역 결과 텍스트만 출력하세요.
+    let bt = '';
+    if (local) {
+      const outLang = state.srcLang === 'ko' ? state.tgtLang : 'ko';
+      bt = (await plamoTranslate(plamoBuild({ text: state.result, src: outLang, tgt: state.srcLang }), () => {})).trim();
+    } else {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent?key=${getApiKey()}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `다음 문장을 자연스러운 한국어로 번역하세요. 번역 결과 텍스트만 출력하세요.
 
 ${state.result}` }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } }
-        }) }
-    );
-    const data = await res.json();
-    const bt = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+            generationConfig: { temperature: 0.1, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } }
+          }) }
+      );
+      const data = await res.json();
+      bt = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    }
     if (!bt) throw new Error('no result');
     state.btText = bt;
     $('backTranslationText').textContent = bt;
